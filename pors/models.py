@@ -17,6 +17,7 @@
 ActionLog ثبت شود.
 
 """
+
 from django.db import models
 
 
@@ -32,10 +33,12 @@ class Holiday(models.Model):
     شود (Reason باید مقدار گیرد)
 
     """
+
     Date = models.DateField()
     IsOfficial = models.BooleanField(default=False)
-    Reason = models.TextField(null=True, blank=True,
-                              help_text="برای تعطیلات غیر رسمی ذکر شود.")
+    Reason = models.TextField(
+        null=True, blank=True, help_text="برای تعطیلات غیر رسمی ذکر شود."
+    )
 
 
 class Category(models.Model):
@@ -48,8 +51,9 @@ class Category(models.Model):
         verbose_name = "دسته بندی ایتم"
         verbose_name_plural = "دسته بندی ایتم ها"
 
-    CategoryName = models.CharField(max_length=300,
-                                    verbose_name='نام دسته بندی')
+    CategoryName = models.CharField(
+        max_length=300, verbose_name="نام دسته بندی"
+    )
 
     def __str__(self):
         return self.CategoryName
@@ -82,14 +86,17 @@ class Subsidy(models.Model):
     که برای این سفارش کدام سوبسید باید در نظر گرفته شود.
     سوبسید 2 یارانه مد نظر است
     """
+
     Amount = models.PositiveIntegerField()
     Date = models.DateField()
     IsActive = models.BooleanField(
         unique=True,
         default=False,
-        help_text="برای تاکید کردن روی غیر قابل استفاده بودن سوبسید این "
-                  "فیلد باید False شود در واقع این محدودیت دیتابیسی است که "
-                  "منطق unique بودن سوبسید فعال را تضمین می کند"
+        help_text=(
+            "برای تاکید کردن روی غیر قابل استفاده بودن سوبسید این "
+            "فیلد باید False شود در واقع این محدودیت دیتابیسی است که "
+            "منطق unique بودن سوبسید فعال را تضمین می کند"
+        ),
     )
 
 
@@ -109,9 +116,10 @@ class Item(models.Model):
         verbose_name = "اطلاعات ایتم"
         verbose_name_plural = "اطلاعات ایتم ها"
 
-    ItemName = models.CharField(max_length=500, verbose_name='نام ایتم')
-    Category = models.ForeignKey('Category', on_delete=models.CASCADE,
-                                 verbose_name='دسته بندی')
+    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+    Category = models.ForeignKey(
+        "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
+    )
     ItemDesc = models.TextField(blank=True, null=True)
     IsActive = models.BooleanField(default=True)
 
@@ -125,8 +133,9 @@ class Item(models.Model):
 class Order(models.Model):
     Personnel = models.CharField(max_length=250)
     DeliveryDate = models.DateField()
-    IsActive = models.BooleanField(default=True,
-                                   help_text="IsDeleted?(Soft Delete)")
+    IsActive = models.BooleanField(
+        default=True, help_text="IsDeleted?(Soft Delete)"
+    )
 
     @property
     def get_data(self):
@@ -142,10 +151,8 @@ class ItemPrice(models.Model):
     جداگانه ذخیره می شود"""
 
     Item = models.ForeignKey(
-        Item,
-        on_delete=models.CASCADE,
-        null=False,
-        blank=False)
+        Item, on_delete=models.CASCADE, null=False, blank=False
+    )
 
     Price = models.PositiveIntegerField()
     IsActive = models.BooleanField()
@@ -158,9 +165,9 @@ class DailyMenuItem(models.Model):
      به این علت که غذای قابل سفارش باید رفرنس به قیمت روز غذا را باید داشته
      باشد
     """
+
     AvailableDate = models.DateField()
-    PriceItem = models.ForeignKey(ItemPrice,
-                                  on_delete=models.CASCADE)
+    PriceItem = models.ForeignKey(ItemPrice, on_delete=models.CASCADE)
     IsActive = models.BooleanField(default=True)
 
 
@@ -217,7 +224,10 @@ class ActionLog(models.Model):
 
     class ActionChoices(models.TextChoices):
         ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
-        ORDER_MODIFICATION = "ORDER_MODIFICATION", "تغییر سفارش" #REASON_REQUIRED
+        ORDER_MODIFICATION = (
+            "ORDER_MODIFICATION",
+            "تغییر سفارش",
+        )  # REASON_REQUIRED
 
         # DELETE = "DEL", "DELETE"
         # UPDATE = "UPT", "UPDATE"
@@ -230,13 +240,11 @@ class ActionLog(models.Model):
     # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
     # به صورت "SYSTEM" ثبت شود
     User = models.CharField(max_length=250)
-    ActionCode = models.CharField(max_length=250,
-                                  choices=ActionChoices.choices)
+    ActionCode = models.CharField(
+        max_length=250, choices=ActionChoices.choices
+    )
     ActionDesc = models.TextField()
     AdminActionReason = models.TextField(null=True)
 
     # TABLENAME_<PRIMARYKEY>
     SearchableKey = models.CharField(null=True, max_length=250)
-
-
-

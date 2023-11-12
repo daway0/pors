@@ -32,7 +32,6 @@
             "id": 1,
             "name": "jooje",
             "img": "something",
-            "operationAllowed": true
         }
     ]
 }
