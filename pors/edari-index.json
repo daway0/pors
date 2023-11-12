@@ -1,0 +1,45 @@
+// calendar
+{
+    "year": 1402,
+    "month": 8,
+    "first": {
+        "dayOfMonth": 1,
+        "dayOfWeek": 1
+    },
+    "last": {
+        "dayOfMonth": 30,
+        "dayOfWeek": 2
+    },
+    "holidays": [
+        2,
+        5,
+        16,
+        19
+    ],
+    "selectedItems": {
+        "1": [
+            1,
+            5,
+            6
+        ]
+    }
+}
+
+// list of available items and detailed information
+{
+    "availableItems": [
+        {
+            "id": 1,
+            "name": "jooje",
+            "img": "something",
+            "operationAllowed": true
+        }
+    ]
+}
+
+// updating calendar days if day is eligable for operations
+"1": [
+    1,
+    5,
+    6
+]

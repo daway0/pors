@@ -1,0 +1,16 @@
+// caregories
+{
+    "id": 1,
+    "title": "nooshidani"
+}
+
+
+// item information
+{
+    "title":"test",
+    "price": 10,
+    "img": "something",
+    "category": 1,
+    "description": "testtest",
+    "isActive": true
+}
