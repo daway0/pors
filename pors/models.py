@@ -116,7 +116,7 @@ class Item(models.Model):
     IsActive = models.BooleanField(default=True)
 
     # در صورتی که غذایی عکس نداشت باید به صورت پیش فرض به کلاینت عکس دهیم
-    Image = models.ImageField(upload_to="media/items/")
+    Image = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.ItemName
@@ -150,6 +150,8 @@ class ItemPrice(models.Model):
     Price = models.PositiveIntegerField()
     IsActive = models.BooleanField()
 
+    def __str__(self):
+        return f"{self.Item.ItemName} {self.Price} {self.IsActive}"
 
 class DailyMenuItem(models.Model):
     """
