@@ -23,27 +23,9 @@
             <section style="direction: rtl">
                 <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
                     <div class="mx-auto max-w-3xl">
-                        <div class="flex flex-row  items-center">
-<div class="w-4/6">
-{#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">ایتم ها</h1>#}
-{#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">دسته بندی ها</h1>#}
-                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">منوی روزانه</h1>
-
-{#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">سه شنبه 4 آذر</h1>#}
-</div>
-                            <div class="w-2/6 flex justify-end gap-3">
-<span>منو</span>
-<span>ایتم ها</span>
-<span>دسته بندی ها</span>
-
-                                {#                                 <img class="w-8 h-8 " src="https://www.svgrepo.com/show/482257/food-menu-3.svg" alt="">#}
-{#                                <img class="w-8 h-8" src="https://www.svgrepo.com/show/495140/category.svg" alt="">#}
-
-
-
-                            </div>
-
-                        </div>
+                        <header class="text-right">
+                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">سه شنبه 4 آذر</h1>
+                        </header>
                         {#                        <header class="text-right">#}
                         {#                            <div class="mt-5  border border-red-400 bg-red-100 text-red-700 px-4 py-3 rounded relative"#}
                         {#                                 role="alert">#}
@@ -68,46 +50,148 @@
                         {#                            </div>#}
                         {#                        </header>#}
 
-{#plug#}
-{#{% include "item_form.html" %}#}
-{#{% include "item_list.html" %}#}
-{#{% include "category_list.html" %}#}
-{% include "menu.html" %}
+                        <div class="mt-8">
+                            <ul class="space-y-2">
+                                <li class="flex flex-col gap-0 bg-gray-100 bg-sky-100 border border-sky-700 rounded p-4 shadow-md hover:bg-gray-300 ">
+
+                                    <div class="flex items-center gap-4">
+                                        <img
+                                                src="https://api.snappfood.biz/api/files/food/1608378020.jpeg"
+                                                alt=""
+                                                class="h-16 w-16 rounded object-cover self-start"
+                                        />
+
+                                        <div class="w-8/12">
+                                            <div><h3 class="text-sm text-gray-900">چلو جوجه کباب ترش</h3>
+
+                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">
+                                                    <div>
+                                                        <dt class="inline"></dt>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <dt class="inline">
+                                                            170 گرم جوجه ران مرینیت شده با (سبزی مخصوص، رب انار و گردو)،
+                                                            320 گرم برنج درجه یک ایرانی. 30 گرم برنج زعفرانی، کره تک
+                                                            نفره، گوجه کبابی، بسته بندی بهداشتی ماکروفری
+                                                        </dt>
+
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end w-3/12">
+
+                                            {#                                        <div class="">#}
+                                            {#                                            <img class="w-6 h-6"#}
+                                            {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
+                                            {#                                        </div>#}
+                                            {#                                        <div class="">#}
+                                            {#                                            <span>2</span>#}
+                                            {#                                        </div>#}
+                                            <div class="">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <div class="">
+                                            <span class="text-sm">۱۶۱,۷۵۶</span>
+                                            <span class="text-sm">تومان</span>
+
+                                        </div>
+                                    </div>
 
 
-{#                        <div class="mt-8">#}
-{#                            <ul class="space-y-2">#}
-{#                                <li class="flex flex-col gap-0 bg-gray-100 bg-sky-100 border border-sky-700 rounded p-4 shadow-md hover:bg-gray-300 ">#}
-{##}
-{#                                    <div class="flex items-center gap-4">#}
-{#                                        <img#}
-{#                                                src="https://api.snappfood.biz/api/files/food/1608378020.jpeg"#}
-{#                                                alt=""#}
-{#                                                class="h-16 w-16 rounded object-cover self-start"#}
-{#                                        />#}
-{##}
-{#                                        <div class="w-8/12">#}
-{#                                            <div><h3 class="text-sm text-gray-900">چلو جوجه کباب ترش</h3>#}
-{##}
-{#                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">#}
-{#                                                    <div>#}
-{#                                                        <dt class="inline"></dt>#}
-{##}
-{#                                                    </div>#}
-{##}
-{#                                                    <div>#}
-{#                                                        <dt class="inline">#}
-{#                                                            170 گرم جوجه ران مرینیت شده با (سبزی مخصوص، رب انار و گردو)،#}
-{#                                                            320 گرم برنج درجه یک ایرانی. 30 گرم برنج زعفرانی، کره تک#}
-{#                                                            نفره، گوجه کبابی، بسته بندی بهداشتی ماکروفری#}
-{#                                                        </dt>#}
-{##}
-{#                                                    </div>#}
-{#                                                </dl>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="flex justify-end w-3/12">#}
-{##}
+                                </li>
+                                <li class="flex flex-col gap-0 bg-sky-100 border border-sky-700 rounded p-4 shadow-md hover:bg-gray-300 ">
+
+                                    <div class="flex items-center gap-4">
+                                        <img
+                                                src="https://api.snappfood.biz/api/files/food/1687335217-11869.jpeg"
+                                                alt=""
+                                                class="h-16 w-16 rounded object-cover self-start"
+                                        />
+
+                                        <div class="w-8/12">
+                                            <div><h3 class="text-sm text-gray-900">جوجه ترش نادری</h3>
+
+                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">
+                                                    <div>
+                                                        <dt class="inline"></dt>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <dt class="inline">
+                                                            ۲۰۰ گرم سینه مرغ، گردو، رب انار، سبزی معطر، زعفران، پیاز و
+                                                            ادویه و روغن به همراه ۳۵۰ گرم برنج ایرانی درجه۱، گوجه، کره و
+                                                            فلفل کبابی
+                                                        </dt>
+
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end w-3/12">
+
+                                            <div class="ml-2">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">
+                                            </div>
+                                            <div class="ml-2">
+                                                <span>2</span>
+                                            </div>
+                                            <div class="">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <div class="">
+                                            <span class="text-sm">۱۵۸,۲۶۸<span
+                                                    class="text-xs text-gray-600">تومان</span></span>
+                                            <span class="text-sm"></span>
+
+                                        </div>
+                                    </div>
+
+
+                                </li>
+                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">
+
+                                    <div class="flex items-center gap-4">
+                                        <img
+                                                src="https://api.snappfood.biz/api/files/food/1685530907-08901.png"
+                                                alt=""
+                                                class="h-16 w-16 rounded object-cover self-start"
+                                        />
+
+                                        <div class="w-8/12">
+                                            <div><h3 class="text-sm text-gray-900">پنینی سبزیجات</h3>
+
+                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">
+                                                    <div>
+                                                        <dt class="inline"></dt>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <dt class="inline">
+                                                            نان چاپاتا، بادمجان طعم دار شده، قارچ طعم دار شده، اسفناج
+                                                            طعم دار شده، فلفل دلمه کبابی، گوجه خشک، زیتون، پنیر، سس
+                                                            پستو، سس گوجه، پنیر مخلوط
+                                                        </dt>
+
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end w-3/12">
+
                                             {#                                        <div class="">#}
                                             {#                                            <img class="w-6 h-6"#}
                                             {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
@@ -115,108 +199,53 @@
                                             {#                                        <div class="">#}
                                             {#                                            <span>2</span>#}
                                             {#                                        </div>#}
-{#                                            <div class="">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end">#}
-{#                                        <div class="">#}
-{#                                            <span class="text-sm">۱۶۱,۷۵۶</span>#}
-{#                                            <span class="text-sm">تومان</span>#}
-{##}
-{#                                        </div>#}
-{#                                    </div>#}
-{##}
-{##}
-{#                                </li>#}
-{#                                <li class="flex flex-col gap-0 bg-sky-100 border border-sky-700 rounded p-4 shadow-md hover:bg-gray-300 ">#}
-{##}
-{#                                    <div class="flex items-center gap-4">#}
-{#                                        <img#}
-{#                                                src="https://api.snappfood.biz/api/files/food/1687335217-11869.jpeg"#}
-{#                                                alt=""#}
-{#                                                class="h-16 w-16 rounded object-cover self-start"#}
-{#                                        />#}
-{##}
-{#                                        <div class="w-8/12">#}
-{#                                            <div><h3 class="text-sm text-gray-900">جوجه ترش نادری</h3>#}
-{##}
-{#                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">#}
-{#                                                    <div>#}
-{#                                                        <dt class="inline"></dt>#}
-{##}
-{#                                                    </div>#}
-{##}
-{#                                                    <div>#}
-{#                                                        <dt class="inline">#}
-{#                                                            ۲۰۰ گرم سینه مرغ، گردو، رب انار، سبزی معطر، زعفران، پیاز و#}
-{#                                                            ادویه و روغن به همراه ۳۵۰ گرم برنج ایرانی درجه۱، گوجه، کره و#}
-{#                                                            فلفل کبابی#}
-{#                                                        </dt>#}
-{##}
-{#                                                    </div>#}
-{#                                                </dl>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="flex justify-end w-3/12">#}
-{##}
-{#                                            <div class="ml-2">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
-{#                                            </div>#}
-{#                                            <div class="ml-2">#}
-{#                                                <span>2</span>#}
-{#                                            </div>#}
-{#                                            <div class="">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end">#}
-{#                                        <div class="">#}
-{#                                            <span class="text-sm">۱۵۸,۲۶۸<span#}
-{#                                                    class="text-xs text-gray-600">تومان</span></span>#}
-{#                                            <span class="text-sm"></span>#}
-{##}
-{#                                        </div>#}
-{#                                    </div>#}
-{##}
-{##}
-{#                                </li>#}
-{#                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">#}
-{##}
-{#                                    <div class="flex items-center gap-4">#}
-{#                                        <img#}
-{#                                                src="https://api.snappfood.biz/api/files/food/1685530907-08901.png"#}
-{#                                                alt=""#}
-{#                                                class="h-16 w-16 rounded object-cover self-start"#}
-{#                                        />#}
-{##}
-{#                                        <div class="w-8/12">#}
-{#                                            <div><h3 class="text-sm text-gray-900">پنینی سبزیجات</h3>#}
-{##}
-{#                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">#}
-{#                                                    <div>#}
-{#                                                        <dt class="inline"></dt>#}
-{##}
-{#                                                    </div>#}
-{##}
-{#                                                    <div>#}
-{#                                                        <dt class="inline">#}
-{#                                                            نان چاپاتا، بادمجان طعم دار شده، قارچ طعم دار شده، اسفناج#}
-{#                                                            طعم دار شده، فلفل دلمه کبابی، گوجه خشک، زیتون، پنیر، سس#}
-{#                                                            پستو، سس گوجه، پنیر مخلوط#}
-{#                                                        </dt>#}
-{##}
-{#                                                    </div>#}
-{#                                                </dl>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="flex justify-end w-3/12">#}
-{##}
+                                            <div class="">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <div class="">
+                                            <span class="text-sm">۱۷۶,۳۶۲</span>
+                                            <span class="text-sm">تومان</span>
+
+                                        </div>
+                                    </div>
+
+
+                                </li>
+                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">
+
+                                    <div class="flex items-center gap-4">
+                                        <img
+                                                src="https://api.snappfood.biz/api/files/food/1657617879-35488.jpeg"
+                                                alt=""
+                                                class="h-16 w-16 rounded object-cover self-start"
+                                        />
+
+                                        <div class="w-8/12">
+                                            <div><h3 class="text-sm text-gray-900">زرشک پلو همایونی</h3>
+
+                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">
+                                                    <div>
+                                                        <dt class="inline"></dt>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <dt class="inline">
+                                                            390زرشک پلو شامل 400 گرم ران مرغ، 350 گرم برنج ايرانی، زرشک
+                                                            و خلال
+                                                            پسته و بادام، رب، ادويه، زعفران و روغن كرمانشاهی
+                                                        </dt>
+
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end w-3/12">
+
                                             {#                                        <div class="">#}
                                             {#                                            <img class="w-6 h-6"#}
                                             {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
@@ -224,53 +253,53 @@
                                             {#                                        <div class="">#}
                                             {#                                            <span>2</span>#}
                                             {#                                        </div>#}
-{#                                            <div class="">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end">#}
-{#                                        <div class="">#}
-{#                                            <span class="text-sm">۱۷۶,۳۶۲</span>#}
-{#                                            <span class="text-sm">تومان</span>#}
-{##}
-{#                                        </div>#}
-{#                                    </div>#}
-{##}
-{##}
-{#                                </li>#}
-{#                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">#}
-{##}
-{#                                    <div class="flex items-center gap-4">#}
-{#                                        <img#}
-{#                                                src="https://api.snappfood.biz/api/files/food/1657617879-35488.jpeg"#}
-{#                                                alt=""#}
-{#                                                class="h-16 w-16 rounded object-cover self-start"#}
-{#                                        />#}
-{##}
-{#                                        <div class="w-8/12">#}
-{#                                            <div><h3 class="text-sm text-gray-900">زرشک پلو همایونی</h3>#}
-{##}
-{#                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">#}
-{#                                                    <div>#}
-{#                                                        <dt class="inline"></dt>#}
-{##}
-{#                                                    </div>#}
-{##}
-{#                                                    <div>#}
-{#                                                        <dt class="inline">#}
-{#                                                            390زرشک پلو شامل 400 گرم ران مرغ، 350 گرم برنج ايرانی، زرشک#}
-{#                                                            و خلال#}
-{#                                                            پسته و بادام، رب، ادويه، زعفران و روغن كرمانشاهی#}
-{#                                                        </dt>#}
-{##}
-{#                                                    </div>#}
-{#                                                </dl>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="flex justify-end w-3/12">#}
-{##}
+                                            <div class="">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <div class="">
+                                            <span class="text-sm">120000</span>
+                                            <span class="text-sm">تومان</span>
+
+                                        </div>
+                                    </div>
+
+
+                                </li>
+                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">
+
+                                    <div class="flex items-center gap-4">
+                                        <img
+                                                src="https://api.snappfood.biz/api/files/food/1657617879-35488.jpeg"
+                                                alt=""
+                                                class="h-16 w-16 rounded object-cover self-start"
+                                        />
+
+                                        <div class="w-8/12">
+                                            <div><h3 class="text-sm text-gray-900">زرشک پلو همایونی</h3>
+
+                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">
+                                                    <div>
+                                                        <dt class="inline"></dt>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <dt class="inline">
+                                                            390زرشک پلو شامل 400 گرم ران مرغ، 350 گرم برنج ايرانی، زرشک
+                                                            و خلال
+                                                            پسته و بادام، رب، ادويه، زعفران و روغن كرمانشاهی
+                                                        </dt>
+
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end w-3/12">
+
                                             {#                                        <div class="">#}
                                             {#                                            <img class="w-6 h-6"#}
                                             {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
@@ -278,82 +307,28 @@
                                             {#                                        <div class="">#}
                                             {#                                            <span>2</span>#}
                                             {#                                        </div>#}
-{#                                            <div class="">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end">#}
-{#                                        <div class="">#}
-{#                                            <span class="text-sm">120000</span>#}
-{#                                            <span class="text-sm">تومان</span>#}
-{##}
-{#                                        </div>#}
-{#                                    </div>#}
-{##}
-{##}
-{#                                </li>#}
-{#                                <li class="flex flex-col gap-0 bg-gray-100 rounded p-4 shadow-md hover:bg-gray-300 ">#}
-{##}
-{#                                    <div class="flex items-center gap-4">#}
-{#                                        <img#}
-{#                                                src="https://api.snappfood.biz/api/files/food/1657617879-35488.jpeg"#}
-{#                                                alt=""#}
-{#                                                class="h-16 w-16 rounded object-cover self-start"#}
-{#                                        />#}
-{##}
-{#                                        <div class="w-8/12">#}
-{#                                            <div><h3 class="text-sm text-gray-900">زرشک پلو همایونی</h3>#}
-{##}
-{#                                                <dl class="mt-0.5 space-y-px text-[10px] text-gray-600">#}
-{#                                                    <div>#}
-{#                                                        <dt class="inline"></dt>#}
-{##}
-{#                                                    </div>#}
-{##}
-{#                                                    <div>#}
-{#                                                        <dt class="inline">#}
-{#                                                            390زرشک پلو شامل 400 گرم ران مرغ، 350 گرم برنج ايرانی، زرشک#}
-{#                                                            و خلال#}
-{#                                                            پسته و بادام، رب، ادويه، زعفران و روغن كرمانشاهی#}
-{#                                                        </dt>#}
-{##}
-{#                                                    </div>#}
-{#                                                </dl>#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                        <div class="flex justify-end w-3/12">#}
-{##}
-                                            {#                                        <div class="">#}
-                                            {#                                            <img class="w-6 h-6"#}
-                                            {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
-                                            {#                                        </div>#}
-                                            {#                                        <div class="">#}
-                                            {#                                            <span>2</span>#}
-                                            {#                                        </div>#}
-{#                                            <div class="">#}
-{#                                                <img class="w-6 h-6"#}
-{#                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">#}
-{#                                            </div>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end">#}
-{#                                        <div class="">#}
-{#                                            <span class="text-sm">120000</span>#}
-{#                                            <span class="text-sm">تومان</span>#}
-{##}
-{#                                        </div>#}
-{#                                    </div>#}
-{##}
-{##}
-{#                                </li>#}
-{#                            </ul>#}
-{##}
-{##}
-{#                        </div>#}
+                                            <div class="">
+                                                <img class="w-6 h-6"
+                                                     src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <div class="">
+                                            <span class="text-sm">120000</span>
+                                            <span class="text-sm">تومان</span>
+
+                                        </div>
+                                    </div>
+
+
+                                </li>
+                            </ul>
+
+
+                        </div>
                         {#                        order list#}
-{#                        <div class="mt-8">#}
+                        <div class="mt-8">
                             {#                            <ul class="space-y-4">#}
                             {#                                <li class="flex items-center gap-4">#}
                             {#                                    <img#}
@@ -1574,53 +1549,53 @@
                             {#                                    </div>#}
                             {#                                </li>#}
                             {#                            </ul>#}
-{##}
-{#                            <div class="mt-8 flex justify-end border-t border-gray-100 pt-8">#}
-{#                                <div class="w-screen  space-y-4">#}
-{#                                    <dl class="space-y-0.5 text-sm text-gray-700">#}
-{#                                        <div class="flex justify-between">#}
-{#                                            <dt>مجموع</dt>#}
-{#                                            <dd>#}
-{#                                                <span>250000</span>#}
+
+                            <div class="mt-8 flex justify-end border-t border-gray-100 pt-8">
+                                <div class="w-screen  space-y-4">
+                                    <dl class="space-y-0.5 text-sm text-gray-700">
+                                        <div class="flex justify-between">
+                                            <dt>مجموع</dt>
+                                            <dd>
+                                                <span>250000</span>
                                                 {#                                                <span>هزارتومان</span>#}
-{#                                            </dd>#}
-{#                                        </div>#}
-{##}
-{#                                        <div class="flex justify-between">#}
-{#                                            <dt>سهم فناوران</dt>#}
-{#                                            <dd>#}
-{#                                                <span>100000</span>#}
+                                            </dd>
+                                        </div>
+
+                                        <div class="flex justify-between">
+                                            <dt>سهم فناوران</dt>
+                                            <dd>
+                                                <span>100000</span>
                                                 {#                                                <span>هزارتومان</span>#}
-{#                                            </dd>#}
-{#                                        </div>#}
-{##}
-{#                                        <div class="flex justify-between">#}
-{#                                            <dt>سهم شما</dt>#}
-{#                                            <dd>#}
-{#                                                <span>150000</span>#}
+                                            </dd>
+                                        </div>
+
+                                        <div class="flex justify-between">
+                                            <dt>سهم شما</dt>
+                                            <dd>
+                                                <span>150000</span>
                                                 {#                                                <span>هزارتومان</span>#}
-{#                                            </dd>#}
-{#                                        </div>#}
-{##}
-{#                                        <div class="flex justify-between">#}
-{#                                            <dt>تخفیف</dt>#}
-{#                                            <dd>#}
-{#                                                <span>0</span>#}
+                                            </dd>
+                                        </div>
+
+                                        <div class="flex justify-between">
+                                            <dt>تخفیف</dt>
+                                            <dd>
+                                                <span>0</span>
                                                 {#                                                <span>هزارتومان</span>#}
-{#                                            </dd>#}
-{##}
-{##}
-{#                                        </div>#}
-{##}
-{#                                        <div class="flex justify-between !text-base font-medium">#}
-{#                                            <dt><span class="font-bold">مبلغ کسر شده از دستمزد</span></dt>#}
-{#                                            <dd>#}
-{#                                                <span class="font-bold">150000</span>#}
+                                            </dd>
+
+
+                                        </div>
+
+                                        <div class="flex justify-between !text-base font-medium">
+                                            <dt><span class="font-bold">مبلغ کسر شده از دستمزد</span></dt>
+                                            <dd>
+                                                <span class="font-bold">150000</span>
                                                 {#                                                <span>هزارتومان</span>#}
-{#                                            </dd>#}
-{#                                        </div>#}
-{#                                    </dl>#}
-{##}
+                                            </dd>
+                                        </div>
+                                    </dl>
+
                                     {#                                    <div class="flex justify-end">#}
                                     {#              <span#}
                                     {#                      class="inline-flex items-center justify-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-indigo-700"#}
@@ -1643,35 +1618,35 @@
                                     {#                <p class="whitespace-nowrap text-xs">2 Discounts Applied</p>#}
                                     {#              </span>#}
                                     {#                                    </div>#}
-{##}
-{#                                    <div class="flex justify-end">#}
-{#                                        <a#}
-{#                                                href="#"#}
-{#                                                class="block rounded bg-green-500 px-5 py-3 text-sm text-gray-100 transition hover:bg-green-600"#}
-{#                                        >#}
-{#                                            ثبت سفارش#}
-{#                                        </a>#}
-{#                                    </div>#}
-{#                                    <div class="flex justify-end hidden">#}
-{#                                        <a#}
-{#                                                href="#"#}
-{#                                                class="block rounded bg-red-500 px-5 py-3 text-sm text-gray-100 transition hover:bg-red-600"#}
-{#                                        >#}
-{#                                            لغو سفارش#}
-{#                                        </a>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                        </div>#}
+
+                                    <div class="flex justify-end">
+                                        <a
+                                                href="#"
+                                                class="block rounded bg-green-500 px-5 py-3 text-sm text-gray-100 transition hover:bg-green-600"
+                                        >
+                                            ثبت سفارش
+                                        </a>
+                                    </div>
+                                    <div class="flex justify-end hidden">
+                                        <a
+                                                href="#"
+                                                class="block rounded bg-red-500 px-5 py-3 text-sm text-gray-100 transition hover:bg-red-600"
+                                        >
+                                            لغو سفارش
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
         </div>
-        <div class="w-2/4 h-[50rem] border border-gray-400 bg-gray-200 rounded-md m-64 ml-16">
+        <div class="w-2/4 h-[50rem] border border-gray-400 rounded-md m-64 ml-16">
 
-            <div class="">
-                <div class="container max-w-full ">
-                    <div class="flex flex-col wrapper bg-white rounded shadow w-full ">
+            <div class="min-h-screen">
+                <div class="container max-w-full min-h-screen">
+                    <div class="flex flex-col wrapper bg-white rounded shadow w-full min-h-screen">
                         <div class="header flex items-center border-b p-2 pl-5 ">
 
                             <div class="w-4/12">
@@ -1713,7 +1688,7 @@
 
                                     <div>
                                         <strong class="pr-2">عرفان رضایی</strong>
-                                        <span class="pr-1">(ادمین اداری)</span>
+                                        <span class="pr-1">(پرسنل)</span>
                                         {#                                        <span class="pr-2">(اداری)</span>#}
 
 
@@ -1732,7 +1707,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-7 gap-0 grid-flow-row min-h-full"  style="direction: rtl">
+                        <div class="grid grid-cols-7 gap-0 grid-flow-row"  style="direction: rtl">
                             <div class="border border-gray-100 flex items-center flex-grow">
                                 <h3 class="m-auto text-2xl">شنبه</h3>
                             </div>
