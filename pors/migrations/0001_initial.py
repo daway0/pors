@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ('ItemDesc', models.TextField(blank=True, null=True)),
                 ('IsActive', models.BooleanField(default=True)),
                 ('Image', models.ImageField(upload_to='media/items/')),
-                ('Category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pors.category', verbose_name='دسته بندی')),
+                ('Category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='js.category', verbose_name='دسته بندی')),
             ],
             options={
                 'verbose_name': 'اطلاعات ایتم',
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('Quantity', models.PositiveSmallIntegerField(default=1)),
-                ('OrderedFood', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pors.dailymenuitem')),
+                ('OrderedFood', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='js.dailymenuitem')),
             ],
         ),
         migrations.CreateModel(
@@ -99,12 +99,12 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('Price', models.PositiveIntegerField()),
                 ('IsActive', models.BooleanField()),
-                ('Item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pors.item')),
+                ('Item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='js.item')),
             ],
         ),
         migrations.AddField(
             model_name='dailymenuitem',
             name='PriceItem',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pors.itemprice'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='js.itemprice'),
         ),
     ]
