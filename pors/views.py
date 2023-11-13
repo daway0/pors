@@ -7,12 +7,13 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
-from .models import Category, DailyMenuItem, Item
+from .models import Category, DailyMenuItem, Holiday, Item, Order, OrderItem
 from .serializers import (
     AvailableItemsSerializer,
     CategorySerializer,
     DayMenuSerializer,
 )
+from .utils import first_and_last_day_date, get_weekend_holidays
 
 # Create your views here.
 
@@ -30,12 +31,12 @@ class AvailableItems(ListAPIView):
     serializer_class = AvailableItemsSerializer
 
 
-@api_view(["POST"])
+@api_view(["GET"])
 def DayMenu(request):
     """
     این ویو مسئولیت ارائه منو غذایی مطابق پارامتر `date` را دارا است.
     """
-    requested_date = request.data.get("date")
+    requested_date = request.query_params.get("date")
     if not requested_date:
         return Response(
             "'date' parameter must be specified.",
@@ -51,17 +52,25 @@ class Categories(ListAPIView):
     serializer_class = CategorySerializer
 
 
-api_view(["GET"])
+@api_view(["GET"])
 def calendar(request):
     """
     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
     """
-    if request.data.get("month") and request.data.get("year"):
-        ...
     today = datetime.date.today()
-    year = today.year
-    month = today.month
+    year = request.query_params.get("year", today.year)
+    month = request.query_params.get("month", today.month)
     last_day_week_num, last_day = monthrange(year, month)
     first_day_week_num = datetime.datetime(year, month, 1).weekday()
+    first_day_date, last_day_date = first_and_last_day_date(month, year)
+    holidays = Holiday.objects.filter(
+        Date__ranege=(first_day_date, last_day_date)
+    )
+    weekend_holidays = get_weekend_holidays(year, month)
+    # Todo = Have no f.. idea how to map request user to the personnel yet. 
+    selected_items = OrderItem.objects.filter(
+        order__DelivaryDate__range=(first_day_date, last_day_date),
+        order__Personnel=request.user,
+    )

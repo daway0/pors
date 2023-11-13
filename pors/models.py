@@ -160,6 +160,7 @@ class ItemPrice(models.Model):
     def __str__(self):
         return f"{self.Item.ItemName} {self.Price} {self.IsActive}"
 
+
 class DailyMenuItem(models.Model):
     """
     اطلاعات غذای قابل سفارش در هر روز را مشخص می کند.
