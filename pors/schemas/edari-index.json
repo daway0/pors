@@ -1,21 +1,25 @@
-// calendar
+// calendar edari
+
+
 {
+    // general calendar start
     "year": 1402,
     "month": 8,
-    "first": {
-        "dayOfMonth": 1,
-        "dayOfWeek": 1
-    },
-    "last": {
-        "dayOfMonth": 30,
-        "dayOfWeek": 2
-    },
+    "firstDayOfWeek": 1,
+    "lastDayOfMonth": 30,
     "holidays": [
         2,
         5,
         16,
         19
     ],
+    "days_with_menu": [
+        2,
+        5,
+        16,
+        19
+    ],
+    // general calendar end
     "selectedItems": [
         {
             "date": "2023/1/1",

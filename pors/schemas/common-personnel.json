@@ -1,0 +1,20 @@
+
+// صفحه اول پرسنل که به همراه اداری باید مرج شه
+{
+  "fullname": "Erfan Rezaee",
+  "profile": "...",
+  "current_date" : {
+    "day": 1,
+    "month": 8,
+    "year": 1402
+  },
+  "balance_for_current_month": {
+    "total": 12412,
+    "fanavaran": 3254,
+    "indebtedness": 32214
+  },
+  "order_status_for_tomorrow": "سفارش ثبت شده است",
+  "deadline_for_tomorrow_order": "<timestamp>"
+
+}
+

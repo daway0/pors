@@ -1,0 +1,62 @@
+// calendar personnel
+
+
+
+{
+  // general calendar start
+  "year": 1402,
+  "month": 8,
+  "firstDayOfWeek": 1,
+  "lastDayOfMonth": 30,
+  "holidays": [
+    2,
+    5,
+    16,
+    19
+  ],
+  // روز هایی که توسط اداری منو ثبت شده برای آيکن استفاده میشه
+  "days_with_menu": [
+    2,
+    5,
+    16,
+    19
+  ],
+  // روز هایی خود طرف ثبت سفارش کرده بازم با ایکن نشون داده میشه
+  "ordered_days": [
+    2,
+    5,
+    16,
+    19
+  ],
+  "totalIndebtedness": 41524521,
+  // general calendar end
+  "orders": [
+    // order schema start
+    {
+      "orderDate": "2023/1/1",
+      "orderItems": [
+        {
+          "item": // item schema start
+          {
+            "id": 1,
+            "title": "test",
+            "currentPrice": 10,
+            "img": "something",
+            "category": 1,
+            "description": "testtest"
+          },
+          // item schema end
+
+          "quantity": 1,
+          "pricePerItem": 20000,
+          "orderBill": {
+            "total": 12412,
+            "fanavaran": 3254,
+            "indebtedness": 32214
+          }
+        }
+        // order schema end
+      ]
+    }
+  ]
+}

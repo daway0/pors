@@ -1,0 +1,26 @@
+// caregories
+{
+    "id": 1,
+    "title": "nooshidani"
+}
+
+
+// item information این نشان دهنده ایتم ها و قیمت های روزشون برای ثبت سفارشه فقط برای اداری
+[
+    {
+        1: {
+            "title": "test",
+            "img": "something",
+            "category": 1,
+            "description": "testtest"
+        }
+    },
+    {
+        2: {
+            "title": "test",
+            "img": "something",
+            "category": 1,
+            "description": "testtest"
+        }
+    }
+]
