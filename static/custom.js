@@ -1,3 +1,9 @@
+function reloadCurrentCalendar() {
+    let currentMonth = getCurrentCalendarMonth()
+//     ajax call to get current month again
+    makeCalendar()
+}
+
 /*
 هنگام تغییر تقویم برای دوباره ساختن آن نیازمند این که روز اول ماه چه روزی
  از هفته است می باشیم علاوه بر این باید بدانیم که ماه 29 یا 30 یا 31 روزه است
@@ -6,7 +12,7 @@
 * @param {Array} holidays
 * @param {Array} daysWithMenu شماره روز هایی که اداری منوی آنها را ثبت کرده است
 * */
-function makeCalender(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
+function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
 
 // ابتدا باید تقویم قبلی را پاگ کنیم
     $('#dayBlocksWrapper [class^="cd-"]').remove()
@@ -15,7 +21,8 @@ function makeCalender(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
 //     حال باید با توجه به روز این روز اول ماه چند شنبه است بلاک های روز
 //     های ما قبل آن خاکستری کنیم
     for (let i = 1; i < startDayOfWeek; i++) {
-    newCalendarHTML += '<div class="cd- flex flex-col items-center bg-gray-50 border border-gray-100 p-4 grow"></div>'
+    newCalendarHTML += '<div class="cd- flex flex-col items-center' +
+        ' bg-gray-50 border border-gray-100 p-4 grow"></div>'
 }
 
 //     سپس به سراغ ساخت بلاک روز های دیگر می کنیم. در صورتی روز مورد نظر
@@ -39,7 +46,7 @@ function makeCalender(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
         }
 
         newCalendarHTML += `<div class="${dayCode} flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
-                                <div>
+                                <div> 
                                     <span class="text-5xl ${dayNumberStyle}">${dayNumber}</span>
                                 </div>
                                 <div>
@@ -54,6 +61,10 @@ function makeCalender(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
 
 }
 
+function getCurrentCalendarMonth() {
+    return $("#calSelectedMonth option:selected").attr("value")
+}
+
 $(document).ready(function () {
 
     $("#calSelectedMonth").change(function () {
@@ -61,9 +72,9 @@ $(document).ready(function () {
         // داده ای برای ماه مورد نظر وجود نداشته باشد alert عدم وجود دیتا
         // به کاربر نشان داده می شود
 
-        let monthNumber = $("#calSelectedMonth option:selected").attr("value")
+        let monthNumber = getCurrentCalendarMonth()
         //     ajax call to backend
-        makeCalender(3,30,[5,12,19,26],[20])
+        makeCalendar(3,30,[5,12,19,26],[20])
     })
 
 

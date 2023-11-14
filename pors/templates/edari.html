@@ -22,15 +22,15 @@
 
 
     <div class="flex flex-row">
-        <div class="h-[50rem] m-64 mr-16 border  border-gray-400 rounded-md w-2/4 bg-gray-200 overscroll-contain  overflow-y-auto ">
+        <div class="h-[50rem] m-64 mr-16 border  border-gray-400 rounded-md w-2/4 bg-gray-200  ">
             <section style="direction: rtl">
                 <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
                     <div class="mx-auto max-w-3xl">
                         <div class="flex flex-row  items-center">
 <div class="w-4/6">
-{#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">ایتم ها</h1>#}
+                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">ایتم ها</h1>
 {#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">دسته بندی ها</h1>#}
-                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">منوی روزانه</h1>
+{#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">منوی روزانه</h1>#}
 
 {#                            <h1 class="text-xl font-bold text-gray-900 sm:text-3xl">سه شنبه 4 آذر</h1>#}
 </div>
@@ -72,10 +72,10 @@
                         {#                        </header>#}
 
 {#plug#}
-{% comment %} {% include "item_form.html" %} {% endcomment %}
-{% comment %} {% include "item_list.html" %} {% endcomment %}
-{% comment %} {% include "category_list.html" %} {% endcomment %}
-{% include "menu.html" %}
+{#{% include "item_form.html" %}#}
+{% include "item_list.html" %}
+{#{% include "category_list.html" %}#}
+{#{% include "menu.html" %}#}
 
 
 {#                        <div class="mt-8">#}
@@ -1675,12 +1675,15 @@
             <div class="">
                 <div class="container h-[50rem] ">
                     <div class="flex flex-col wrapper bg-white rounded  w-full h-[49rem]">
-                        <div class="header flex items-center border-b p-0 pl-0 ">
+                        <div class="header flex items-center border-b p-0 pl-0 justify-between">
 
-                            <div class="w-2/12">
+                            <div class="min-w-fit flex items-center space-x-1">
+                                <div>
+                                    <span class="cursor-pointer text-base px-3 py-1 border border-gray-300 rounded-md">برو به امروز</span>
+                                </div>
            <div style="direction: rtl">
                     <select id="calSelectedMonth" name="calSelectedMonth" autocomplete=off"
-                            class="pr-4 block w-full rounded-md border-0 py-1.5 bg-white text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                            class="text-base pr-4 block w-full rounded-md border-0 py-1.5 bg-white text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
                         <option value="1">فروردین</option>
                         <option value="2">اردیبهشت</option>
                         <option value="3">خرداد</option>
