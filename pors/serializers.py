@@ -61,3 +61,16 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def get_is_active(self, obj: m.ItemPrice):
         return obj.Item.IsActive
+
+
+class HolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.Holiday
+        fields = "DeliveryDate"
+
+
+
+class SelectedItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.OrderItem
+        fields = ("date", "id")

@@ -12,6 +12,8 @@ from .serializers import (
     AvailableItemsSerializer,
     CategorySerializer,
     DayMenuSerializer,
+    HolidaySerializer,
+    SelectedItemSerializer,
 )
 from .utils import first_and_last_day_date, get_weekend_holidays
 
@@ -27,7 +29,7 @@ class AvailableItems(ListAPIView):
     تمام ایتم های موجود برگشت داده می‌شود.
     """
 
-    queryset = Item.objects.all()
+    queryset = Item.objects.filter(IsActive=True)
     serializer_class = AvailableItemsSerializer
 
 
@@ -66,11 +68,33 @@ def calendar(request):
     first_day_week_num = datetime.datetime(year, month, 1).weekday()
     first_day_date, last_day_date = first_and_last_day_date(month, year)
     holidays = Holiday.objects.filter(
-        Date__ranege=(first_day_date, last_day_date)
+        Date__range=(first_day_date, last_day_date)
     )
     weekend_holidays = get_weekend_holidays(year, month)
-    # Todo = Have no f.. idea how to map request user to the personnel yet. 
+    # Todo = Have no f.. idea how to map request user to the personnel yet.
     selected_items = OrderItem.objects.filter(
-        order__DelivaryDate__range=(first_day_date, last_day_date),
-        order__Personnel=request.user,
+        OrderedFood__DelivaryDate__range=(first_day_date, last_day_date),
+        OrderedFood__Personnel=request.user,
+    )
+    selected_items_serializer = SelectedItemSerializer(
+        data={"date": selected_items.OrderedFood__id}, many=True
+    )
+    selected_items_list = [
+        selected_item["id"] for selected_item in selected_items_serializer.data
+    ]
+    holidays_serializer = HolidaySerializer(holidays, many=True)
+    holidays_list = [
+        holiday["DeliveryDate"] for holiday in holidays_serializer.data
+    ]
+    holidays_list += weekend_holidays
+    holidays_list.sort()
+    return Response(
+        {
+            "year": year,
+            "month": month,
+            "first": {"dayOfMonth": 1, "dayOfWeek": first_day_week_num},
+            "last": {"dayOfMonth": last_day, "dayOfWeek": last_day_week_num},
+            "holidays": holidays_list,
+            "selectedItems": selected_items_list,
+        }
     )
