@@ -28,7 +28,7 @@
     16,
     19
   ],
-  "totalIndebtedness": 41524521,
+  "totalDebt": 41524521,
   // general calendar end
   "orders": [
     // order schema start
@@ -52,7 +52,7 @@
           "orderBill": {
             "total": 12412,
             "fanavaran": 3254,
-            "indebtedness": 32214
+            "debt": 32214
           }
         }
         // order schema end
