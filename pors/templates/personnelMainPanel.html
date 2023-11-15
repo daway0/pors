@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Vazirmatn">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'custom.js' %}"></script>
+
+    <style>
+        body {
+            font-family: "Vazirmatn", sans-serif;
+        }
+    </style>
+</head>
+<body class="items-center">
+
+<div class="pt-[10rem] flex items-start justify-center h-screen">
+    <div class="flex flex-col w-7/12 h-[50rem] space-y-4 ">
+
+        {#        Personnel Menu bar#}
+        <div class="flex items-center justify-between bg-gray-100 border-gray-200 p-2" style="direction: rtl">
+        {% include 'personnelMenuBar.html' %}
+        </div>
+        <div class="flex flex-row space-x-24">
+{#            Left Panel / Food Menu#}
+            <div class="w-1/2 bg-gray-50 p-5 " style="direction: rtl">
+                {% include "personnelFoodMenu.html" %}
+            </div>
+{#            Right Panel / Calendar#}
+            <div class="w-1/2 bg-white">
+                {% include 'calendar.html' %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+</html>

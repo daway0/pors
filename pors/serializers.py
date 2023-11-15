@@ -136,7 +136,7 @@ class OrderSerializer(serializers.Serializer):
     orderBill = serializers.SerializerMethodField()
 
     def get_orderItems(self, obj):
-        result = OrderItemSerializer(obj, many=True).data
+        result = OrderItemSerializer(obj).data
         return result
 
     def get_orderBill(self, obj):

@@ -26,7 +26,7 @@ from .utils import first_and_last_day_date, get_weekend_holidays
 
 
 def ui(request):
-    return render(request, "edari.html")
+    return render(request, "personnelMainPanel.html")
 
 
 class AvailableItems(ListAPIView):
