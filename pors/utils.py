@@ -1,26 +1,47 @@
 import datetime
 from calendar import monthrange
 
+from jdatetime import GregorianToJalali
+from jdatetime import datetime as jdatetime
+
 
 def first_and_last_day_date(
     month: int, year: int
 ) -> tuple[datetime.date, datetime.date]:
     """
-    این تابع یک ابکجت از روز اول و روز اخر تاریخ وارد شده
+    این تابع یک ابکجت دیت جلالی از روز اول و روز اخر تاریخ وارد شده
     بر می‌گرداند.
 
     ورودی ها:
         year: سال
         month: ماه
     بازگشتی ها:
-        first_day_date: ابجکت روز اول
-        last_day_date: ابجکت روز اخر
+        jalali_first_day_date: ابجکت روز اول
+        jalali_last_day_date: ابجکت روز اخر
 
     """
     _, last_day = monthrange(year, month)
     first_day_date = datetime.date(year, month, 1)
     last_day_date = datetime.date(year, month, last_day)
-    return first_day_date, last_day_date
+    jalali_first_day_date = (
+        jdatetime.fromgregorian(
+            year=first_day_date.year,
+            month=first_day_date.month,
+            day=first_day_date.day,
+        )
+        .strftime("%Y-%m-%d")
+        .replace("-", "/")
+    )
+    jalali_last_day_date = (
+        jdatetime.fromgregorian(
+            year=last_day_date.year,
+            month=last_day_date.month,
+            day=last_day_date.day,
+        )
+        .strftime("%Y-%m-%d")
+        .replace("-", "/")
+    )
+    return str(jalali_first_day_date), str(jalali_last_day_date)
 
 
 def get_weekend_holidays(year: int, month: int) -> list[datetime.date]:

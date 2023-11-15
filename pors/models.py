@@ -157,9 +157,10 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    OrderedFood = models.ForeignKey("DailyMenuItem", on_delete=models.CASCADE)
+    OrderedItem = models.ForeignKey(Item, on_delete=models.CASCADE)
     Quantity = models.PositiveSmallIntegerField(default=1)
     PricePerOne = models.PositiveIntegerField()
+    Order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
 
 class ItemPriceHistory(models.Model):

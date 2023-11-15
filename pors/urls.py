@@ -1,13 +1,9 @@
+from django.urls import path, include
+from . import views
 
+app_name = "pors"
 
+urlpatterns = [
 
-#
-# from django.urls import path, include
-# from .views import ui
-#
-# app_name = "pors"
-#
-# urlpatterns = [
-#
-#     path("", ui)
-# ]
+    path("calendar/", views.edari_calendar, name="edari_calendar"),
+]

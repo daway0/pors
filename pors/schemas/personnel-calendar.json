@@ -4,6 +4,7 @@
 
 {
   // general calendar start
+  "today": "2023/10/10",
   "year": 1402,
   "month": 8,
   "firstDayOfWeek": 1,
@@ -28,8 +29,8 @@
     16,
     19
   ],
-  "totalIndebtedness": 41524521,
   // general calendar end
+  "totalIndebtedness": 41524521,
   "orders": [
     // order schema start
     {
@@ -48,15 +49,15 @@
           // item schema end
 
           "quantity": 1,
-          "pricePerItem": 20000,
-          "orderBill": {
-            "total": 12412,
-            "fanavaran": 3254,
-            "indebtedness": 32214
-          }
+          "pricePerItem": 20000
         }
-        // order schema end
-      ]
+      ],
+      "orderBill": {
+        "total": 12412,
+        "fanavaran": 3254,
+        "indebtedness": 32214
+      }
+      // order schema end
     }
   ]
 }

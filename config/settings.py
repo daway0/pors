@@ -75,31 +75,31 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "pors",
-#         "USER": "root",
-#         "PASSWORD": "63TXYqWg4qOoM6IkmNjfHf7t",
-#         "HOST": "billy.iran.liara.ir",
-#         "PORT": 33056,
-#     }
-# }
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'pors',
-        'USER': 'sa',
-        'PASSWORD': '0WhhChRPId0OP61vfkwg5v77',
-        'HOST': 'robin.iran.liara.ir',
-        'PORT': '34741',
-
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "pors",
+        "USER": "root",
+        "PASSWORD": "63TXYqWg4qOoM6IkmNjfHf7t",
+        "HOST": "billy.iran.liara.ir",
+        "PORT": 33056,
+    }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'pors2',
+#         'USER': 'sa',
+#         'PASSWORD': '0WhhChRPId0OP61vfkwg5v77',
+#         'HOST': 'robin.iran.liara.ir',
+#         'PORT': '34741',
+
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 17 for SQL Server',
+#         },
+#     },
+# }
 
 
 # Password validation
