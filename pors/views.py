@@ -137,7 +137,6 @@ def edari_calendar(request):
     )
     print(orders.query)
 
-
     orders_serializer = OrderSerializer(instance=orders, many=True).data
 
     # final = GeneralCalendarSerializer(

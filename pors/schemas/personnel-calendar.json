@@ -29,8 +29,8 @@
     16,
     19
   ],
+  "totalDebt": 41524521,
   // general calendar end
-  "totalIndebtedness": 41524521,
   "orders": [
     // order schema start
     {
@@ -46,18 +46,18 @@
             "category": 1,
             "description": "testtest"
           },
-          // item schema end
-
+          
           "quantity": 1,
           "pricePerItem": 20000
+          // item schema end
         }
       ],
       "orderBill": {
         "total": 12412,
         "fanavaran": 3254,
-        "indebtedness": 32214
+        "debt": 32214
       }
-      // order schema end
     }
+    // order schema end
   ]
 }

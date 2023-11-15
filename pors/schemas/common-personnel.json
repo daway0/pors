@@ -11,7 +11,7 @@
   "balance_for_current_month": {
     "total": 12412,
     "fanavaran": 3254,
-    "indebtedness": 32214
+    "debt": 32214
   },
   "order_status_for_tomorrow": "سفارش ثبت شده است",
   "deadline_for_tomorrow_order": "<timestamp>"
