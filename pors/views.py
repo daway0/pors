@@ -22,6 +22,7 @@ from .serializers import (
 )
 from .utils import first_and_last_day_date, get_weekend_holidays
 
+
 # Create your views here.
 
 
@@ -86,9 +87,7 @@ def edari_calendar(request):
     days_with_menu = DailyMenuItem.objects.filter(
         AvailableDate__range=(first_day_date, last_day_date),
     ).values("AvailableDate", "Item")
-    days_with_menu_serializer = SelectedItemSerializer(
-        days_with_menu, many=True
-    )
+    days_with_menu_serializer = SelectedItemSerializer(days_with_menu, many=True)
     ordered_days = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
         Personnel=request.user,
@@ -106,7 +105,7 @@ def edari_calendar(request):
         .values("debt")
     )
     debt_serializer = DebtSerializer(debt)
-    orders = (
+    orders_items_qs = (
         OrderItem.objects.filter(
             Order__DeliveryDate__range=(first_day_date, last_day_date),
             Order__IsDeleted=False,
@@ -135,7 +134,47 @@ def edari_calendar(request):
             ),
         )
     )
-    print(orders.query)
+    print(orders_items_qs.query)
+
+    orders = []
+    order_items = {}
+    order_bill = {}
+
+    for order in orders_items_qs:
+        if order["Order__DeliveryDate"] in order_bill.keys():
+            continue
+
+        order_bill[order["Order__DeliveryDate"]] = {
+            "total": order["total"],
+            "fanavaran": order["fanavaran"],
+            "debt": order["debt"],
+        }
+
+    for order in orders_items_qs:
+        if order["Order__DeliveryDate"] not in order_items:
+            order_items[order["Order__DeliveryDate"]] = []
+
+        order_items[order["Order__DeliveryDate"]].append(
+            {
+                "OrderedItem__id": order["OrderedItem__id"],
+                "OrderedItem__ItemName": order["OrderedItem__ItemName"],
+                "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
+                "OrderedItem__Image": order["OrderedItem__Image"],
+                "OrderedItem__CurrentPrice": order["OrderedItem__CurrentPrice"],
+                "OrderedItem__Category_id": order["OrderedItem__Category_id"],
+                "Quantity": order["Quantity"],
+                "PricePerOne": order["PricePerOne"],
+            }
+        )
+
+    for order_date in order_bill.keys():
+        orders.append(
+            {
+                "orderDate": order_date,
+                "orderItems": order_items[order_date],
+                "orderBill": order_bill[order_date],
+            }
+        )
 
     orders_serializer = OrderSerializer(instance=orders, many=True).data
 

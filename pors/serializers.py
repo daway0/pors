@@ -131,16 +131,16 @@ class OrderBillSerializer(serializers.Serializer):
 
 
 class OrderSerializer(serializers.Serializer):
-    orderDate = serializers.CharField(source="Order__DeliveryDate")
+    orderDate = serializers.CharField()
     orderItems = serializers.SerializerMethodField()
     orderBill = serializers.SerializerMethodField()
 
     def get_orderItems(self, obj):
-        result = OrderItemSerializer(obj).data
+        result = OrderItemSerializer(obj.get("orderItems"), many=True).data
         return result
 
     def get_orderBill(self, obj):
-        return OrderBillSerializer(obj).data
+        return OrderBillSerializer(obj.get("orderBill")).data
 
 
 class GeneralCalendarSerializer(serializers.Serializer):
