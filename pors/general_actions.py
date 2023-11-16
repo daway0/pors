@@ -40,7 +40,7 @@ def get_general_calendar(year: int, month: int, personnel: str):
             "year": year,
             "month": month,
             "firstDayOfWeek": first_day_week_num,
-            "lastDayOfWeek": last_day,
+            "lastDayOfMonth": last_day,
             "holidays": holidays_serializer,
             "daysWithMenu": days_with_menu_serializer.values(),
             "orderedDays": days_list,

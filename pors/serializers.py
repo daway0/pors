@@ -3,9 +3,10 @@ from rest_framework import serializers
 from . import models as m
 
 
+
 class AvailableItemsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = m.ItemPriceHistory
+        model = m.Item
         fields = ("id", "ItemName", "Image")
 
 
@@ -135,7 +136,7 @@ class GeneralCalendarSerializer(serializers.Serializer):
     year = serializers.IntegerField()
     month = serializers.IntegerField()
     firstDayOfWeek = serializers.IntegerField()
-    lastDayOfWeek = serializers.IntegerField()
+    lastDayOfMonth = serializers.IntegerField()
     holidays = serializers.ListField()
     daysWithMenu = serializers.ListField()
 
@@ -155,7 +156,6 @@ class DaysWithMenuSerializer(serializers.Serializer):
         for item in obj:
             result.append(item["AvailableDate"])
         return result
-
 
 # class EdariCalendarSchemaSerializer(serializers.Serializer):
 #     generalCalendar = serializers.SerializerMethodField()
