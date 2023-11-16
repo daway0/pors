@@ -99,7 +99,7 @@ def general_calendar(request):
         AvailableDate__range=(first_day_date, last_day_date), IsActive=True
     ).values("AvailableDate", "Item")
 
-    #Todo handle the difference between subidy and total cost
+    # Todo handle the difference between subidy and total cost
     debt = (
         Order.objects.filter(DeliveryDate__range=["1402/00/00", "1403/00/00"])
         .annotate(
@@ -113,14 +113,13 @@ def general_calendar(request):
         .aggregate(
             total_price=Sum("total_price"),
             total_subsidy=Sum("AppliedSubsidy"),
-            difference=Case(
-                When(
-                    total_price__gt=F("AppliedSubsidy"),
-                    then=F("total_price") - F("AppliedSubsidy"),
-                ),
-                default=Value(0),
-                output_field=fields.IntegerField(),
-            ),
+            difference=Sum(
+                ExpressionWrapper(
+                    F("orderitem__Quantity") * F("orderitem__PricePerOne"),
+                    output_field=fields.IntegerField(),
+                )
+            )
+            - Sum("AppliedSubsidy"),
         )
     )
     """
