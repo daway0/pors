@@ -59,9 +59,7 @@ class Category(models.Model):
         verbose_name = "دسته بندی ایتم"
         verbose_name_plural = "دسته بندی ایتم ها"
 
-    CategoryName = models.CharField(
-        max_length=300, verbose_name="نام دسته بندی"
-    )
+    CategoryName = models.CharField(max_length=300, verbose_name="نام دسته بندی")
 
     def __str__(self):
         return self.CategoryName
@@ -143,9 +141,7 @@ class Item(models.Model):
 class Order(models.Model):
     Personnel = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
-    IsDeleted = models.BooleanField(
-        default=True, help_text="IsDeleted?(Soft Delete)"
-    )
+    IsDeleted = models.BooleanField(default=True, help_text="IsDeleted?(Soft Delete)")
     AppliedSubsidy = models.PositiveIntegerField()
 
     @property
@@ -162,15 +158,18 @@ class OrderItem(models.Model):
     PricePerOne = models.PositiveIntegerField()
     Order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
+    class Meta:
+        models.UniqueConstraint(
+            fields=["OrderedItem", "Order"], name="unique_ordered_item_order"
+        )
+
 
 class ItemPriceHistory(models.Model):
     """به توجه به تغییر قسمت ایتم ها در طول زمان وجود این جدول ضروری است
     این جدول تاریخچه تغییر قیمت اقلام را نگه می دارد و لاگ ان در جدول
     جداگانه ذخیره می شود"""
 
-    Item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, null=False, blank=False
-    )
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE, null=False, blank=False)
 
     Price = models.PositiveIntegerField()
     FromDate = models.CharField(max_length=10)
