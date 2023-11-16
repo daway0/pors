@@ -41,7 +41,7 @@ from .utils import (
 
 
 def ui(request):
-    return render(request, "personnelMainPanel.html")
+    return render(request, "administrativeMainPanel.html")
 
 
 class AvailableItems(ListAPIView):
@@ -135,7 +135,7 @@ def general_calendar(request):
     WHERE o."IsDeleted" = False
     """
 
-    debt_serializer = DebtSerializer(debt).data
+    # debt_serializer = DebtSerializer(debt).data
     orders_items_qs = (
         OrderItem.objects.filter(
             Order__DeliveryDate__range=(first_day_date, last_day_date),
@@ -190,9 +190,7 @@ def general_calendar(request):
                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
                 "OrderedItem__Image": order["OrderedItem__Image"],
-                "OrderedItem__CurrentPrice": order[
-                    "OrderedItem__CurrentPrice"
-                ],
+                "OrderedItem__CurrentPrice": order["OrderedItem__CurrentPrice"],
                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
                 "Quantity": order["Quantity"],
                 "PricePerOne": order["PricePerOne"],
@@ -210,7 +208,11 @@ def general_calendar(request):
 
     orders_serializer = OrderSerializer(instance=orders, many=True).data
     return Response(
-        data=(general_calendar, debt_serializer, orders_serializer),
+        data=(
+            general_calendar,
+            # debt_serializer,
+            orders_serializer,
+        ),
         status=status.HTTP_200_OK,
     )
 
@@ -252,9 +254,7 @@ def edari_calendar(request):
         selected_item["items"].append(item["Item__id"])
         selected_items.append(selected_item)
 
-    selected_items_serializer = SelectedItemSerializer(
-        instance=selected_items
-    ).data
+    selected_items_serializer = SelectedItemSerializer(instance=selected_items).data
 
     return Response(
         data=(general_calendar, selected_items_serializer),
