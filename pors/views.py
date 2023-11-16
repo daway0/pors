@@ -1,27 +1,41 @@
 import datetime
 from calendar import monthrange
 
-from django.db.models import ExpressionWrapper, F, IntegerField, Sum, fields
+from django.conf import settings
+from django.db.models import (
+    Case,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Sum,
+    Value,
+    When,
+    fields,
+)
 from django.shortcuts import get_list_or_404, render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
+from .general_actions import get_general_calendar
 from .models import Category, DailyMenuItem, Holiday, Item, Order, OrderItem
 from .serializers import (
     AvailableItemsSerializer,
     CategorySerializer,
     DayMenuSerializer,
     DebtSerializer,
+    EdariFirstPageSerializer,
     GeneralCalendarSerializer,
     HolidaySerializer,
-    OrderedDaySerializer,
     OrderSerializer,
     SelectedItemSerializer,
 )
-from .utils import first_and_last_day_date, get_weekend_holidays
-
+from .utils import (
+    first_and_last_day_date,
+    get_current_date,
+    get_weekend_holidays,
+)
 
 # Create your views here.
 
@@ -61,50 +75,68 @@ class Categories(ListAPIView):
 
 
 @api_view(["GET"])
-def edari_calendar(request):
+def general_calendar(request):
     """
     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
     """
+    # Past Auth...
+    personnel = ...
     today = datetime.date.today()
     year = request.query_params.get("year", today.year)
     month = request.query_params.get("month", today.month)
-    year = int(year)
-    month = int(month)
-    last_day_week_num, last_day = monthrange(year, month)
-    first_day_week_num = datetime.datetime(year, month, 1).weekday()
+    try:
+        year = int(year)
+        month = int(month)
+    except ValueError:
+        # user didnt provide integer values, so we are using default values.
+        year = today.year
+        month = today.month
     first_day_date, last_day_date = first_and_last_day_date(month, year)
-    print(first_day_date, last_day_date)
-    holidays = Holiday.objects.filter(
-        HolidayDate__range=(first_day_date, last_day_date)
-    )
-    weekend_holidays = get_weekend_holidays(year, month)
-    holidays_serializer = HolidaySerializer(holidays, many=True)
-    holidays_serializer = holidays_serializer.data
-    holidays_serializer += weekend_holidays
-    holidays_serializer.sort()
+    general_calendar = get_general_calendar(year, month, personnel)
     days_with_menu = DailyMenuItem.objects.filter(
-        AvailableDate__range=(first_day_date, last_day_date),
+        AvailableDate__range=(first_day_date, last_day_date), IsActive=True
     ).values("AvailableDate", "Item")
-    days_with_menu_serializer = SelectedItemSerializer(days_with_menu, many=True)
-    ordered_days = Order.objects.filter(
-        DeliveryDate__range=(first_day_date, last_day_date),
-        Personnel=request.user,
-    ).values("DeliveryDate")
-    ordered_days_serializer = OrderedDaySerializer(ordered_days).data
+
+    #Todo handle the difference between subidy and total cost
     debt = (
-        Order.objects.filter(orderitem__isnull=False)
-        .values("orderitem__PricePerOne", "AppliedSubsidy")
+        Order.objects.filter(DeliveryDate__range=["1402/00/00", "1403/00/00"])
         .annotate(
-            debt=ExpressionWrapper(
-                Sum("orderitem__PricePerOne") - Sum("AppliedSubsidy"),
-                output_field=IntegerField(),
+            total_price=Sum(
+                ExpressionWrapper(
+                    F("orderitem__Quantity") * F("orderitem__PricePerOne"),
+                    output_field=fields.IntegerField(),
+                )
             )
         )
-        .values("debt")
+        .aggregate(
+            total_price=Sum("total_price"),
+            total_subsidy=Sum("AppliedSubsidy"),
+            difference=Case(
+                When(
+                    total_price__gt=F("AppliedSubsidy"),
+                    then=F("total_price") - F("AppliedSubsidy"),
+                ),
+                default=Value(0),
+                output_field=fields.IntegerField(),
+            ),
+        )
     )
-    debt_serializer = DebtSerializer(debt)
+    """
+    ```sql
+    SELECT SUM(OI."Quantity" * OI."PricePerOne") AS total_cost,
+    SUM(O."AppliedSubsidy") AS subsidy,
+    CASE
+                    WHEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy") > 0 THEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy")
+                    ELSE 0
+    END AS debt
+    FROM PORS_ORDER AS O
+    INNER JOIN PORS_ORDERITEM AS OI ON O."id" = OI."Order_id"
+    WHERE o."IsDeleted" = False
+    """
+
+    debt_serializer = DebtSerializer(debt).data
     orders_items_qs = (
         OrderItem.objects.filter(
             Order__DeliveryDate__range=(first_day_date, last_day_date),
@@ -134,7 +166,6 @@ def edari_calendar(request):
             ),
         )
     )
-    print(orders_items_qs.query)
 
     orders = []
     order_items = {}
@@ -160,7 +191,9 @@ def edari_calendar(request):
                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
                 "OrderedItem__Image": order["OrderedItem__Image"],
-                "OrderedItem__CurrentPrice": order["OrderedItem__CurrentPrice"],
+                "OrderedItem__CurrentPrice": order[
+                    "OrderedItem__CurrentPrice"
+                ],
                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
                 "Quantity": order["Quantity"],
                 "PricePerOne": order["PricePerOne"],
@@ -177,22 +210,73 @@ def edari_calendar(request):
         )
 
     orders_serializer = OrderSerializer(instance=orders, many=True).data
+    return Response(
+        data=(general_calendar, debt_serializer, orders_serializer),
+        status=status.HTTP_200_OK,
+    )
 
-    # final = GeneralCalendarSerializer(
-    #     data={
-    #         "today": str(today),
-    #         "year": year,
-    #         "month": month,
-    #         "firstDayOfWeek": first_day_week_num,
-    #         "lastDayOfWeek": last_day_week_num,
-    #         "holidays": holidays_serializer,
-    #         "daysWithMenu": days_with_menu_serializer.data,
-    #         "orderedDays": ordered_days_serializer,
-    #         "debt": debt_serializer,
-    #         "orders": ordered_days_serializer
-    #     }
-    # )
-    # if final.is_valid():
-    #     return Response(final.data)
-    # return Response(final.errors)
-    return Response(orders_serializer)
+
+@api_view(["GET"])
+def edari_calendar(request):
+    # Past Auth...
+    personnel = ...
+    today = datetime.date.today()
+    year = request.query_params.get("year", today.year)
+    month = request.query_params.get("month", today.month)
+    try:
+        year = int(year)
+        month = int(month)
+    except ValueError:
+        # user didnt provide integer values, so we are using default values.
+        year = today.year
+        month = today.month
+    first_day_date, last_day_date = first_and_last_day_date(month, year)
+    general_calendar = get_general_calendar(year, month, personnel)
+    days_with_menu = (
+        DailyMenuItem.objects.filter(
+            AvailableDate__range=(first_day_date, last_day_date), IsActive=True
+        )
+        .values("AvailableDate", "Item__id")
+        .order_by("AvailableDate")
+    )
+    selected_item = {}
+    selected_items = []
+    for item in days_with_menu:
+        if item["AvailableDate"] in selected_item.values():
+            selected_item["items"].append(item["Item__id"])
+            selected_items.pop()
+            selected_items.append(selected_item)
+            continue
+        selected_item = {}
+        selected_item["date"] = item["AvailableDate"]
+        selected_item["items"] = []
+        selected_item["items"].append(item["Item__id"])
+        selected_items.append(selected_item)
+
+    selected_items_serializer = SelectedItemSerializer(
+        instance=selected_items
+    ).data
+
+    return Response(
+        data=(general_calendar, selected_items_serializer),
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def edari_first_page(request):
+    # ... past auth
+    is_open = settings.IS_OPEN
+    full_name = "test"  # DONT FORGET TO SPECIFY ...
+    profile = "test"  # DONT FORGET TO SPECIFY ...
+    year, month, day = get_current_date()
+    current_date = {"day": day, "month": month, "year": year}
+    serializer = EdariFirstPageSerializer(
+        data={
+            "is_open": is_open,
+            "full_name": full_name,
+            "profile": profile,
+            "current_date": current_date,
+        }
+    ).initial_data
+    return Response(serializer)

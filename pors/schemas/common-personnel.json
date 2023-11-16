@@ -22,6 +22,7 @@
 
 // صفحه اول اداری که به همراه اداری باید مرج شه
 {
+  "isOpen": true,
   "fullname": "Erfan Rezaee",
   "profile": "...",
   "current_date" : {

@@ -20,6 +20,8 @@ def first_and_last_day_date(
         jalali_last_day_date: ابجکت روز اخر
 
     """
+
+    #Todo convert year and month to gro
     _, last_day = monthrange(year, month)
     first_day_date = datetime.date(year, month, 1)
     last_day_date = datetime.date(year, month, last_day)
@@ -54,6 +56,8 @@ def get_weekend_holidays(year: int, month: int) -> list[datetime.date]:
     بازگشتی ها:
         holidays: لیستی از تعطیلات اخر خفته
     """
+
+    #Todo get last day of month in jalali date
     _, last_day_of_month = monthrange(year, month)
     holidays = []
     for daynum in range(1, last_day_of_month + 1):
@@ -61,3 +65,8 @@ def get_weekend_holidays(year: int, month: int) -> list[datetime.date]:
         if daynum_date.weekday() in (3, 4):
             holidays.append(daynum_date)
     return holidays
+
+
+def get_current_date() -> int:
+    now = jdatetime.now()
+    return now.year, now.month, now.day

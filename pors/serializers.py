@@ -75,37 +75,25 @@ class HolidaySerializer(serializers.Serializer):
 
 
 class SelectedItemsBasedOnDaySerializer(serializers.Serializer):
-    Date = serializers.CharField(max_length=10)
-    SelectedItems = serializers.ListField()
+    date = serializers.CharField(max_length=10)
+    items = serializers.ListField()
 
 
 class SelectedItemSerializer(serializers.Serializer):
     SelectedItems = serializers.SerializerMethodField()
 
     def get_SelectedItems(self, obj):
-        days = {}
-        for item_id, date in obj:
-            if date not in days.keys():
-                days[date] = [item_id]
-                continue
-            days[date].append(item_id)
-
         result = []
-        for day, items in days.items():
-            result += SelectedItemsBasedOnDaySerializer(
-                data={"Date": day, "SelectedItems": items}
-            ).data
-        return result
-
-
-class OrderedDaySerializer(serializers.Serializer):
-    ordered_days = serializers.SerializerMethodField()
-
-    def get_ordered_days(self, obj):
-        result = []
-        for date in obj.values():
-            if date not in result:
-                result.append(date)
+        for item in obj:
+            result.append(
+                SelectedItemsBasedOnDaySerializer(
+                    data={
+                        "date": item.get("date"),
+                        "items": item.get("items"),
+                    },
+                    many=True,
+                ).initial_data
+            )
         return result
 
 
@@ -144,16 +132,29 @@ class OrderSerializer(serializers.Serializer):
 
 
 class GeneralCalendarSerializer(serializers.Serializer):
-    today = serializers.CharField()
     year = serializers.IntegerField()
     month = serializers.IntegerField()
     firstDayOfWeek = serializers.IntegerField()
     lastDayOfWeek = serializers.IntegerField()
     holidays = serializers.ListField()
     daysWithMenu = serializers.ListField()
-    orderedDays = serializers.ListField()
-    debt = serializers.IntegerField()
-    orders = serializers.ListField()
+
+
+class EdariFirstPageSerializer(serializers.Serializer):
+    is_open = serializers.BooleanField()
+    full_name = serializers.CharField()
+    profile = serializers.ImageField()
+    current_date = serializers.DictField()
+
+
+class DaysWithMenuSerializer(serializers.Serializer):
+    days_with_menu = serializers.SerializerMethodField()
+
+    def get_days_with_menu(self, obj):
+        result = []
+        for item in obj:
+            result.append(item["AvailableDate"])
+        return result
 
 
 # class EdariCalendarSchemaSerializer(serializers.Serializer):
