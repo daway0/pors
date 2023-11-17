@@ -38,7 +38,7 @@ def get_general_calendar(year: int, month: int):
         data={
             "year": year,
             "month": month,
-            "firstDayOfWeek": first_day_week_num,
+            "firstDayOfWeek": first_day_week_num + 1,
             "lastDayOfMonth": last_day,
             "holidays": splited_holidays,
             "daysWithMenu": splited_days_with_menu,
