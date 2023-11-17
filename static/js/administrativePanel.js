@@ -66,6 +66,18 @@ function toShamsiFormat(dateobj) {
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
 }
 
+function extractIds(items) {
+    return items.map(function (item) {
+        return item.id;
+    });
+}
+
+function filterObjectsById(inputArray, idList) {
+  return inputArray.filter(function(object) {
+    return idList.includes(object.id);
+  });
+}
+
 function toObjectFormat(shamsiDate) {
     let dateParts = shamsiDate.split('/');
 
@@ -91,9 +103,9 @@ function zfill(number, width) {
 
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu) {
     let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
-    let menuIconHTML = ""
+    let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
-        menuIconHTML = `<img className="w-8 h-8" src="${MenuIcon}" alt="">`
+        menuIconHTML = `<img class="w-8 h-8" src="${MenuIcon}" alt="">`
     }
     let date = toShamsiFormat({
         year: yearNumber,
@@ -107,14 +119,14 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
                                 <div> 
                                     <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
-                                <div>
+                                <div class="w-8 h-8">
                                     ${menuIconHTML}
                                 </div>
                             </div>`
 }
 
 function menuItemBlock(id, itemName, pic) {
-    return `<li data-item-id="${id}" class="flex flex-col cursor-pointer bg-sky-100 border border-sky-700 rounded p-4 shadow-md hover:bg-gray-300 ">
+    return `<li data-item-id="${id}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
     <div class="flex items-center gap-4">
         <img
                 src="${pic}"
@@ -173,9 +185,9 @@ function loadMenu(day, month, year) {
     });
 
     // حالا باید آیتم هارو بگیریم
-    if (selectedMenu!==undefined){
+    if (selectedMenu !== undefined) {
         let menuHTML = makeSelectedMenu(selectedMenu.items)
-    $("#menu-items-container").append(menuHTML)
+        $("#menu-items-container").append(menuHTML)
     }
 
 
@@ -217,6 +229,8 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 
 
         newCalendarHTML += calendarDayBlock(dayNumberStyle, dayNumber, startDayOfWeek % 8, monthNumber, yearNumber, dayMenuIcon)
+
+
         startDayOfWeek++
         if (startDayOfWeek % 8 === 0) {
             startDayOfWeek++
@@ -241,13 +255,15 @@ function addNewItemToMenu(id) {
     $("#menu-items-container").append(
         menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
     )
+    updateAvailableItemForThisDay()
 
-    removeItemFromAvailableItems(id)
+
 }
 
 function removeItemFromMenu(id) {
     $(`#menu-items-container li[data-item-id='${id}']`).remove();
-    addItemToAvailableItems(id)
+
+    updateAvailableItemForThisDay()
 }
 
 function removeItemFromAvailableItems(id) {
@@ -294,7 +310,7 @@ function updateSelectedItems(month, year) {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            selectedItems = data[1]["SelectedItems"]
+            selectedItems = data[1]["selectedItems"]
             daysWithMenu = data[0]["daysWithMenu"]
 
         },
@@ -308,20 +324,20 @@ function changeMenuDate(dateTitle) {
     $("#menu-date-wrapper").text(dateTitle)
 }
 
-function updateItemsCounter(shamsiFormatDate) {
-    let len = 0
-    if (selectedItems !== undefined) {
-        let selectedMenu = selectedItems.find(function (entry) {
-            return entry.date === shamsiFormatDate;
-        });
-        if (selectedMenu!==undefined){
-            len = selectedMenu.length
-        }
-
-    }
-
+function updateItemsCounter() {
+    let len = $("#menu-items-container li").length
     $("#menu-items-counter").text(len)
+}
 
+function updateHasMenuCalendarDayBlock() {
+    let currentShamsi = toShamsiFormat(selectedDate)
+    let len = $("#menu-items-container li").length
+    let dishLogo = $(`.cd-[data-date="${currentShamsi}"] img`)
+    if (parseInt(len) === 0) {
+        dishLogo.addClass("hidden")
+        return
+    }
+    dishLogo.removeClass("hidden")
 
 }
 
@@ -340,14 +356,52 @@ function updateSelectedDayOnCalendar(shamsiFormatDate) {
 
 }
 
+function updateAvailableItemForThisDay() {
+    // اول قبلی ها رو پاک می کنیم
+    $("#dropdown-menu a").remove();
+
+    //     ابتدا می بینیم که چه چیز هایی در منوی روز انتخاب شده وجود دارد
+    let thisDaySelectedItemIds = []
+    $("#menu-items-container li").each(function (index, element) {
+        thisDaySelectedItemIds.push(parseInt($(this).attr("data-item-id")))
+    })
+
+//     خب حالا هر چیزی که انتخاب نشده باشه رو قابل انتخاب می گذاریم
+    let allAvailableItemsIds = extractIds(availableItems)
+    let remainingItemsIds = allAvailableItemsIds.filter(function (element) {
+        return !thisDaySelectedItemIds.includes(element);
+    });
+
+    let data = filterObjectsById(availableItems, remainingItemsIds)
+    $("#dropdown-menu").append(makeDropDownChoices(data))
+
+}
+
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
     let selectedShamsiDateTitle = e.attr("data-day-title")
     updateSelectedDate(selectedShamsiDate)
     updateSelectedDayOnCalendar(selectedShamsiDate)
     changeMenuDate(selectedShamsiDateTitle)
-    updateItemsCounter(selectedShamsiDate)
     loadMenu(selectedDate.day, selectedDate.month, selectedDate.year)
+    updateItemsCounter()
+    updateHasMenuCalendarDayBlock()
+    updateAvailableItemForThisDay()
+
+}
+
+function preItemsImageLoader() {
+    let imageLinks= availableItems.map(function (item) {
+        return item.image;
+    });
+
+    $.each(imageLinks, function(index, link) {
+      // Create an <img> element for each image link
+      let imgElement = $('<img>').attr('src', link);
+
+      // Append the <img> element to the container
+      $('#dump-image-container').append(imgElement);
+    });
 }
 
 function getCurrentCalendarMonth() {
@@ -399,6 +453,7 @@ $(document).ready(function () {
                     let requestedMonth = data[0]["month"]
 
                     loadAvailableItem()
+                    preItemsImageLoader()
 
                     // تقویم این ماه به صورت پیشفرض لود می شود
                     makeCalendar(
@@ -422,7 +477,6 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
-
 
 
                 },
@@ -461,6 +515,9 @@ $(document).ready(function () {
             success: function (data) {
                 addNewItemToMenu(id)
                 updateSelectedItems(selectedDate.month, selectedDate.year)
+                updateItemsCounter()
+                updateHasMenuCalendarDayBlock()
+
             },
             error: function (xhr, status, error) {
                 console.error('Item not added!', status, 'and error:', error);
@@ -486,6 +543,8 @@ $(document).ready(function () {
             success: function (data) {
                 removeItemFromMenu(id)
                 updateSelectedItems(selectedDate.month, selectedDate.year)
+                updateItemsCounter()
+                updateHasMenuCalendarDayBlock()
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error);
@@ -510,7 +569,7 @@ $(document).ready(function () {
                 lastDayOfMonth = data[0]["lastDayOfMonth"]
                 holidays = data[0]["holidays"]
                 daysWithMenu = data[0]["daysWithMenu"]
-                selectedItems = data[1]["SelectedItems"]
+                selectedItems = data[1]["selectedItems"]
                 makeCalendar(
                     parseInt(firstDayOfWeek),
                     parseInt(lastDayOfMonth),
