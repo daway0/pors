@@ -35,6 +35,7 @@ from .utils import (
     first_and_last_day_date,
     get_current_date,
     get_weekend_holidays,
+    validate_date,
 )
 
 # Create your views here.
@@ -46,6 +47,18 @@ def ui(request):
 
 @api_view(["POST"])
 def add_item_to_menu(request):
+    if not request.data.get("id") and not not request.data.get("date"):
+        return Response(
+            "'id' and 'date' parameters must specified.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        id = int(request.data.get("id"))
+    except ValueError:
+        return Response("Invalid 'id' value.", status.HTTP_400_BAD_REQUEST)
+    date = validate_date(request.data.get("date"))
+    if date is None:
+        return Response("Invalid 'date' value.", status.HTTP_400_BAD_REQUEST)
     return Response(data={}, status=200)
 
 

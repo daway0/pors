@@ -10,17 +10,17 @@ urlpatterns = [
     path(
         "administrative/available-items/",
         views.AvailableItems.as_view(),
-        name="aallitems",
+        name="admin_available_items",
     ),
     path(
         "administrative/add-item-to-menu/",
         views.add_item_to_menu,
-        name="aadditem",
+        name="add_item_to_menu",
     ),
     path(
         "administrative/remove-item-from-menu/",
         views.remove_item_from_menu,
-        name="aremoveitem",
+        name="remove_item_from_menu",
     ),
 
     path("", views.ui),

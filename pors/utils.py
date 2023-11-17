@@ -1,3 +1,5 @@
+import re
+
 import jdatetime
 from persiantools.jdatetime import JalaliDate
 
@@ -72,19 +74,31 @@ def split_dates(dates, mode: str):
     match mode:
         case "day":
             if not isinstance(dates, list):
-                return dates.split("/")[2]
+                return int(dates.split("/")[2])
             for date in dates:
-                new_dates.append(date.split("/")[2])
+                new_dates.append(int(date.split("/")[2]))
             return new_dates
         case "month":
             if not isinstance(dates, list):
-                return dates.split("/")[1]
+                return int(dates.split("/")[1])
             for date in dates:
-                new_dates.append(date.split("/")[1])
+                new_dates.append(int(date.split("/")[1]))
             return new_dates
         case "year":
             if not isinstance(dates, list):
-                return dates.split("/")[0]
+                return int(dates.split("/")[0])
             for date in dates:
-                new_dates.append(date.split("/")[0])
+                new_dates.append(int(date.split("/")[0]))
             return new_dates
+
+
+def validate_date(date: str):
+    pattern = r"^\d{4}\/\d{2}\/\d{2}$"
+    if not isinstance(date, str):
+        return None
+    if "-" in date:
+        date = date.replace("-", "/")
+    if re.match(pattern, date):
+        return date
+    else:
+        return None
