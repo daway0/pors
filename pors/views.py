@@ -2,7 +2,6 @@ import datetime
 from calendar import monthrange
 
 from django.conf import settings
-
 from django.db.models import (
     Case,
     ExpressionWrapper,
@@ -38,7 +37,6 @@ from .utils import (
     get_weekend_holidays,
 )
 
-
 # Create your views here.
 
 
@@ -48,12 +46,12 @@ def ui(request):
 
 @api_view(["POST"])
 def add_item_to_menu(request):
-    return Response(data={},status=200)
+    return Response(data={}, status=200)
 
 
 @api_view(["POST"])
 def remove_item_from_menu(request):
-    return Response(data={},status=200)
+    return Response(data={}, status=200)
 
 
 class AvailableItems(ListAPIView):
@@ -103,10 +101,12 @@ def personnel_calendar(request):
             status.HTTP_400_BAD_REQUEST,
         )
     try:
-        int(month)
-        int(year)
+        month = int(month)
+        year = int(year)
     except ValueError:
         return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
+    if month > 12:
+        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
     first_day_date, last_day_date = first_and_last_day_date(month, year)
     general_calendar = get_general_calendar(year, month)
     ordered_days = Order.objects.filter(
@@ -134,7 +134,7 @@ def personnel_calendar(request):
                     output_field=fields.IntegerField(),
                 )
             )
-                       - Sum("AppliedSubsidy"),
+            - Sum("AppliedSubsidy"),
         )
     )
     """
@@ -251,6 +251,8 @@ def edari_calendar(request):
         year = int(year)
     except ValueError:
         return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
+    if month > 12:
+        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
     first_day_date, last_day_date = first_and_last_day_date(month, year)
     general_calendar = get_general_calendar(year, month)
     days_with_menu = (
