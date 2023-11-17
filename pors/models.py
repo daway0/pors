@@ -37,16 +37,13 @@ class Holiday(models.Model):
     HolidayDate = models.CharField(max_length=10)
 
     @property
-    def HolidayYear(self):
-        ...
+    def HolidayYear(self): ...
 
     @property
-    def HolidayMonth(self):
-        ...
+    def HolidayMonth(self): ...
 
     @property
-    def HolidayDay(self):
-        ...
+    def HolidayDay(self): ...
 
 
 class Category(models.Model):
@@ -59,7 +56,9 @@ class Category(models.Model):
         verbose_name = "دسته بندی ایتم"
         verbose_name_plural = "دسته بندی ایتم ها"
 
-    CategoryName = models.CharField(max_length=300, verbose_name="نام دسته بندی")
+    CategoryName = models.CharField(
+        max_length=300, verbose_name="نام دسته بندی"
+    )
 
     def __str__(self):
         return self.CategoryName
@@ -141,7 +140,9 @@ class Item(models.Model):
 class Order(models.Model):
     Personnel = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
-    IsDeleted = models.BooleanField(default=True, help_text="IsDeleted?(Soft Delete)")
+    IsDeleted = models.BooleanField(
+        default=True, help_text="IsDeleted?(Soft Delete)"
+    )
     AppliedSubsidy = models.PositiveIntegerField()
 
     @property
@@ -169,7 +170,9 @@ class ItemPriceHistory(models.Model):
     این جدول تاریخچه تغییر قیمت اقلام را نگه می دارد و لاگ ان در جدول
     جداگانه ذخیره می شود"""
 
-    Item = models.ForeignKey(Item, on_delete=models.CASCADE, null=False, blank=False)
+    Item = models.ForeignKey(
+        Item, on_delete=models.CASCADE, null=False, blank=False
+    )
 
     Price = models.PositiveIntegerField()
     FromDate = models.CharField(max_length=10)
@@ -192,16 +195,13 @@ class DailyMenuItem(models.Model):
     IsActive = models.BooleanField(default=True)
 
     @property
-    def AvailableYear(self):
-        ...
+    def AvailableYear(self): ...
 
     @property
-    def AvailableMonth(self):
-        ...
+    def AvailableMonth(self): ...
 
     @property
-    def AvailableDay(self):
-        ...
+    def AvailableDay(self): ...
 
 
 # class ActionLog(models.Model):

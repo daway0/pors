@@ -75,7 +75,7 @@ class Categories(ListAPIView):
 
 
 @api_view(["GET"])
-def general_calendar(request):
+def personnel_calendar(request):
     """
     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
@@ -83,22 +83,25 @@ def general_calendar(request):
     """
     # Past Auth...
     personnel = ...
-    today = datetime.date.today()
-    year = request.query_params.get("year", today.year)
-    month = request.query_params.get("month", today.month)
+    year = request.query_params.get("year")
+    month = request.query_params.get("month")
+    if year is None or month is None:
+        return Response(
+            "'year' and 'month' parameters must specified.",
+            status.HTTP_400_BAD_REQUEST,
+        )
     try:
-        year = int(year)
-        month = int(month)
+        int(month)
+        int(year)
     except ValueError:
-        # user didnt provide integer values, so we are using default values.
-        year = today.year
-        month = today.month
+        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
     first_day_date, last_day_date = first_and_last_day_date(month, year)
-    general_calendar = get_general_calendar(year, month, personnel)
-    days_with_menu = DailyMenuItem.objects.filter(
-        AvailableDate__range=(first_day_date, last_day_date), IsActive=True
-    ).values("AvailableDate", "Item")
-
+    general_calendar = get_general_calendar(year, month)
+    ordered_days = Order.objects.filter(
+        DeliveryDate__range=(first_day_date, last_day_date),
+        Personnel=personnel,
+    ).values("DeliveryDate")
+    ordered_days_list = [date["DeliveryDate"] for date in ordered_days]
     # Todo handle the difference between subidy and total cost
     debt = (
         Order.objects.filter(DeliveryDate__range=["1402/00/00", "1403/00/00"])
@@ -190,7 +193,9 @@ def general_calendar(request):
                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
                 "OrderedItem__Image": order["OrderedItem__Image"],
-                "OrderedItem__CurrentPrice": order["OrderedItem__CurrentPrice"],
+                "OrderedItem__CurrentPrice": order[
+                    "OrderedItem__CurrentPrice"
+                ],
                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
                 "Quantity": order["Quantity"],
                 "PricePerOne": order["PricePerOne"],
@@ -210,6 +215,7 @@ def general_calendar(request):
     return Response(
         data=(
             general_calendar,
+            ordered_days_list,
             # debt_serializer,
             orders_serializer,
         ),
@@ -221,18 +227,20 @@ def general_calendar(request):
 def edari_calendar(request):
     # Past Auth...
     personnel = ...
-    today = datetime.date.today()
-    year = request.query_params.get("year", today.year)
-    month = request.query_params.get("month", today.month)
+    year = request.query_params.get("year")
+    month = request.query_params.get("month")
+    if year is None or month is None:
+        return Response(
+            "'year' and 'month' parameters must specified.",
+            status.HTTP_400_BAD_REQUEST,
+        )
     try:
-        year = int(year)
         month = int(month)
+        year = int(year)
     except ValueError:
-        # user didnt provide integer values, so we are using default values.
-        year = today.year
-        month = today.month
+        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
     first_day_date, last_day_date = first_and_last_day_date(month, year)
-    general_calendar = get_general_calendar(year, month, personnel)
+    general_calendar = get_general_calendar(year, month)
     days_with_menu = (
         DailyMenuItem.objects.filter(
             AvailableDate__range=(first_day_date, last_day_date), IsActive=True
@@ -254,7 +262,9 @@ def edari_calendar(request):
         selected_item["items"].append(item["Item__id"])
         selected_items.append(selected_item)
 
-    selected_items_serializer = SelectedItemSerializer(instance=selected_items).data
+    selected_items_serializer = SelectedItemSerializer(
+        instance=selected_items
+    ).data
 
     return Response(
         data=(general_calendar, selected_items_serializer),
@@ -272,10 +282,10 @@ def edari_first_page(request):
     current_date = {"day": day, "month": month, "year": year}
     serializer = EdariFirstPageSerializer(
         data={
-            "is_open": is_open,
-            "full_name": full_name,
+            "isOpen": is_open,
+            "fullName": full_name,
             "profile": profile,
-            "current_date": current_date,
+            "currentDate": current_date,
         }
     ).initial_data
-    return Response(serializer)
+    return Response(serializer, status.HTTP_200_OK)

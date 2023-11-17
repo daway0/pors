@@ -3,15 +3,18 @@ from rest_framework import serializers
 from . import models as m
 
 
-
 class AvailableItemsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="Id")
+    itemName = serializers.CharField(source="ItemName")
+    image = serializers.CharField(source="Image")
+
     class Meta:
         model = m.Item
         fields = ("id", "ItemName", "Image")
 
 
 class DayMenuSerializer(serializers.ModelSerializer):
-    food_ids = serializers.SerializerMethodField(
+    foodIds = serializers.SerializerMethodField(
         "List of foods based on the given date."
     )
 
@@ -19,7 +22,7 @@ class DayMenuSerializer(serializers.ModelSerializer):
         model = m.DailyMenuItem
         fields = ("food_ids",)
 
-    def get_food_ids(self, obj: m.DailyMenuItem):
+    def get_foodIds(self, obj: m.DailyMenuItem):
         food_ids = [price_item.Item.id for price_item in obj.PriceItem.all()]
         return food_ids
 
@@ -70,8 +73,8 @@ class HolidaySerializer(serializers.Serializer):
     def get_holidays(self, obj):
         result = []
         for date in obj.values():
-            if date not in result:
-                result.append(date)
+            if date["HolidayDate"] not in result:
+                result.append(date["HolidayDate"])
         return result
 
 
@@ -81,9 +84,9 @@ class SelectedItemsBasedOnDaySerializer(serializers.Serializer):
 
 
 class SelectedItemSerializer(serializers.Serializer):
-    SelectedItems = serializers.SerializerMethodField()
+    selectedItems = serializers.SerializerMethodField()
 
-    def get_SelectedItems(self, obj):
+    def get_selectedItems(self, obj):
         result = []
         for item in obj:
             result.append(
@@ -142,20 +145,21 @@ class GeneralCalendarSerializer(serializers.Serializer):
 
 
 class EdariFirstPageSerializer(serializers.Serializer):
-    is_open = serializers.BooleanField()
-    full_name = serializers.CharField()
+    isOpen = serializers.BooleanField()
+    fullName = serializers.CharField()
     profile = serializers.ImageField()
-    current_date = serializers.DictField()
+    currentDate = serializers.DictField()
 
 
 class DaysWithMenuSerializer(serializers.Serializer):
-    days_with_menu = serializers.SerializerMethodField()
+    daysWithMenu = serializers.SerializerMethodField()
 
-    def get_days_with_menu(self, obj):
+    def get_daysWithMenu(self, obj):
         result = []
         for item in obj:
             result.append(item["AvailableDate"])
         return result
+
 
 # class EdariCalendarSchemaSerializer(serializers.Serializer):
 #     generalCalendar = serializers.SerializerMethodField()
