@@ -1,6 +1,3 @@
-import datetime
-from calendar import monthrange
-
 from django.conf import settings
 from django.db.models import (
     Case,
@@ -19,24 +16,18 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from .general_actions import get_general_calendar
-from .models import Category, DailyMenuItem, Holiday, Item, Order, OrderItem
+from .models import Category, DailyMenuItem, Item, Order, OrderItem
 from .serializers import (
+    AddMenuItemSerializer,
     AvailableItemsSerializer,
     CategorySerializer,
     DayMenuSerializer,
-    DebtSerializer,
     EdariFirstPageSerializer,
-    GeneralCalendarSerializer,
-    HolidaySerializer,
     OrderSerializer,
+    RemoveMenuItemSerializer,
     SelectedItemSerializer,
 )
-from .utils import (
-    first_and_last_day_date,
-    get_current_date,
-    get_weekend_holidays,
-    validate_date,
-)
+from .utils import first_and_last_day_date, get_current_date
 
 # Create your views here.
 
@@ -47,24 +38,24 @@ def ui(request):
 
 @api_view(["POST"])
 def add_item_to_menu(request):
-    if not request.data.get("id") and not not request.data.get("date"):
+    serializer = AddMenuItemSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
         return Response(
-            "'id' and 'date' parameters must specified.",
-            status.HTTP_400_BAD_REQUEST,
+            "Successfully added the item into the menu.", status.HTTP_200_OK
         )
-    try:
-        id = int(request.data.get("id"))
-    except ValueError:
-        return Response("Invalid 'id' value.", status.HTTP_400_BAD_REQUEST)
-    date = validate_date(request.data.get("date"))
-    if date is None:
-        return Response("Invalid 'date' value.", status.HTTP_400_BAD_REQUEST)
-    return Response(data={}, status=200)
+    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 def remove_item_from_menu(request):
-    return Response(data={}, status=200)
+    serializer = RemoveMenuItemSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer._remove_item()
+        return Response(
+            "Successsfully deleted the item from menu.", status.HTTP_200_OK
+        )
+    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 class AvailableItems(ListAPIView):

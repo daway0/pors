@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from . import models as m
+from .utils import validate_date
 
 
 class AvailableItemsSerializer(serializers.ModelSerializer):
@@ -159,6 +160,52 @@ class DaysWithMenuSerializer(serializers.Serializer):
         for item in obj:
             result.append(item["AvailableDate"])
         return result
+
+
+class AddMenuItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source="Item")
+    date = serializers.CharField(max_length=10, source="AvailableDate")
+
+    def validate(self, data):
+        date = validate_date(data["AvailableDate"])
+        if not date:
+            raise serializers.ValidationError("Date is not valid.")
+        instance = m.DailyMenuItem.objects.filter(
+            AvailableDate=date, Item=data["Item"]
+        )
+        if instance:
+            raise serializers.ValidationError(
+                "Item already exist on provided date."
+            )
+        data["Item"] = m.Item.objects.get(id=data["Item"])
+        data["IsActive"] = True
+        return data
+
+    def create(self, validated_data):
+        m.DailyMenuItem.objects.create(**validated_data)
+
+
+class RemoveMenuItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source="Item")
+    date = serializers.CharField(max_length=10, source="AvailableDate")
+
+    def validate(self, data):
+        date = validate_date(data["AvailableDate"])
+        if not date:
+            raise serializers.ValidationError("Date is not valid.")
+        instance = m.DailyMenuItem.objects.filter(
+            AvailableDate=date, Item=data["Item"]
+        )
+        if not instance:
+            raise serializers.ValidationError(
+                "Item not exists in provided date"
+            )
+        return data
+
+    def _remove_item(self):
+        date = self.validated_data.get("AvailableDate")
+        item = self.validated_data.get("Item")
+        m.DailyMenuItem.objects.get(AvailableDate=date, Item=item).delete()
 
 
 # class EdariCalendarSchemaSerializer(serializers.Serializer):
