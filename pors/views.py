@@ -2,6 +2,7 @@ import datetime
 from calendar import monthrange
 
 from django.conf import settings
+
 from django.db.models import (
     Case,
     ExpressionWrapper,
@@ -37,11 +38,22 @@ from .utils import (
     get_weekend_holidays,
 )
 
+
 # Create your views here.
 
 
 def ui(request):
     return render(request, "administrativeMainPanel.html")
+
+
+@api_view(["POST"])
+def add_item_to_menu(request):
+    return Response(data={},status=200)
+
+
+@api_view(["POST"])
+def remove_item_from_menu(request):
+    return Response(data={},status=200)
 
 
 class AvailableItems(ListAPIView):
@@ -119,7 +131,7 @@ def general_calendar(request):
                     output_field=fields.IntegerField(),
                 )
             )
-            - Sum("AppliedSubsidy"),
+                       - Sum("AppliedSubsidy"),
         )
     )
     """
@@ -190,7 +202,8 @@ def general_calendar(request):
                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
                 "OrderedItem__Image": order["OrderedItem__Image"],
-                "OrderedItem__CurrentPrice": order["OrderedItem__CurrentPrice"],
+                "OrderedItem__CurrentPrice": order[
+                    "OrderedItem__CurrentPrice"],
                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
                 "Quantity": order["Quantity"],
                 "PricePerOne": order["PricePerOne"],
@@ -254,7 +267,8 @@ def edari_calendar(request):
         selected_item["items"].append(item["Item__id"])
         selected_items.append(selected_item)
 
-    selected_items_serializer = SelectedItemSerializer(instance=selected_items).data
+    selected_items_serializer = SelectedItemSerializer(
+        instance=selected_items).data
 
     return Response(
         data=(general_calendar, selected_items_serializer),
@@ -265,7 +279,7 @@ def edari_calendar(request):
 @api_view(["GET"])
 def edari_first_page(request):
     # ... past auth
-    is_open = settings.IS_OPEN
+    is_open = settings.OPEN_FOR_ADMINISTRATIVE
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
     year, month, day = get_current_date()
