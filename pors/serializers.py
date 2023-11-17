@@ -182,7 +182,8 @@ class AddMenuItemSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        m.DailyMenuItem.objects.create(**validated_data)
+        return m.DailyMenuItem.objects.create(**validated_data)
+
 
 
 class RemoveMenuItemSerializer(serializers.Serializer):

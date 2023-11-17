@@ -22,29 +22,21 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 let isSystemOpen = false
-    let currentDate = {
-        year: undefined,
-        month: undefined,
-        day: undefined
-    }
-    let selectedDate = undefined
-    let personnelFullName = undefined
-    let personnelProfileImg = undefined
-    let firstDayOfWeek = undefined
-    let lastDayOfMonth = undefined
-    let holidays = undefined
-    let daysWithMenu = undefined
-    let orderedDays = undefined
-    let selectedItems = undefined
-    let availableItems = undefined
-function convertArrayToIntegers(stringArray) {
-    // Using map to convert each string to an integer
-    var intArray = stringArray.map(function (str) {
-        return parseInt(str, 10); // Using parseInt with base 10
-    });
-
-    return intArray;
+let currentDate = {
+    year: undefined,
+    month: undefined,
+    day: undefined
 }
+let selectedDate = undefined
+let personnelFullName = undefined
+let personnelProfileImg = undefined
+let firstDayOfWeek = undefined
+let lastDayOfMonth = undefined
+let holidays = undefined
+let daysWithMenu = undefined
+let orderedDays = undefined
+let selectedItems = undefined
+let availableItems = undefined
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -72,6 +64,21 @@ function convertToPersianNumber(englishNumber) {
 function toShamsiFormat(dateobj) {
     // 1402/08/09
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
+}
+
+function toObjectFormat(shamsiDate) {
+    let dateParts = shamsiDate.split('/');
+
+    let year = parseInt(dateParts[0], 10);
+    let month = parseInt(dateParts[1], 10);
+    let day = parseInt(dateParts[2], 10);
+
+
+    return {
+        year: year,
+        month: month,
+        day: day
+    };
 }
 
 function zfill(number, width) {
@@ -141,18 +148,37 @@ function makeDropDownChoices(items) {
     return HTML
 }
 
-function loadMenu(day, month, year, allMenus) {
+function makeSelectedMenu(items) {
+    let HTML = ""
+    items.forEach(function (id) {
+        let selectedItem = availableItems.find(item => item.id == id);
+        HTML += menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
+    })
+    return HTML
+}
+
+function loadMenu(day, month, year) {
+
     // allMenus در واقع همون selectedItems هست
 
+
     // منوی قبلی را پاک می کنیم
-    $("#menu-items-container").remove()
+    $("#menu-items-container li").remove()
+
+    if (selectedItems === undefined) return
 
     let requestedDate = toShamsiFormat({year: year, month: month, day: day})
-    let selectedMenu = allMenus.find(function (entry) {
+    let selectedMenu = selectedItems.find(function (entry) {
         return entry.date === requestedDate;
     });
 
     // حالا باید آیتم هارو بگیریم
+    if (selectedMenu!==undefined){
+        let menuHTML = makeSelectedMenu(selectedMenu.items)
+    $("#menu-items-container").append(menuHTML)
+    }
+
+
 }
 
 function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber) {
@@ -245,9 +271,11 @@ function loadAvailableItem() {
         url: `administrative/available-items/`,
         method: 'GET',
         dataType: 'json',
+        async: false,
         success: function (data) {
             $("#dropdown-menu").append(makeDropDownChoices(data))
             availableItems = data
+            console.log(availableItems)
         },
         error: function (xhr, status, error) {
             console.error('Available Items cannot be loaded', status, 'and' +
@@ -256,7 +284,8 @@ function loadAvailableItem() {
     });
 }
 
-function updateSelectedDate(month) {
+function updateSelectedDate(shamsiDate) {
+    selectedDate = toObjectFormat(shamsiDate)
 }
 
 function updateSelectedItems(month, year) {
@@ -285,7 +314,10 @@ function updateItemsCounter(shamsiFormatDate) {
         let selectedMenu = selectedItems.find(function (entry) {
             return entry.date === shamsiFormatDate;
         });
-        len = selectedMenu.length
+        if (selectedMenu!==undefined){
+            len = selectedMenu.length
+        }
+
     }
 
     $("#menu-items-counter").text(len)
@@ -311,11 +343,11 @@ function updateSelectedDayOnCalendar(shamsiFormatDate) {
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
     let selectedShamsiDateTitle = e.attr("data-day-title")
+    updateSelectedDate(selectedShamsiDate)
     updateSelectedDayOnCalendar(selectedShamsiDate)
     changeMenuDate(selectedShamsiDateTitle)
     updateItemsCounter(selectedShamsiDate)
-    // updateSelectedDate()
-    // loadMenu()
+    loadMenu(selectedDate.day, selectedDate.month, selectedDate.year)
 }
 
 function getCurrentCalendarMonth() {
@@ -323,8 +355,6 @@ function getCurrentCalendarMonth() {
 }
 
 $(document).ready(function () {
-
-
 
 
     /* وقتی که صفحه به صورت کامل لود شد کار های زیر را به ترتیب انجام می دهیم
@@ -363,10 +393,12 @@ $(document).ready(function () {
                     lastDayOfMonth = data[0]["lastDayOfMonth"]
                     holidays = data[0]["holidays"]
                     daysWithMenu = data[0]["daysWithMenu"]
-                    selectedItems = data[1]["SelectedItems"]
+                    selectedItems = data[1]["selectedItems"]
 
                     let requestedYear = data[0]["year"]
                     let requestedMonth = data[0]["month"]
+
+                    loadAvailableItem()
 
                     // تقویم این ماه به صورت پیشفرض لود می شود
                     makeCalendar(
@@ -382,14 +414,15 @@ $(document).ready(function () {
                     let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
                     selectDayOnCalendar(sd)
 
-                    // منوی غذا امروز نیز نمایش داده میشود
-                    // loadMenu(
-                    //     currentDate.day,
-                    //     currentDate.month,
-                    //     currentDate.year
-                    // )
 
-                    loadAvailableItem()
+
+                    // منوی غذا امروز نیز نمایش داده میشود
+                    loadMenu(
+                        currentDate.day,
+                        currentDate.month,
+                        currentDate.year
+                    )
+
 
 
                 },
@@ -411,14 +444,20 @@ $(document).ready(function () {
 
 
         let id = parseInt($(this).attr("data-item-id"))
+        console.log({
+            "id": id,
+            "date": toShamsiFormat(selectedDate)
+        })
         $.ajax({
             url: `administrative/add-item-to-menu/`,
             method: 'POST',
-            dataType: 'json',
-            data: {
-                "id": id,
-                "date": toShamsiFormat(selectedDate)
-            },
+            contentType: 'application/json',
+            data: JSON.stringify(
+                {
+                    "id": id,
+                    "date": toShamsiFormat(selectedDate)
+                }
+            ),
             success: function (data) {
                 addNewItemToMenu(id)
                 updateSelectedItems(selectedDate.month, selectedDate.year)
@@ -437,11 +476,13 @@ $(document).ready(function () {
         $.ajax({
             url: `administrative/remove-item-from-menu/`,
             method: 'POST',
-            dataType: 'json',
-            data: {
-                "id": id,
-                "date": toShamsiFormat(selectedDate)
-            },
+            contentType: 'application/json',
+            data: JSON.stringify(
+                {
+                    "id": id,
+                    "date": toShamsiFormat(selectedDate)
+                }
+            ),
             success: function (data) {
                 removeItemFromMenu(id)
                 updateSelectedItems(selectedDate.month, selectedDate.year)
