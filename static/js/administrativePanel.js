@@ -21,6 +21,30 @@ const YEAR_MONTHS = {
     11: "بهمن",
     12: "اسفند",
 }
+let isSystemOpen = false
+    let currentDate = {
+        year: undefined,
+        month: undefined,
+        day: undefined
+    }
+    let selectedDate = undefined
+    let personnelFullName = undefined
+    let personnelProfileImg = undefined
+    let firstDayOfWeek = undefined
+    let lastDayOfMonth = undefined
+    let holidays = undefined
+    let daysWithMenu = undefined
+    let orderedDays = undefined
+    let selectedItems = undefined
+    let availableItems = undefined
+function convertArrayToIntegers(stringArray) {
+    // Using map to convert each string to an integer
+    var intArray = stringArray.map(function (str) {
+        return parseInt(str, 10); // Using parseInt with base 10
+    });
+
+    return intArray;
+}
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -72,7 +96,7 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
 
     let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
 
-    return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cursor-pointer flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
+    return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cd- cursor-pointer flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
                                 <div> 
                                     <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
@@ -112,7 +136,7 @@ function dropDownItemBlock(id, title) {
 function makeDropDownChoices(items) {
     let HTML = ""
     items.forEach(function (item) {
-        HTML += dropDownItemBlock(item.id, item.ItemName)
+        HTML += dropDownItemBlock(item.id, item.itemName)
     })
     return HTML
 }
@@ -189,7 +213,7 @@ function blurMainPanel() {
 function addNewItemToMenu(id) {
     let selectedItem = availableItems.find(item => item.id == id);
     $("#menu-items-container").append(
-        menuItemBlock(selectedItem.id, selectedItem.ItemName, selectedItem.Image)
+        menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
     )
 
     removeItemFromAvailableItems(id)
@@ -208,7 +232,7 @@ function removeItemFromAvailableItems(id) {
 function addItemToAvailableItems(id) {
     let selectedItem = availableItems.find(item => item.id == id);
     $("#dropdown-menu").append(
-        dropDownItemBlock(id, selectedItem.ItemName)
+        dropDownItemBlock(id, selectedItem.itemName)
     )
 }
 
@@ -255,23 +279,32 @@ function changeMenuDate(dateTitle) {
     $("#menu-date-wrapper").text(dateTitle)
 }
 
-function updateItemCounter(shamsiFormatDate) {
+function updateItemsCounter(shamsiFormatDate) {
+    let len = 0
+    if (selectedItems !== undefined) {
+        let selectedMenu = selectedItems.find(function (entry) {
+            return entry.date === shamsiFormatDate;
+        });
+        len = selectedMenu.length
+    }
+
+    $("#menu-items-counter").text(len)
+
 
 }
 
 function updateSelectedDayOnCalendar(shamsiFormatDate) {
-    let selectedBG = "bg-sky-600"
-    let selectedText = "text-white"
+    let selectedBG = "bg-sky-100"
     let selectedHover = "hover:bg-gray-200"
 
     //     ابتدا روز انتخاب شده قبلی رو استایلش رو تغییر می دهیم
     let preSelected = $(`#dayBlocksWrapper div[data-date].${selectedBG}`)
-    preSelected.removeClass(`${selectedBG} ${selectedText}`)
+    preSelected.removeClass(`${selectedBG}`)
     preSelected.addClass(`${selectedHover}`)
 
     let currentSelectedDayBlock = $(`#dayBlocksWrapper div[data-date="${shamsiFormatDate}"]`)
     currentSelectedDayBlock.removeClass(`${selectedHover}`)
-    currentSelectedDayBlock.addClass(`${selectedBG} ${selectedText}`)
+    currentSelectedDayBlock.addClass(`${selectedBG}`)
 
 }
 
@@ -280,8 +313,7 @@ function selectDayOnCalendar(e) {
     let selectedShamsiDateTitle = e.attr("data-day-title")
     updateSelectedDayOnCalendar(selectedShamsiDate)
     changeMenuDate(selectedShamsiDateTitle)
-
-    // updateItemCounter()
+    updateItemsCounter(selectedShamsiDate)
     // updateSelectedDate()
     // loadMenu()
 }
@@ -292,22 +324,7 @@ function getCurrentCalendarMonth() {
 
 $(document).ready(function () {
 
-    let isSystemOpen = false
-    let currentDate = {
-        year: undefined,
-        month: undefined,
-        day: undefined
-    }
-    let selectedDate = undefined
-    let personnelFullName = undefined
-    let personnelProfileImg = undefined
-    let firstDayOfWeek = undefined
-    let lastDayOfMonth = undefined
-    let holidays = undefined
-    let daysWithMenu = undefined
-    let orderedDays = undefined
-    let selectedItems = undefined
-    let availableItems = undefined
+
 
 
     /* وقتی که صفحه به صورت کامل لود شد کار های زیر را به ترتیب انجام می دهیم
@@ -321,10 +338,10 @@ $(document).ready(function () {
         async: false,
         success: function (data) {
             console.log(data)
-            isSystemOpen = data["is_open"]
-            currentDate.day = data["current_date"]["day"]
-            currentDate.month = data["current_date"]["month"]
-            currentDate.year = data["current_date"]["year"]
+            isSystemOpen = data["isOpen"]
+            currentDate.day = data["currentDate"]["day"]
+            currentDate.month = data["currentDate"]["month"]
+            currentDate.year = data["currentDate"]["year"]
 
             selectedDate = currentDate
 
@@ -438,6 +455,34 @@ $(document).ready(function () {
 
     $(document).on('click', '#dayBlocksWrapper div[data-date]', function () {
         selectDayOnCalendar($(this))
+    })
+
+    $(document).on('change', '#calSelectedMonth', function () {
+        let monthNumber = getCurrentCalendarMonth()
+        $.ajax({
+            url: `administrative/calendar/?year=1402&month=${monthNumber}`,
+            method: 'GET',
+            dataType: 'json',
+
+            success: function (data) {
+                firstDayOfWeek = data[0]["firstDayOfWeek"]
+                lastDayOfMonth = data[0]["lastDayOfMonth"]
+                holidays = data[0]["holidays"]
+                daysWithMenu = data[0]["daysWithMenu"]
+                selectedItems = data[1]["SelectedItems"]
+                makeCalendar(
+                    parseInt(firstDayOfWeek),
+                    parseInt(lastDayOfMonth),
+                    holidays,
+                    daysWithMenu,
+                    monthNumber,
+                    1402
+                )
+            },
+            error: function (xhr, status, error) {
+                console.error('Item not removed!', status, 'and error:', error);
+            }
+        });
     })
 
 

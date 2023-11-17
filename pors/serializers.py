@@ -4,13 +4,13 @@ from . import models as m
 
 
 class AvailableItemsSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source="Id")
+    # id = serializers.IntegerField(source="id")
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
 
     class Meta:
         model = m.Item
-        fields = ("id", "ItemName", "Image")
+        fields = ("id", "itemName", "image")
 
 
 class DayMenuSerializer(serializers.ModelSerializer):
