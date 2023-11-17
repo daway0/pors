@@ -152,4 +152,5 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Is the food app open for submiting orders.
-IS_OPEN = True
+OPEN_FOR_PERSONNEL = True
+OPEN_FOR_ADMINISTRATIVE = True
