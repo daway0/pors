@@ -1,3 +1,50 @@
+    const WEEK_DAYS = {
+        1: "شنبه",
+        2: "یک شنبه",
+        3: "دوشنبه",
+        4: "سه شنبه",
+        5: "چهارشنبه",
+        6: "پنج شنبه",
+        7: "جمعه",
+    }
+    const YEAR_MONTHS = {
+        1: "فروردین",
+        2: "اردیبهشت",
+        3: "خرداد",
+        4: "تیر",
+        5: "مرداد",
+        6: "شهریور",
+        7: "مهر",
+        8: "آبان",
+        9: "آذر",
+        10: "دی",
+        11: "بهمن",
+        12: "اسفند",
+    }
+
+function convertToPersianNumber(englishNumber) {
+    const persianNumbers = {
+        '0': '۰',
+        '1': '۱',
+        '2': '۲',
+        '3': '۳',
+        '4': '۴',
+        '5': '۵',
+        '6': '۶',
+        '7': '۷',
+        '8': '۸',
+        '9': '۹'
+    };
+
+    const englishNumberArray = englishNumber.toString().split('');
+
+    const persianNumberArray = englishNumberArray.map(digit => {
+        return persianNumbers[digit] || digit;
+    });
+
+    return persianNumberArray.join('');
+}
+
 function toShamsiFormat(dateobj) {
     // 1402/08/09
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
@@ -11,13 +58,21 @@ function zfill(number, width) {
     return numberString;
 }
 
-function calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon) {
-    return `<div class="${dayCode} flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
+function calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon, monthNumber, yearNumber) {
+    let date= toShamsiFormat({
+        year: yearNumber,
+        month: monthNumber,
+        day: dayNumber
+    })
+
+    let dayTitle = `${WEEK_DAYS[dayNumber]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
+
+    return `<div data-date="${date}" data-day-title="${dayTitle}" class="${dayCode} cursor-pointer flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
                                 <div> 
-                                    <span class="text-5xl ${dayNumberStyle}">${dayNumber}</span>
+                                    <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
                                 <div>
-                                    <img class="w-10 h-10" src="${dayMenuIcon}" alt="">
+                                    <img class="w-8 h-8" src="${dayMenuIcon}" alt="">
                                 </div>
                             </div>`
 }
@@ -57,16 +112,13 @@ function makeDropDownChoices(items) {
     return HTML
 }
 
-function loadAdministrativeProfile() {
-
-}
-
-
 function loadMenu(day, month, year, allMenus) {
+    // allMenus در واقع همون selectedItems هست
+
     // منوی قبلی را پاک می کنیم
     $("#menu-items-container").remove()
 
-    let requestedDate = `${year}/${month}/${day}`
+    let requestedDate = toShamsiFormat({year:year, month:month, day:day})
     let selectedMenu = allMenus.find(function (entry) {
         return entry.date === requestedDate;
     });
@@ -74,7 +126,7 @@ function loadMenu(day, month, year, allMenus) {
     // حالا باید آیتم هارو بگیریم
 }
 
-function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
+function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber) {
 
 // ابتدا باید تقویم قبلی را پاگ کنیم
     $('#dayBlocksWrapper [class^="cd-"]').remove()
@@ -92,8 +144,8 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
 //     تعطیل بود باید شماره روز را رنگی کنیم و در همچنین وضعیت ثبت منو توسط
 //     اداری را در آن روز به نمایش بگذاریم
     for (let dayNumber = 1; dayNumber <= endDayOfMonth; dayNumber++) {
-        startDayOfWeek++
-        let dayCode = `cd-${dayNumber}-${startDayOfWeek % 7}`
+
+        let dayCode = `cd-${dayNumber}-${startDayOfWeek % 8}`
         let dayNumberStyle = ""
         let dayMenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
 
@@ -108,16 +160,26 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu) {
             dayMenuIcon = "https://www.svgrepo.com/show/390075/food-dish.svg"
         }
 
-        newCalendarHTML += calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon)
+        startDayOfWeek++
+        if (startDayOfWeek % 8 === 0) {
+            startDayOfWeek++
+
+        }
+
+        newCalendarHTML += calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon, monthNumber, yearNumber)
+
     }
     $("#dayBlocksWrapper").append(newCalendarHTML)
+
+
 }
 
 function displaySystemIsNotAvailable() {
-
+    $("#system-is-not-available").removeClass("hidden")
 }
 
 function blurMainPanel() {
+    $("#main-panel").addClass("blur-sm")
 
 }
 
@@ -167,15 +229,31 @@ function loadAvailableItem() {
     });
 }
 
-function updateSelectedDate() {
+function updateSelectedDate(month) {}
 
+function updateSelectedItems(month, year) {
+    $.ajax({
+                url: `administrative/calendar/?year=${year}&month=${month}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    selectedItems = data[1]["SelectedItems"]
+                    daysWithMenu = data[0]["daysWithMenu"]
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Selected Items cannot be updated!', status, 'and error:', error);
+                }
+            });
 }
+
 function getCurrentCalendarMonth() {
     return $("#calSelectedMonth option:selected").attr("value")
 }
 
 $(document).ready(function () {
-    let isSystemOpen = undefined
+
+    let isSystemOpen = false
     let currentDate = {
         year: undefined,
         month: undefined,
@@ -183,7 +261,7 @@ $(document).ready(function () {
     }
     let selectedDate = {
         year: 1402,
-        month: 12,
+        month: 11,
         day: 1
     }
     let personnelFullName = undefined
@@ -222,7 +300,7 @@ $(document).ready(function () {
             }
 
             $.ajax({
-                url: `administrative/calendar/?month=${currentDate.month}`,
+                url: `administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
@@ -233,12 +311,17 @@ $(document).ready(function () {
                     daysWithMenu = data[0]["daysWithMenu"]
                     selectedItems = data[1]["SelectedItems"]
 
+                    let requestedYear = data[0]["year"]
+                    let requestedMonth = data[0]["month"]
+
                     // تقویم این ماه به صورت پیشفرض لود می شود
                     makeCalendar(
-                        firstDayOfWeek,
-                        lastDayOfMonth,
+                        parseInt(firstDayOfWeek),
+                        parseInt(lastDayOfMonth),
                         holidays,
-                        daysWithMenu
+                        daysWithMenu,
+                        parseInt(requestedMonth),
+                        parseInt(requestedYear)
                     )
 
                     // منوی غذا امروز نیز نمایش داده میشود
@@ -263,9 +346,13 @@ $(document).ready(function () {
                 ' error:', error);
         }
     });
+    if (isSystemOpen === false) return
 
     $(document).on('click', '#dropdown-menu a', function () {
-        let id = $(this).attr("data-item-id")
+        // اضافه کردن یک غذا از منوی دراپ دان به منوی روز انتخاب شده
+
+
+        let id = parseInt($(this).attr("data-item-id"))
         $.ajax({
             url: `administrative/add-item-to-menu/`,
             method: 'POST',
@@ -276,6 +363,7 @@ $(document).ready(function () {
             },
             success: function (data) {
                 addNewItemToMenu(id)
+                updateSelectedItems(selectedDate.month, selectedDate.year)
             },
             error: function (xhr, status, error) {
                 console.error('Item not added!', status, 'and error:', error);
@@ -285,7 +373,8 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '#menu-items-container li', function () {
-        let id = $(this).attr("data-item-id")
+        // حذف کردن یک غذا از منوی روز انتخاب شده
+        let id = parseInt($(this).attr("data-item-id"))
 
         $.ajax({
             url: `administrative/remove-item-from-menu/`,
@@ -297,6 +386,7 @@ $(document).ready(function () {
             },
             success: function (data) {
                 removeItemFromMenu(id)
+                updateSelectedItems(selectedDate.month, selectedDate.year)
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error);
@@ -304,8 +394,6 @@ $(document).ready(function () {
         });
 
     });
-
-
 
 
 });
