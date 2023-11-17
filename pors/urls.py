@@ -14,12 +14,12 @@ urlpatterns = [
     ),
     path(
         "administrative/add-item-to-menu/",
-        views.AvailableItems.as_view(),
+        views.add_item_to_menu,
         name="aadditem",
     ),
     path(
         "administrative/remove-item-from-menu/",
-        views.AvailableItems.as_view(),
+        views.remove_item_from_menu,
         name="aremoveitem",
     ),
 
