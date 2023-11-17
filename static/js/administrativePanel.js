@@ -1,26 +1,26 @@
-    const WEEK_DAYS = {
-        1: "شنبه",
-        2: "یک شنبه",
-        3: "دوشنبه",
-        4: "سه شنبه",
-        5: "چهارشنبه",
-        6: "پنج شنبه",
-        7: "جمعه",
-    }
-    const YEAR_MONTHS = {
-        1: "فروردین",
-        2: "اردیبهشت",
-        3: "خرداد",
-        4: "تیر",
-        5: "مرداد",
-        6: "شهریور",
-        7: "مهر",
-        8: "آبان",
-        9: "آذر",
-        10: "دی",
-        11: "بهمن",
-        12: "اسفند",
-    }
+const WEEK_DAYS = {
+    1: "شنبه",
+    2: "یک‌شنبه",
+    3: "دو‌شنبه",
+    4: "سه‌شنبه",
+    5: "چهارشنبه",
+    6: "پنج‌شنبه",
+    7: "جمعه",
+}
+const YEAR_MONTHS = {
+    1: "فروردین",
+    2: "اردیبهشت",
+    3: "خرداد",
+    4: "تیر",
+    5: "مرداد",
+    6: "شهریور",
+    7: "مهر",
+    8: "آبان",
+    9: "آذر",
+    10: "دی",
+    11: "بهمن",
+    12: "اسفند",
+}
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -58,21 +58,26 @@ function zfill(number, width) {
     return numberString;
 }
 
-function calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon, monthNumber, yearNumber) {
-    let date= toShamsiFormat({
+function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu) {
+    let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+    let menuIconHTML = ""
+    if (hasMenu === true) {
+        menuIconHTML = `<img className="w-8 h-8" src="${MenuIcon}" alt="">`
+    }
+    let date = toShamsiFormat({
         year: yearNumber,
         month: monthNumber,
         day: dayNumber
     })
 
-    let dayTitle = `${WEEK_DAYS[dayNumber]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
+    let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
 
-    return `<div data-date="${date}" data-day-title="${dayTitle}" class="${dayCode} cursor-pointer flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
+    return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cursor-pointer flex flex-col items-center justify-between border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
                                 <div> 
                                     <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
                                 <div>
-                                    <img class="w-8 h-8" src="${dayMenuIcon}" alt="">
+                                    ${menuIconHTML}
                                 </div>
                             </div>`
 }
@@ -118,7 +123,7 @@ function loadMenu(day, month, year, allMenus) {
     // منوی قبلی را پاک می کنیم
     $("#menu-items-container").remove()
 
-    let requestedDate = toShamsiFormat({year:year, month:month, day:day})
+    let requestedDate = toShamsiFormat({year: year, month: month, day: day})
     let selectedMenu = allMenus.find(function (entry) {
         return entry.date === requestedDate;
     });
@@ -145,9 +150,9 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 //     اداری را در آن روز به نمایش بگذاریم
     for (let dayNumber = 1; dayNumber <= endDayOfMonth; dayNumber++) {
 
-        let dayCode = `cd-${dayNumber}-${startDayOfWeek % 8}`
+
         let dayNumberStyle = ""
-        let dayMenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+        let dayMenuIcon = false
 
         // در صورتی که روز تعطیل بود اون رو قرمز می کنیم
         if (holidays.includes(dayNumber)) {
@@ -157,17 +162,15 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
         // در صورتی که توسط اداری برای اون روز منو تعیین شده بود آن ایکن را
         // تغییر می دهیم
         if (daysWithMenu.includes(dayNumber)) {
-            dayMenuIcon = "https://www.svgrepo.com/show/390075/food-dish.svg"
+            dayMenuIcon = true
         }
 
+
+        newCalendarHTML += calendarDayBlock(dayNumberStyle, dayNumber, startDayOfWeek % 8, monthNumber, yearNumber, dayMenuIcon)
         startDayOfWeek++
         if (startDayOfWeek % 8 === 0) {
             startDayOfWeek++
-
         }
-
-        newCalendarHTML += calendarDayBlock(dayCode, dayNumberStyle, dayNumber, dayMenuIcon, monthNumber, yearNumber)
-
     }
     $("#dayBlocksWrapper").append(newCalendarHTML)
 
@@ -229,22 +232,58 @@ function loadAvailableItem() {
     });
 }
 
-function updateSelectedDate(month) {}
+function updateSelectedDate(month) {
+}
 
 function updateSelectedItems(month, year) {
     $.ajax({
-                url: `administrative/calendar/?year=${year}&month=${month}`,
-                method: 'GET',
-                dataType: 'json',
-                success: function (data) {
-                    selectedItems = data[1]["SelectedItems"]
-                    daysWithMenu = data[0]["daysWithMenu"]
+        url: `administrative/calendar/?year=${year}&month=${month}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            selectedItems = data[1]["SelectedItems"]
+            daysWithMenu = data[0]["daysWithMenu"]
 
-                },
-                error: function (xhr, status, error) {
-                    console.error('Selected Items cannot be updated!', status, 'and error:', error);
-                }
-            });
+        },
+        error: function (xhr, status, error) {
+            console.error('Selected Items cannot be updated!', status, 'and error:', error);
+        }
+    });
+}
+
+function changeMenuDate(dateTitle) {
+    $("#menu-date-wrapper").text(dateTitle)
+}
+
+function updateItemCounter(shamsiFormatDate) {
+
+}
+
+function updateSelectedDayOnCalendar(shamsiFormatDate) {
+    let selectedBG = "bg-sky-600"
+    let selectedText = "text-white"
+    let selectedHover = "hover:bg-gray-200"
+
+    //     ابتدا روز انتخاب شده قبلی رو استایلش رو تغییر می دهیم
+    let preSelected = $(`#dayBlocksWrapper div[data-date].${selectedBG}`)
+    preSelected.removeClass(`${selectedBG} ${selectedText}`)
+    preSelected.addClass(`${selectedHover}`)
+
+    let currentSelectedDayBlock = $(`#dayBlocksWrapper div[data-date="${shamsiFormatDate}"]`)
+    currentSelectedDayBlock.removeClass(`${selectedHover}`)
+    currentSelectedDayBlock.addClass(`${selectedBG} ${selectedText}`)
+
+}
+
+function selectDayOnCalendar(e) {
+    let selectedShamsiDate = e.attr("data-date")
+    let selectedShamsiDateTitle = e.attr("data-day-title")
+    updateSelectedDayOnCalendar(selectedShamsiDate)
+    changeMenuDate(selectedShamsiDateTitle)
+
+    // updateItemCounter()
+    // updateSelectedDate()
+    // loadMenu()
 }
 
 function getCurrentCalendarMonth() {
@@ -259,11 +298,7 @@ $(document).ready(function () {
         month: undefined,
         day: undefined
     }
-    let selectedDate = {
-        year: 1402,
-        month: 11,
-        day: 1
-    }
+    let selectedDate = undefined
     let personnelFullName = undefined
     let personnelProfileImg = undefined
     let firstDayOfWeek = undefined
@@ -290,6 +325,8 @@ $(document).ready(function () {
             currentDate.day = data["current_date"]["day"]
             currentDate.month = data["current_date"]["month"]
             currentDate.year = data["current_date"]["year"]
+
+            selectedDate = currentDate
 
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
@@ -323,6 +360,10 @@ $(document).ready(function () {
                         parseInt(requestedMonth),
                         parseInt(requestedYear)
                     )
+                    updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+                    // انتخاب کردن روز فعلی به عنوان پیشفرض
+                    let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
+                    selectDayOnCalendar(sd)
 
                     // منوی غذا امروز نیز نمایش داده میشود
                     // loadMenu(
@@ -395,5 +436,10 @@ $(document).ready(function () {
 
     });
 
+    $(document).on('click', '#dayBlocksWrapper div[data-date]', function () {
+        selectDayOnCalendar($(this))
+    })
+
 
 });
+
