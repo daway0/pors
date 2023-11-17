@@ -1,13 +1,10 @@
-import datetime
-from calendar import monthrange
-
-from jdatetime import GregorianToJalali
-from jdatetime import datetime as jdatetime
+import jdatetime
+from persiantools.jdatetime import JalaliDate
 
 
 def first_and_last_day_date(
     month: int, year: int
-) -> tuple[datetime.date, datetime.date]:
+) -> tuple[jdatetime.date, jdatetime.date]:
     """
     این تابع یک ابکجت دیت جلالی از روز اول و روز اخر تاریخ وارد شده
     بر می‌گرداند.
@@ -21,32 +18,21 @@ def first_and_last_day_date(
 
     """
 
-    #Todo convert year and month to gro
-    _, last_day = monthrange(year, month)
-    first_day_date = datetime.date(year, month, 1)
-    last_day_date = datetime.date(year, month, last_day)
-    jalali_first_day_date = (
-        jdatetime.fromgregorian(
-            year=first_day_date.year,
-            month=first_day_date.month,
-            day=first_day_date.day,
-        )
+    # Todo convert year and month to gro
+    print(month)
+    last_day_of_month = JalaliDate.days_in_month(month, year)
+    first_day_date = (
+        jdatetime.date(year, month, 1).strftime("%Y-%m-%d").replace("-", "/")
+    )
+    last_day_date = (
+        jdatetime.date(year, month, last_day_of_month)
         .strftime("%Y-%m-%d")
         .replace("-", "/")
     )
-    jalali_last_day_date = (
-        jdatetime.fromgregorian(
-            year=last_day_date.year,
-            month=last_day_date.month,
-            day=last_day_date.day,
-        )
-        .strftime("%Y-%m-%d")
-        .replace("-", "/")
-    )
-    return str(jalali_first_day_date), str(jalali_last_day_date)
+    return str(first_day_date), str(last_day_date)
 
 
-def get_weekend_holidays(year: int, month: int) -> list[datetime.date]:
+def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
     """
     این تابع مسئولیت حساب کردن تعطیلات اخر هفته را دارد.
 
@@ -57,16 +43,48 @@ def get_weekend_holidays(year: int, month: int) -> list[datetime.date]:
         holidays: لیستی از تعطیلات اخر خفته
     """
 
-    #Todo get last day of month in jalali date
-    _, last_day_of_month = monthrange(year, month)
+    # Todo get last day of month in jalali date
+    last_day_of_month = JalaliDate.days_in_month(month, year)
     holidays = []
     for daynum in range(1, last_day_of_month + 1):
-        daynum_date = datetime.date(year, month, daynum)
-        if daynum_date.weekday() in (3, 4):
-            holidays.append(daynum_date)
+        daynum_date = jdatetime.date(year, month, daynum)
+        if daynum_date.weekday() in (6, 5):
+            holidays.append(daynum_date.strftime("%Y/%m/%d").replace("-", "/"))
     return holidays
 
 
 def get_current_date() -> int:
-    now = jdatetime.now()
+    now = jdatetime.datetime.now()
     return now.year, now.month, now.day
+
+
+def replace_hyphens_from_date(*dates: str):
+    if len(dates) == 1:
+        return dates[0].replace("-", "/")
+    new_date = []
+    for date in dates:
+        new_date.append(date.replace("-", "/"))
+    return new_date
+
+
+def split_dates(dates, mode: str):
+    new_dates = []
+    match mode:
+        case "day":
+            if not isinstance(dates, list):
+                return dates.split("/")[2]
+            for date in dates:
+                new_dates.append(date.split("/")[2])
+            return new_dates
+        case "month":
+            if not isinstance(dates, list):
+                return dates.split("/")[1]
+            for date in dates:
+                new_dates.append(date.split("/")[1])
+            return new_dates
+        case "year":
+            if not isinstance(dates, list):
+                return dates.split("/")[0]
+            for date in dates:
+                new_dates.append(date.split("/")[0])
+            return new_dates
