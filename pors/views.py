@@ -21,13 +21,15 @@ from .serializers import (
     AddMenuItemSerializer,
     AvailableItemsSerializer,
     CategorySerializer,
+    CreateOrderItemSerializer,
+    CreateOrderSerializer,
     DayMenuSerializer,
     EdariFirstPageSerializer,
     OrderSerializer,
     RemoveMenuItemSerializer,
     SelectedItemSerializer,
 )
-from .utils import first_and_last_day_date, get_current_date
+from .utils import first_and_last_day_date, get_current_date, validate_date
 
 # Create your views here.
 
@@ -307,3 +309,28 @@ def edari_first_page(request):
         }
     ).initial_data
     return Response(serializer, status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def create_order(request):
+    # pas auth ...
+    personnel = ...
+    item = request.data.get("item")
+    date = request.data.get("date")
+    quantity = request.data.get("quantity")
+    if not item or date or quantity:
+        return Response(
+            "'item','date' and 'quantity' must specified.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+    date = validate_date(date)
+    order = Order.objects.filter(DeliveryDate=date, Personnel=personnel)
+    if not order:
+        order_serializer = CreateOrderSerializer(data=request.data)
+        if not order_serializer.is_valid():
+            return Response(
+                order_serializer.errors, status.HTTP_400_BAD_REQUEST
+            )
+    else:
+        CreateOrderItemSerializer(request.data)
+        ...

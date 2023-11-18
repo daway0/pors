@@ -216,6 +216,49 @@ class RemoveMenuItemSerializer(serializers.Serializer):
         m.DailyMenuItem.objects.get(AvailableDate=date, Item=item).delete()
 
 
+class CreateOrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.OrderItem
+        fields = ("OrderedItem", "Quantity", "PricePerOne", "Order")
+
+    # def create(self, validated_data):
+    #     validated_data.pop("PricePerOne", None)
+    #     validated_data.pop("Order", None)
+    #     instance = m.OrderItem.objects.create(**validated_data)
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    item = serializers.IntegerField()
+    personnel = serializers.CharField(max_length=250, source="Personnel")
+    date = serializers.CharField(max_length=10, source="DeliveryDate")
+    quantity = serializers.IntegerField()
+
+    def validate(self, data):
+        date = validate_date(data.get("DeliveryDate"))
+        if not date:
+            raise serializers.ValidationError("Invalid 'date' value.")
+        if not self._validate_item(date, data.get("item")):
+            raise serializers.ValidationError("Invalid 'item' value.")
+        return data
+
+    def _validate_item(self, date: str, item_id: int) -> bool:
+        is_item_available = m.DailyMenuItem.objects.select_related(
+            "Item"
+        ).filter(
+            Item__IsActive=True,
+            Item__id=item_id,
+            IsActive=True,
+            AvailableDate=date,
+        )
+        return bool(is_item_available)
+
+    def create(self, validated_data):
+        subsidy = m.Subsidy.objects.get(UntilDate__isnull=True).Amount
+        instance = m.Order.objects.create(**validated_data)
+        instance.AppliedSubsidy = subsidy
+        return instance
+
+
 # class EdariCalendarSchemaSerializer(serializers.Serializer):
 #     generalCalendar = serializers.SerializerMethodField()
 #     daysWithMenu = serializers.SerializerMethodField()
