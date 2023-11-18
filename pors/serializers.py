@@ -185,7 +185,6 @@ class AddMenuItemSerializer(serializers.Serializer):
         return m.DailyMenuItem.objects.create(**validated_data)
 
 
-
 class RemoveMenuItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="Item")
     date = serializers.CharField(max_length=10, source="AvailableDate")
@@ -200,6 +199,14 @@ class RemoveMenuItemSerializer(serializers.Serializer):
         if not instance:
             raise serializers.ValidationError(
                 "Item not exists in provided date"
+            )
+        orders = m.OrderItem.objects.select_related("Order").filter(
+            Order__DeliveryDate=data["AvailableDate"], OrderedItem=data["Item"]
+        )
+        if orders:
+            raise serializers.ValidationError(
+                "This item is not eligable for deleting, an order has already"
+                " owned this item."
             )
         return data
 

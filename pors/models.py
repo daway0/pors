@@ -203,80 +203,90 @@ class DailyMenuItem(models.Model):
     @property
     def AvailableDay(self): ...
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["AvailableDate", "Item"],
+                name="unique_AvailableDate_Item",
+            )
+        ]
 
-# class ActionLog(models.Model):
-#     """لاگ هر عملی که در این سیستم انجام شود در این جدول ذخیره  می شود
-#     اکشن ها قابل توسعه هستند
-#
-#     --------------------------
-#      برای مثال فرض کنیم که برای تعداد غذا های قابل سفارش در یک روز محدودیت
-#      بگذاریم. مثلا 80 تا جوجه و 240 تا کوبیده
-#
-#      در صورتی که اداری تصمیم بگیرد ظرفیت غذا ها را تغییر دهد عملی به نام
-#      تغییر ظرفیت غذا تعریف می شود به شرح زیر
-#
-#
-#      CHANGE_FOOD_LIMITATION = "CFL", "CHANGE FOOD LIMITATION"
-#
-#      در ویوو مربوط هنگام عوض کردن STATE (دیتا) باید لاگ به صورت زیر ذخیره کنند
-#
-#      ActionLog.objects.create(
-#         User= AuthenticatedUser,
-#         ActionCode= ObjectChoices.CHANGE_FOOD_LIMITATION,
-#         ActionDesc= "ظرفیت جوجه برای روز 1402/08/15 از 80 به 180 تغییر کرد"
-#         AdminActionReason= "طی تماس با رستوران افزایش ظرفیت اعمال شد"
-#      )
-#
-#      --------------------------
-#     درباره ActionDesc: توضیح اصلی که  هنگام رخداد این عمل/ این عمل چه
-#     دیتایی تغییر کرده است یا به صورت کلی چه اتفاقی افتاده است به صورت کاملا
-#     شفاف باید بیان شود و طراحی ساختار پیام به عهده توسعه دهنده است
-#
-#     --------------------------
-#     درباره AdminActionReason: سیستم, مخصوصا  سیستم ثبت / لغو و تغییر سفارش
-#     به گونه ای طراحی شده است تا نیازی به دخالت ادمین در این روند نباشد. در
-#     صورتی که به هر طریقی ادمین (اداری و یا تیم سامانه های ستادی) در این
-#     روند تغییری ایجاد کرده و یابه نحوی دخالت کنند باید دلیل این امر به صورت
-#     شفاف در این فیلد ذکر شود
-#
-#     نکته مهم درباره فیلد AdminActionReason این است که  اجبار برای مقدار گرفتن
-#     این فیلد در سطح دیتابیس صورت نمی گیرد(null=True) و توسعه دهنده باید آن را
-#     هندل کند(هر جا که ادمین در حال اعمال تغییر بود باید این فیلد required شود)
-#
-#     --------------------------
-#     به صورت خلاصه کنار اکشن هایی که نیاز است در صورت تغییر آن توسط ادمین
-#     دلیل آن نیز (AdminActionReason)ثبت شود نوشته REASON_REQUIRED کامنت شده است
-#
-#
-#     """
-#
-#     class ActionType(models.TextChoices):
-#         # crud
-#         ...
-#
-#     # class ActionChoices(models.TextChoices):
-#     #     ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
-#     #     ORDER_MODIFICATION = (
-#     #         "ORDER_MODIFICATION",
-#     #         "تغییر سفارش",
-#     #     )  # REASON_REQUIRED
-#     #
-#     #     # DELETE = "DEL", "DELETE"
-#     #     # UPDATE = "UPT", "UPDATE"
-#     #     # CANCEL = "CN", "CANCEL"
-#     #     # EMAIL_TO_SUPER_ADMIN = ""
-#     #     # EMAIL_TO_ADMIN = ""
-#
-#     ActionAt = models.DateTimeField(auto_now_add=True)
-#
-#     # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
-#     # به صورت "SYSTEM" ثبت شود
-#     User = models.CharField(max_length=250)
-#     TabelName = models.CharField(max_length=50)
-#     ReferencedRecordId = models.PositiveIntegerField()
-#     ActionType = models.CharField(choices=ActionType.choices)
-#
-#     ActionDesc = models.CharField(max_length=1000)
-#     AdminActionReason = models.TextField(null=True)  # combo
-#     OldData = models.JSONField(...)
-#     NewData = models.JSONField(...)
+
+class ActionLog(models.Model):
+    """لاگ هر عملی که در این سیستم انجام شود در این جدول ذخیره  می شود
+    اکشن ها قابل توسعه هستند
+
+    --------------------------
+     برای مثال فرض کنیم که برای تعداد غذا های قابل سفارش در یک روز محدودیت
+     بگذاریم. مثلا 80 تا جوجه و 240 تا کوبیده
+
+     در صورتی که اداری تصمیم بگیرد ظرفیت غذا ها را تغییر دهد عملی به نام
+     تغییر ظرفیت غذا تعریف می شود به شرح زیر
+
+
+     CHANGE_FOOD_LIMITATION = "CFL", "CHANGE FOOD LIMITATION"
+
+     در ویوو مربوط هنگام عوض کردن STATE (دیتا) باید لاگ به صورت زیر ذخیره کنند
+
+     ActionLog.objects.create(
+        User= AuthenticatedUser,
+        ActionCode= ObjectChoices.CHANGE_FOOD_LIMITATION,
+        ActionDesc= "ظرفیت جوجه برای روز 1402/08/15 از 80 به 180 تغییر کرد"
+        AdminActionReason= "طی تماس با رستوران افزایش ظرفیت اعمال شد"
+     )
+
+     --------------------------
+    درباره ActionDesc: توضیح اصلی که  هنگام رخداد این عمل/ این عمل چه
+    دیتایی تغییر کرده است یا به صورت کلی چه اتفاقی افتاده است به صورت کاملا
+    شفاف باید بیان شود و طراحی ساختار پیام به عهده توسعه دهنده است
+
+    --------------------------
+    درباره AdminActionReason: سیستم, مخصوصا  سیستم ثبت / لغو و تغییر سفارش
+    به گونه ای طراحی شده است تا نیازی به دخالت ادمین در این روند نباشد. در
+    صورتی که به هر طریقی ادمین (اداری و یا تیم سامانه های ستادی) در این
+    روند تغییری ایجاد کرده و یابه نحوی دخالت کنند باید دلیل این امر به صورت
+    شفاف در این فیلد ذکر شود
+
+    نکته مهم درباره فیلد AdminActionReason این است که  اجبار برای مقدار گرفتن
+    این فیلد در سطح دیتابیس صورت نمی گیرد(null=True) و توسعه دهنده باید آن را
+    هندل کند(هر جا که ادمین در حال اعمال تغییر بود باید این فیلد required شود)
+
+    --------------------------
+    به صورت خلاصه کنار اکشن هایی که نیاز است در صورت تغییر آن توسط ادمین
+    دلیل آن نیز (AdminActionReason)ثبت شود نوشته REASON_REQUIRED کامنت شده است
+
+
+    """
+
+    class ActionType(models.TextChoices):
+        CREATE = "CREATE" "ساختن"
+        READ = "READ" "خواندن"
+        UPDATE = "UPDATE" "بروز رسانی"
+        DELETE = "پاک کردن"
+
+    # class ActionChoices(models.TextChoices):
+    #     ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
+    #     ORDER_MODIFICATION = (
+    #         "ORDER_MODIFICATION",
+    #         "تغییر سفارش",
+    #     )  # REASON_REQUIRED
+    #
+    #     # DELETE = "DEL", "DELETE"
+    #     # UPDATE = "UPT", "UPDATE"
+    #     # CANCEL = "CN", "CANCEL"
+    #     # EMAIL_TO_SUPER_ADMIN = ""
+    #     # EMAIL_TO_ADMIN = ""
+
+    ActionAt = models.DateTimeField(auto_now_add=True)
+
+    # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
+    # به صورت "SYSTEM" ثبت شود
+    User = models.CharField(max_length=250)
+    TabelName = models.CharField(max_length=50)
+    ReferencedRecordId = models.PositiveIntegerField()
+    ActionType = models.CharField(choices=ActionType.choices)
+
+    ActionDesc = models.CharField(max_length=1000)
+    AdminActionReason = models.TextField(null=True)  # combo
+    OldData = models.JSONField(...)
+    # NewData = models.JSONField(...)
