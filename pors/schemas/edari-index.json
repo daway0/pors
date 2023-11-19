@@ -13,24 +13,35 @@
         16,
         19
     ],
-    "days_with_menu": [
-        2,
-        5,
-        16,
-        19
+    "daysWithMenu": [
+        {
+            "day": 2,
+            "ordersNumber":261
+        },
+        {
+            "day": 5,
+            "ordersNumber":261
+        }
     ],
     // general calendar end
+
     "selectedItems": [
         {
-            "date": "2023/1/1",
+            "date": "1402/01/01",
             "items": [
                 1,
                 5,
-                6
+                6,
+                {
+                    "id": 7,
+                    "allowToRemoveMenuItems": true,
+                    "orderedBy": 21
+
+                }
             ]
         },
         {
-            "date": "2023/1/2",
+            "date": "1402/01/02",
             "items": [
                 2,
                 6,
@@ -41,15 +52,20 @@
 }
 
 // list of available items and detailed information
-{
-    "availableItems": [
-        {
-            "id": 1,
-            "name": "jooje",
-            "img": "something",
-        }
-    ]
-}
+
+     [
+         {
+        "id": 1,
+        "itemName": "غم بر پلوی شیرازی",
+        "image": "https://api.snappfood.biz/api/files/food/1630495057.jpeg"
+    },
+    {
+        "id": 2,
+        "itemName": "شیرین قاتق گیلانی",
+        "image": "https://api.snappfood.biz/api/files/food/1630495122.jpeg"
+    }
+     ]
+
 
 // updating calendar days if day is eligable for operations
 "1": [

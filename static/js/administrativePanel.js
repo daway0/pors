@@ -102,6 +102,7 @@ function zfill(number, width) {
 }
 
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu) {
+    let opacity = ""
     let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
@@ -113,14 +114,21 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
         day: dayNumber
     })
 
+    if (date < toShamsiFormat(currentDate)){
+        opacity = "opacity-50"
+    }
+
+
+
     let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
 
-    return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cd- cursor-pointer flex flex-col items-center justify-around border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
+    return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cd- ${opacity} cursor-pointer flex flex-col items-center justify-around border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
                                 <div> 
                                     <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
-                                <div class="w-8 h-8">
+                                <div class="w-8 h-8 flex flex-col">
                                     ${menuIconHTML}
+                                    <span class="text-sm text-slate-500 self-center">${convertToPersianNumber(241)}</span>
                                 </div>
                             </div>`
 }

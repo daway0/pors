@@ -79,12 +79,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -100,20 +100,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'Pors2',
-        'USER': 'sa',
-        'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
-        'HOST': 'finn.iran.liara.ir',
-        'PORT': '30919',
-
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    },
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'Pors2',
+#         'USER': 'sa',
+#         'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
+#         'HOST': 'finn.iran.liara.ir',
+#         'PORT': '30919',
+#
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 17 for SQL Server',
+#         },
+#     },
+# }
 
 
 # Password validation
@@ -157,6 +157,3 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Is the food app open for submiting orders.
-OPEN_FOR_PERSONNEL = True
-OPEN_FOR_ADMINISTRATIVE = True

@@ -1,4 +1,4 @@
-from django.conf import settings
+from .config import OPEN_FOR_ADMINISTRATIVE
 from django.db.models import (
     Case,
     ExpressionWrapper,
@@ -295,7 +295,7 @@ def edari_calendar(request):
 @api_view(["GET"])
 def edari_first_page(request):
     # ... past auth
-    is_open = settings.OPEN_FOR_ADMINISTRATIVE
+    is_open = OPEN_FOR_ADMINISTRATIVE
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
     year, month, day = get_current_date()

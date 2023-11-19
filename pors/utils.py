@@ -1,8 +1,8 @@
 import re
 
 import jdatetime
-from persiantools.jdatetime import JalaliDate
-
+from persiantools.jdatetime import JalaliDate, timedelta
+from .config import ORDER_REGISTRATION_CLOSED_IN
 
 def first_and_last_day_date(
     month: int, year: int
@@ -55,10 +55,19 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
     return holidays
 
 
-def get_current_date() -> int:
+def get_current_date() -> tuple[int]:
+    """
+    #todo
+    حتما باید داک داشته باشه
+    """
     now = jdatetime.datetime.now()
-    return now.year, now.month, now.day
 
+    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
+        now += timedelta(days=2)
+    else:
+        now += timedelta(days=1)
+    # return now.year, now.month, now.day
+    return 1402,8,16
 
 def replace_hyphens_from_date(*dates: str):
     if len(dates) == 1:
