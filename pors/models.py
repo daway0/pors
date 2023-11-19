@@ -137,15 +137,15 @@ class Item(models.Model):
         return self.ItemName
 
 
-# class Order(models.Model):
-#     class Meta:
-#         managed = False
-#
-#     Personnel = models.CharField(max_length=250)
-#     DeliveryDate = models.CharField(max_length=10)
-#     AppliedSubsidy = models.PositiveIntegerField()
-#     TotalPrice = models.PositiveIntegerField()
-#     Debt = models.IntegerField()
+class Order(models.Model):
+    class Meta:
+        managed = False
+
+    Personnel = models.CharField(max_length=250)
+    DeliveryDate = models.CharField(max_length=10)
+    AppliedSubsidy = models.PositiveIntegerField()
+    TotalPrice = models.PositiveIntegerField()
+    Debt = models.IntegerField()
 
 
 class OrderItem(models.Model):
