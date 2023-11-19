@@ -73,9 +73,9 @@ function extractIds(items) {
 }
 
 function filterObjectsById(inputArray, idList) {
-  return inputArray.filter(function(object) {
-    return idList.includes(object.id);
-  });
+    return inputArray.filter(function (object) {
+        return idList.includes(object.id);
+    });
 }
 
 function toObjectFormat(shamsiDate) {
@@ -114,10 +114,9 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
         day: dayNumber
     })
 
-    if (date < toShamsiFormat(currentDate)){
+    if (date < toShamsiFormat(currentDate)) {
         opacity = "opacity-50"
     }
-
 
 
     let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
@@ -245,9 +244,12 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
         }
     }
     $("#dayBlocksWrapper").append(newCalendarHTML)
+    $("#dayBlocksWrapper").attr("data-month", monthNumber)
+    $("#dayBlocksWrapper").attr("data-year", yearNumber)
 
 
 }
+
 
 function displaySystemIsNotAvailable() {
     $("#system-is-not-available").removeClass("hidden")
@@ -322,7 +324,7 @@ function changeMenuDate(dateTitle) {
 
 function updateItemsCounter() {
     let len = $("#menu-items-container li").length
-    $("#menu-items-counter").text(len)
+    $("#menu-items-counter").text(convertToPersianNumber(len))
 }
 
 function updateHasMenuCalendarDayBlock() {
@@ -387,20 +389,39 @@ function selectDayOnCalendar(e) {
 }
 
 function preItemsImageLoader() {
-    let imageLinks= availableItems.map(function (item) {
+    let imageLinks = availableItems.map(function (item) {
         return item.image;
     });
 
-    $.each(imageLinks, function(index, link) {
-      // Create an <img> element for each image link
-      let imgElement = $('<img>').attr('src', link);
+    $.each(imageLinks, function (index, link) {
+        // Create an <img> element for each image link
+        let imgElement = $('<img>').attr('src', link);
 
-      // Append the <img> element to the container
-      $('#dump-image-container').append(imgElement);
+        // Append the <img> element to the container
+        $('#dump-image-container').append(imgElement);
     });
 }
 
+function updateDropdownCalendarMonth() {
+    // این تابع بعد از makeCalendar کال شه چرا که با کال شدن تابع مذکور
+    // dayBlocksWrapper دارای دیتای ماه میشه
+
+
+    //  نمایش ماه قبلی رو متوقف می کنیم
+    $("#calSelectedMonth option:selected").removeAttr("selected")
+
+    let currentMonth = $("#dayBlocksWrapper").attr("data-month")
+
+    $(`#calSelectedMonth option[value="${currentMonth}"]`).prop("selected",true)
+
+
+}
+
 function getCurrentCalendarMonth() {
+    return $("#dayBlocksWrapper").attr("data-month")
+}
+
+function getSelectedCalendarMonthDropdown() {
     return $("#calSelectedMonth option:selected").attr("value")
 }
 
@@ -460,11 +481,11 @@ $(document).ready(function () {
                         parseInt(requestedMonth),
                         parseInt(requestedYear)
                     )
+                    updateDropdownCalendarMonth()
                     updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
                     // انتخاب کردن روز فعلی به عنوان پیشفرض
                     let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
                     selectDayOnCalendar(sd)
-
 
 
                     // منوی غذا امروز نیز نمایش داده میشود
@@ -553,8 +574,58 @@ $(document).ready(function () {
         selectDayOnCalendar($(this))
     })
 
+    $(document).on('click', '#system-today', function () {
+
+        let currentCalendarMonthNumber = parseInt(getCurrentCalendarMonth())
+
+        if (currentDate.month !== currentCalendarMonthNumber) {
+            $.ajax({
+                url: `administrative/calendar/?year=1402&month=${currentDate.month}`,
+                method: 'GET',
+                dataType: 'json',
+
+                success: function (data) {
+                    firstDayOfWeek = data[0]["firstDayOfWeek"]
+                    lastDayOfMonth = data[0]["lastDayOfMonth"]
+                    holidays = data[0]["holidays"]
+                    daysWithMenu = data[0]["daysWithMenu"]
+                    selectedItems = data[1]["selectedItems"]
+                    makeCalendar(
+                        parseInt(firstDayOfWeek),
+                        parseInt(lastDayOfMonth),
+                        holidays,
+                        daysWithMenu,
+                        currentDate.month,
+                        1402
+                    )
+                    updateDropdownCalendarMonth()
+                    // بعد از اینکه تغییر تقویم صورت میگیرد باید بلاک روز
+                    // فعلی گرفته شود
+                    let systemToday = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(currentDate)}"]`)
+                    selectDayOnCalendar(systemToday)
+                    updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Item not removed!', status, 'and error:', error);
+                }
+            });
+        } else {
+            // بعد از اینکه تغییر تقویم صورت میگیرد باید بلاک روز
+            // فعلی گرفته شود
+            let systemToday = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(currentDate)}"]`)
+            selectDayOnCalendar(systemToday)
+            updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+
+
+        }
+
+
+    })
+
     $(document).on('change', '#calSelectedMonth', function () {
-        let monthNumber = getCurrentCalendarMonth()
+        // تغییر دادن ماه تقویم
+        let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
             url: `administrative/calendar/?year=1402&month=${monthNumber}`,
             method: 'GET',

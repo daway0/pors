@@ -66,8 +66,7 @@ def get_current_date() -> tuple[int]:
         now += timedelta(days=2)
     else:
         now += timedelta(days=1)
-    # return now.year, now.month, now.day
-    return 1402,8,16
+    return now.year, now.month, now.day
 
 def replace_hyphens_from_date(*dates: str):
     if len(dates) == 1:
