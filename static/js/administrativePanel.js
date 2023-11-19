@@ -266,18 +266,6 @@ function removeItemFromMenu(id) {
     updateAvailableItemForThisDay()
 }
 
-function removeItemFromAvailableItems(id) {
-    $(`#dropdown-menu a[data-item-id='${id}']`).remove();
-
-}
-
-function addItemToAvailableItems(id) {
-    let selectedItem = availableItems.find(item => item.id == id);
-    $("#dropdown-menu").append(
-        dropDownItemBlock(id, selectedItem.itemName)
-    )
-}
-
 function loadAvailableItem() {
     // آیتم های قبل را پاک می کنیم
     $("#dropdown-menu a").remove();
@@ -578,6 +566,7 @@ $(document).ready(function () {
                     monthNumber,
                     1402
                 )
+                updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error);
