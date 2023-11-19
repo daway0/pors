@@ -137,27 +137,23 @@ class Item(models.Model):
         return self.ItemName
 
 
-class Order(models.Model):
-    Personnel = models.CharField(max_length=250)
-    DeliveryDate = models.CharField(max_length=10)
-    IsDeleted = models.BooleanField(
-        default=True, help_text="IsDeleted?(Soft Delete)"
-    )
-    AppliedSubsidy = models.PositiveIntegerField()
-
-    @property
-    def get_data(self):
-        """برای اینکه ویرایش یک سفارش را به صورت لاگ در دیتابیس ثبت کنیم
-        نیاز داریم تا اطلاعات قبل و بعد از اصللاح را داشته باشیم بنابراین
-        از این برای دریافت دیتا به صورت json برای ثبت در لاگ استفاده می کنیم"""
-        ...
+# class Order(models.Model):
+#     class Meta:
+#         managed = False
+#
+#     Personnel = models.CharField(max_length=250)
+#     DeliveryDate = models.CharField(max_length=10)
+#     AppliedSubsidy = models.PositiveIntegerField()
+#     TotalPrice = models.PositiveIntegerField()
+#     Debt = models.IntegerField()
 
 
 class OrderItem(models.Model):
+    Personnel = models.CharField(max_length=250)
+    DeliveryDate = models.CharField(max_length=10)
     OrderedItem = models.ForeignKey(Item, on_delete=models.CASCADE)
     Quantity = models.PositiveSmallIntegerField(default=1)
     PricePerOne = models.PositiveIntegerField()
-    Order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
     class Meta:
         models.UniqueConstraint(
@@ -258,35 +254,35 @@ class ActionLog(models.Model):
 
     """
 
-    class ActionType(models.TextChoices):
-        CREATE = "CREATE" "ساختن"
-        READ = "READ" "خواندن"
-        UPDATE = "UPDATE" "بروز رسانی"
-        DELETE = "پاک کردن"
-
-    # class ActionChoices(models.TextChoices):
-    #     ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
-    #     ORDER_MODIFICATION = (
-    #         "ORDER_MODIFICATION",
-    #         "تغییر سفارش",
-    #     )  # REASON_REQUIRED
+    # class ActionType(models.TextChoices):
+    #     CREATE = "CREATE" "ساختن"
+    #     READ = "READ" "خواندن"
+    #     UPDATE = "UPDATE" "بروز رسانی"
+    #     DELETE = "پاک کردن"
     #
-    #     # DELETE = "DEL", "DELETE"
-    #     # UPDATE = "UPT", "UPDATE"
-    #     # CANCEL = "CN", "CANCEL"
-    #     # EMAIL_TO_SUPER_ADMIN = ""
-    #     # EMAIL_TO_ADMIN = ""
-
-    ActionAt = models.DateTimeField(auto_now_add=True)
-
-    # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
-    # به صورت "SYSTEM" ثبت شود
-    User = models.CharField(max_length=250)
-    TabelName = models.CharField(max_length=50)
-    ReferencedRecordId = models.PositiveIntegerField()
-    ActionType = models.CharField(choices=ActionType.choices)
-
-    ActionDesc = models.CharField(max_length=1000)
-    AdminActionReason = models.TextField(null=True)  # combo
-    OldData = models.JSONField(...)
-    # NewData = models.JSONField(...)
+    # # class ActionChoices(models.TextChoices):
+    # #     ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
+    # #     ORDER_MODIFICATION = (
+    # #         "ORDER_MODIFICATION",
+    # #         "تغییر سفارش",
+    # #     )  # REASON_REQUIRED
+    # #
+    # #     # DELETE = "DEL", "DELETE"
+    # #     # UPDATE = "UPT", "UPDATE"
+    # #     # CANCEL = "CN", "CANCEL"
+    # #     # EMAIL_TO_SUPER_ADMIN = ""
+    # #     # EMAIL_TO_ADMIN = ""
+    #
+    # ActionAt = models.DateTimeField(auto_now_add=True)
+    #
+    # # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
+    # # به صورت "SYSTEM" ثبت شود
+    # User = models.CharField(max_length=250)
+    # TabelName = models.CharField(max_length=50)
+    # ReferencedRecordId = models.PositiveIntegerField()
+    # ActionType = models.CharField(choices=ActionType.choices)
+    #
+    # ActionDesc = models.CharField(max_length=1000)
+    # AdminActionReason = models.TextField(null=True)  # combo
+    # OldData = models.JSONField(...)
+    # # NewData = models.JSONField(...)

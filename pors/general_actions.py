@@ -1,7 +1,7 @@
 import jdatetime
 from persiantools.jdatetime import JalaliDate
 
-from .models import DailyMenuItem, Holiday, Order
+from .models import DailyMenuItem, Holiday
 from .serializers import (
     DaysWithMenuSerializer,
     GeneralCalendarSerializer,

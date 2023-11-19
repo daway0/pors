@@ -79,12 +79,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -100,20 +100,20 @@ DATABASES = {
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'mssql',
-#         'NAME': 'pors2',
-#         'USER': 'sa',
-#         'PASSWORD': '0WhhChRPId0OP61vfkwg5v77',
-#         'HOST': 'robin.iran.liara.ir',
-#         'PORT': '34741',
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'pors2',
+        'USER': 'sa',
+        'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
+        'HOST': 'finn.iran.liara.ir',
+        'PORT': '30919',
 
-#         'OPTIONS': {
-#             'driver': 'ODBC Driver 17 for SQL Server',
-#         },
-#     },
-# }
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
+    },
+}
 
 
 # Password validation
