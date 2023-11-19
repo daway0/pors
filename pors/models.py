@@ -140,12 +140,13 @@ class Item(models.Model):
 class Order(models.Model):
     class Meta:
         managed = False
+        db_table = "Order"
 
     Personnel = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
-    AppliedSubsidy = models.PositiveIntegerField()
+    SubsidyAmount = models.PositiveIntegerField()
     TotalPrice = models.PositiveIntegerField()
-    Debt = models.IntegerField()
+    PersonnelDebt = models.PositiveIntegerField()
 
 
 class OrderItem(models.Model):
