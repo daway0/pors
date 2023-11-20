@@ -71,7 +71,6 @@ def get_first_orderable_date() -> tuple[int, int, int]:
         now += timedelta(days=1)
     return now.year, now.month, now.day
 
-
 def replace_hyphens_from_date(*dates: str):
     if len(dates) == 1:
         return dates[0].replace("-", "/")
