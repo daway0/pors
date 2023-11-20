@@ -32,7 +32,7 @@ def get_general_calendar(year: int, month: int):
     holidays_serializer.sort()
     splited_holidays = split_dates(holidays_serializer, mode="day")
     days_with_menu = ItemsOrdersPerDay.objects.filter(
-        Date__range=["1402/00/00", "1403/00/00"]
+        Date__range=[first_day_date, last_day_date]
     ).values("Date").annotate(TotalOrders=Sum("TotalOrders"))
     days_with_menu_serializer = DayWithMenuSerializer(
         days_with_menu, many=True
