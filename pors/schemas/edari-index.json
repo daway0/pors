@@ -29,23 +29,31 @@
         {
             "date": "1402/01/01",
             "items": [
-                1,
-                5,
-                6,
                 {
-                    "id": 7,
+                    "id": 1,
                     "allowToRemoveMenuItems": true,
-                    "orderedBy": 21
-
-                }
+                    "orderedBy": 0
+                },
+                {
+                   "id": 7,
+                   "allowToRemoveMenuItems": false,
+                   "orderedBy": 21
+               }
             ]
         },
         {
             "date": "1402/01/02",
             "items": [
-                2,
-                6,
-                7
+                {
+                    "id": 1,
+                    "allowToRemoveMenuItems": true,
+                    "orderedBy": 0
+                },
+                {
+                   "id": 7,
+                   "allowToRemoveMenuItems": false,
+                   "orderedBy": 21
+               }
             ]
         }
     ]

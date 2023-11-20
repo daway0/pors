@@ -79,6 +79,17 @@ class HolidaySerializer(serializers.Serializer):
         return result
 
 
+class ItemOrderSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source="Item")
+    allowToRemoveMenuItems = serializers.SerializerMethodField()
+    orderedBy = serializers.IntegerField(source="TotalOrders")
+
+    def get_allowToRemoveMenuItems(self, obj):
+        if obj.TotalOrders > 0:
+            return False
+        return True
+
+
 class SelectedItemsBasedOnDaySerializer(serializers.Serializer):
     date = serializers.CharField(max_length=10)
     items = serializers.ListField()
@@ -89,16 +100,21 @@ class SelectedItemSerializer(serializers.Serializer):
 
     def get_selectedItems(self, obj):
         result = []
-        for item in obj:
-            result.append(
-                SelectedItemsBasedOnDaySerializer(
-                    data={
-                        "date": item.get("date"),
-                        "items": item.get("items"),
-                    },
-                    many=True,
-                ).initial_data
-            )
+        current_date_obj = {}
+        # current_date_obj["items"] = []
+        for object in obj:
+            serializer = ItemOrderSerializer(
+                data={"id": object.Item, "orderedBy": object.TotalOrders},
+            ).initial_data
+            if current_date_obj.get("date") == object.Date:
+                current_date_obj["items"].append(serializer)
+            else:
+                result.append(current_date_obj)
+                current_date_obj = {}
+                current_date_obj["date"] = object.Date
+                current_date_obj["items"] = []
+                current_date_obj["items"].append(serializer)
+
         return result
 
 
@@ -153,8 +169,8 @@ class EdariFirstPageSerializer(serializers.Serializer):
 
 
 class DayWithMenuSerializer(serializers.Serializer):
-    day = serializers.CharField(source="AvailableDate")
-    ordersNumber = serializers.IntegerField(source="items")
+    day = serializers.CharField(source="Date")
+    ordersNumber = serializers.IntegerField(source="TotalOrders")
 
 
 class AddMenuItemSerializer(serializers.Serializer):
@@ -178,7 +194,6 @@ class AddMenuItemSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return m.DailyMenuItem.objects.create(**validated_data)
-
 
 
 class CreateOrderItemSerializer(serializers.ModelSerializer):

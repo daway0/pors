@@ -1,4 +1,4 @@
-select dmi.AvailableDate, dmi.Item_id Item, count(*) OrderNumber
-from pors_orderitem oi
-inner join pors_dailymenuitem dmi on dmi.AvailableDate = oi.DeliveryDate and dmi.Item_id = oi.OrderedItem_id
-group by dmi.AvailableDate, dmi.Item_id
+SELECT        dmi.AvailableDate AS Date, dmi.Item_id AS Item, COUNT(*) AS TotalOrders
+FROM            dbo.pors_orderitem AS oi INNER JOIN
+                         dbo.pors_dailymenuitem AS dmi ON dmi.AvailableDate = oi.DeliveryDate AND dmi.Item_id = oi.OrderedItem_id
+GROUP BY dmi.AvailableDate, dmi.Item_id
