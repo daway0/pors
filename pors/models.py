@@ -142,6 +142,7 @@ class Order(models.Model):
         managed = False
         db_table = "Order"
 
+    Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
     SubsidyAmount = models.PositiveIntegerField()
@@ -160,6 +161,16 @@ class OrderItem(models.Model):
         models.UniqueConstraint(
             fields=["OrderedItem", "Order"], name="unique_ordered_item_order"
         )
+
+
+class ItemsOrdersPerDay(models.Model):
+    class Meta:
+        managed = False
+        db_table = "ItemsOrdersPerDay"
+
+    Item = models.PositiveIntegerField(primary_key=True)
+    Date = models.CharField(max_length=10)
+    TotalOrders = models.PositiveIntegerField()
 
 
 class ItemPriceHistory(models.Model):

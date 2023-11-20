@@ -142,7 +142,7 @@ class GeneralCalendarSerializer(serializers.Serializer):
     firstDayOfWeek = serializers.IntegerField()
     lastDayOfMonth = serializers.IntegerField()
     holidays = serializers.ListField()
-    daysWithMenu = serializers.DictField()
+    daysWithMenu = serializers.ListField()
 
 
 class EdariFirstPageSerializer(serializers.Serializer):

@@ -106,7 +106,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'Pors2',
+        'NAME': 'PersonnelService',
         'USER': 'sa',
         'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
         'HOST': 'finn.iran.liara.ir',
