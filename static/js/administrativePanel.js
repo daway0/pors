@@ -61,6 +61,12 @@ function convertToPersianNumber(englishNumber) {
     return persianNumberArray.join('');
 }
 
+
+function getOrdersNumberForDay(day, ordersList) {
+    let order = ordersList.find(order => order.day === day);
+    return order ? order.ordersNumber : undefined;
+}
+
 function toShamsiFormat(dateobj) {
     // 1402/08/09
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
@@ -101,8 +107,9 @@ function zfill(number, width) {
     return numberString;
 }
 
-function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu) {
+function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, orderedByCounter) {
     let opacity = ""
+    let orderedBy = ""
     let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
@@ -118,6 +125,10 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
         opacity = "opacity-50"
     }
 
+    if (orderedByCounter > 0 && hasMenu){
+        orderedBy = `<span class="text-sm text-slate-500 self-center">${convertToPersianNumber(orderedByCounter)}</span>`
+    }
+
 
     let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
 
@@ -127,7 +138,8 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
                                 </div>
                                 <div class="w-8 h-8 flex flex-col">
                                     ${menuIconHTML}
-                                    <span class="text-sm text-slate-500 self-center">${convertToPersianNumber(241)}</span>
+                                    ${orderedBy}
+                                    
                                 </div>
                             </div>`
 }
@@ -193,7 +205,7 @@ function loadMenu(day, month, year) {
 
     // حالا باید آیتم هارو بگیریم
     if (selectedMenu !== undefined) {
-        let menuHTML = makeSelectedMenu(selectedMenu.items)
+        let menuHTML = makeSelectedMenu(extractIds(selectedMenu.items))
         $("#menu-items-container").append(menuHTML)
     }
 
@@ -219,7 +231,7 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 //     اداری را در آن روز به نمایش بگذاریم
     for (let dayNumber = 1; dayNumber <= endDayOfMonth; dayNumber++) {
 
-
+        let orderedBy = 0
         let dayNumberStyle = ""
         let dayMenuIcon = false
 
@@ -230,12 +242,21 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 
         // در صورتی که توسط اداری برای اون روز منو تعیین شده بود آن ایکن را
         // تغییر می دهیم
-        if (daysWithMenu.includes(dayNumber)) {
+
+
+        let daysWithMenuDaysNumber = daysWithMenu.map(function (item) {
+        return item.day;
+    });
+
+
+
+        if (daysWithMenuDaysNumber.includes(dayNumber)) {
             dayMenuIcon = true
+            orderedBy = getOrdersNumberForDay(dayNumber, daysWithMenu)
         }
 
 
-        newCalendarHTML += calendarDayBlock(dayNumberStyle, dayNumber, startDayOfWeek % 8, monthNumber, yearNumber, dayMenuIcon)
+        newCalendarHTML += calendarDayBlock(dayNumberStyle, dayNumber, startDayOfWeek % 8, monthNumber, yearNumber, dayMenuIcon,orderedBy)
 
 
         startDayOfWeek++
