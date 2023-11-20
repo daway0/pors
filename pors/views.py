@@ -265,30 +265,6 @@ def edari_calendar(request):
         return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
     first_day_date, last_day_date = first_and_last_day_date(month, year)
     general_calendar = get_general_calendar(year, month)
-    # days_with_menu = (
-    #     DailyMenuItem.objects.filter(
-    #         AvailableDate__range=(first_day_date, last_day_date), IsActive=True
-    #     )
-    #     .values("AvailableDate", "Item__id")
-    #     .order_by("AvailableDate")
-    # )
-    # selected_item = {}
-    # selected_items = []
-    # for item in days_with_menu:
-    #     if item["AvailableDate"] in selected_item.values():
-    #         selected_item["items"].append(item["Item__id"])
-    #         selected_items.pop()
-    #         selected_items.append(selected_item)
-    #         continue
-    #     selected_item = {}
-    #     selected_item["date"] = item["AvailableDate"]
-    #     selected_item["items"] = []
-    #     selected_item["items"].append(item["Item__id"])
-    #     selected_items.append(selected_item)
-
-    # selected_items_serializer = SelectedItemSerializer(
-    #     instance=selected_items
-    # ).data
     selected_items = ItemsOrdersPerDay.objects.filter(
         Date__range=[first_day_date, last_day_date]
     )

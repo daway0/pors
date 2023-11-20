@@ -90,18 +90,12 @@ class ItemOrderSerializer(serializers.Serializer):
         return True
 
 
-class SelectedItemsBasedOnDaySerializer(serializers.Serializer):
-    date = serializers.CharField(max_length=10)
-    items = serializers.ListField()
-
-
 class SelectedItemSerializer(serializers.Serializer):
     selectedItems = serializers.SerializerMethodField()
 
     def get_selectedItems(self, obj):
         result = []
         current_date_obj = {}
-        # current_date_obj["items"] = []
         for object in obj:
             serializer = ItemOrderSerializer(
                 data={"id": object.Item, "orderedBy": object.TotalOrders},
@@ -109,11 +103,11 @@ class SelectedItemSerializer(serializers.Serializer):
             if current_date_obj.get("date") == object.Date:
                 current_date_obj["items"].append(serializer)
             else:
-                result.append(current_date_obj)
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
+                result.append(current_date_obj)
 
         return result
 
