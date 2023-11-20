@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 import os
 from pathlib import Path
 
@@ -20,7 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-d+7u1)$w-w51s#r0$a+)8$z1qn4du&!oe1r_ck*xl033d+_4pa"
+SECRET_KEY = (
+    "django-insecure-d+7u1)$w-w51s#r0$a+)8$z1qn4du&!oe1r_ck*xl033d+_4pa"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -79,12 +82,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -100,20 +103,20 @@ DATABASES = {
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'mssql',
-#         'NAME': 'Pors2',
-#         'USER': 'sa',
-#         'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
-#         'HOST': 'finn.iran.liara.ir',
-#         'PORT': '30919',
-#
-#         'OPTIONS': {
-#             'driver': 'ODBC Driver 17 for SQL Server',
-#         },
-#     },
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'Pors2',
+        'USER': 'sa',
+        'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
+        'HOST': 'finn.iran.liara.ir',
+        'PORT': '30919',
+
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
+    },
+}
 
 
 # Password validation
@@ -124,13 +127,19 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation.MinimumLengthValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation.CommonPasswordValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation.NumericPasswordValidator"
+        ),
     },
 ]
 
@@ -156,4 +165,3 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-

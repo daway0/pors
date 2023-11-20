@@ -1,13 +1,21 @@
+import json
+
 import jdatetime
+from django.db.models import Count
 from persiantools.jdatetime import JalaliDate
 
 from .models import DailyMenuItem, Holiday
 from .serializers import (
-    DaysWithMenuSerializer,
+    DayWithMenuSerializer,
     GeneralCalendarSerializer,
     HolidaySerializer,
 )
-from .utils import first_and_last_day_date, get_weekend_holidays, split_dates
+from .utils import (
+    first_and_last_day_date,
+    get_weekend_holidays,
+    split_dates,
+    split_json_dates,
+)
 
 
 def get_general_calendar(year: int, month: int):
@@ -25,14 +33,16 @@ def get_general_calendar(year: int, month: int):
     splited_holidays = split_dates(holidays_serializer, mode="day")
     days_with_menu = (
         DailyMenuItem.objects.filter(
-            AvailableDate__range=(first_day_date, last_day_date)
+            AvailableDate__range=("1402/11/01", "1402/12/01"), IsActive=True
         )
         .values("AvailableDate")
-        .distinct()
+        .annotate(items=Count("Item_id"))
     )
-    days_with_menu_serializer = DaysWithMenuSerializer(days_with_menu).data
-    splited_days_with_menu = split_dates(
-        days_with_menu_serializer["daysWithMenu"], "day"
+    days_with_menu_serializer = DayWithMenuSerializer(
+        days_with_menu, many=True
+    ).data
+    splited_days_with_menu = split_json_dates(
+        json.dumps(days_with_menu_serializer)
     )
     general_calendar_serializer = GeneralCalendarSerializer(
         data={

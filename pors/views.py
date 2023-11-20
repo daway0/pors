@@ -1,4 +1,3 @@
-from .config import OPEN_FOR_ADMINISTRATIVE
 from django.db.models import (
     Case,
     ExpressionWrapper,
@@ -15,6 +14,8 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
+from . import business as b
+from .config import OPEN_FOR_ADMINISTRATIVE
 from .general_actions import get_general_calendar
 from .models import Category, DailyMenuItem, Item, OrderItem
 from .serializers import (
@@ -22,14 +23,16 @@ from .serializers import (
     AvailableItemsSerializer,
     CategorySerializer,
     CreateOrderItemSerializer,
-    CreateOrderSerializer,
     DayMenuSerializer,
     EdariFirstPageSerializer,
     OrderSerializer,
-    RemoveMenuItemSerializer,
     SelectedItemSerializer,
 )
-from .utils import first_and_last_day_date, get_current_date, validate_date
+from .utils import (
+    first_and_last_day_date,
+    get_current_date,
+    get_first_orderable_date,
+)
 
 # Create your views here.
 
@@ -51,13 +54,13 @@ def add_item_to_menu(request):
 
 @api_view(["POST"])
 def remove_item_from_menu(request):
-    serializer = RemoveMenuItemSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer._remove_item()
+    validatior = b.ValidateRemove(request.data)
+    if validatior.is_valid():
+        validatior.remove_item()
         return Response(
             "Successsfully deleted the item from menu.", status.HTTP_200_OK
         )
-    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
 class AvailableItems(ListAPIView):
@@ -298,7 +301,7 @@ def edari_first_page(request):
     is_open = OPEN_FOR_ADMINISTRATIVE
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
-    year, month, day = get_current_date()
+    year, month, day = get_first_orderable_date()
     current_date = {"day": day, "month": month, "year": year}
     serializer = EdariFirstPageSerializer(
         data={
