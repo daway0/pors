@@ -10,12 +10,12 @@
 پنل مخصوص طراحی شده است)
 
 قرارداد ها **
- 1. تاریخ به میلادی در دیتابیس ذخیره می شود در صورت نیاز از calculate  فیلد ها
- ویا view  ها دیتابیسی استفاده شود
+ 1. تاریخ به صورت شمسی و با دیتا تایپ charfield در دیتابیس باید قرار بگیرد
 
 2. تغییر در یک از state ها که شامل داده در دیتابیس می شود باید در جدول
 ActionLog ثبت شود.
 
+3. قیمت ها همه جا به تومان است
 """
 
 from django.db import models
@@ -23,27 +23,28 @@ from django.db import models
 
 class Holiday(models.Model):
     """
-    روز های تعطیلی
-    تعطیلات رسمی و غیر رسمی مانند آلودگی هوا / سرمای هوا / مشکلات شرکت و غیره
-
-    پنج شنبه ها و جمعه ها در این جدول آورده نمی شوند و با پکیج JDATETIME
-    محاسبه می شوند
-
-    در صورتی که تعطیلی رسمی نباشد (IsOfficial=False) باید علت تعطیلی ذکر
-    شود (Reason باید مقدار گیرد)
-
+       روز های تعطیلی رسمی کشور.
+       عملیات غیر از Read روی این جدول به صورت معمول صورت گرفته نمی شود.
+    احتمالا تاریخ تعطیلات رسمی کشور سال به سال در این جدول ورود اطلاعات خواهد شد
     """
 
-    HolidayDate = models.CharField(max_length=10)
+    HolidayDate = models.CharField(max_length=10, verbose_name="تاریخ")
 
     @property
-    def HolidayYear(self): ...
+    def HolidayYear(self):
+        ...
 
     @property
-    def HolidayMonth(self): ...
+    def HolidayMonth(self):
+        ...
 
     @property
-    def HolidayDay(self): ...
+    def HolidayDay(self):
+        ...
+
+    class Meta:
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class Category(models.Model):
@@ -52,164 +53,226 @@ class Category(models.Model):
 
     برای مثال پک قاشق و چنگال نیز می تواند در دسته اضافات قرار گیرد"""
 
-    class Meta:
-        verbose_name = "دسته بندی ایتم"
-        verbose_name_plural = "دسته بندی ایتم ها"
-
-    CategoryName = models.CharField(
-        max_length=300, verbose_name="نام دسته بندی"
-    )
+    CategoryName = models.CharField(max_length=300,
+                                    verbose_name="نام دسته بندی")
 
     def __str__(self):
         return self.CategoryName
+
+    class Meta:
+        verbose_name = "دسته بندی ایتم"
+        verbose_name_plural = "دسته بندی ایتم ها"
 
 
 class Subsidy(models.Model):
     """مقدار یارانه یا سهم فناوران از سفارش به صورت روزانه
 
-    #todo
-    منتقل شه به دیزاین داک
+
     نکات مربوط به لاچیک سوبسید شرکت:
 
     1. یارانه به صورت روزانه تعلق می گیرد به سفارش و امکان انباشت آن وجود
     ندارد
 
-    ---------------
-    در باره نحوه محسابه یارانه سفارش ها:
-    فرض کنیم در جدول سوبسید رکورد ها زیر را داریم
+    2. در صورتی که فرد مورد نظر سفارشی با مبلغ کمتر از حد سوبسید خریداری
+    کند از سهم فناوران چیزی به وی عودت داده نمی شود
 
-    1 10000   1402/05/06  0
-    2 20000   1402/11/06  0
-    3 30000   1403/05/06  0
-    4 50000   1403/11/06  1
+    3. قرار داد ثبت تاریخ ها به صورت زیر تا در زمان query گیری از دیتابیس
+    سهل الوصول تر باشد
 
-    هر سفارشی که در سیستم ثبت می شود دارای سوبسید است بنابراین فقط کافیست
-    که تاریخ اعمال سفارش یعنی DeliveryDate با مدت زمان فعال بودن سوبسید چک شود
-    مثال:
 
-    فرض کنیم که DeliveryDate برای سفارشی 1402/12/09 باشد سیستم باید چک کند
-    که برای این سفارش کدام سوبسید باید در نظر گرفته شود.
-    سوبسید 2 یارانه مد نظر است
+    id   fromDate        untilDate      amount
+    ------------------------------
+    1    1402/02/05      1402/02/12     12
+    2    1402/02/13      null           15
+
+    توجه 1: روز 5 و 12 اردیبهشت ماه نیز با یارانه 12 حساب
+    می شود
+    توجه 2: ستونی که untildate آن null است سهم سوبسید فعلی را نشان می دهد
     """
 
-    Amount = models.PositiveIntegerField()
-    FromDate = models.CharField(max_length=10)
+    Amount = models.PositiveIntegerField(verbose_name="سهم فناوران به تومان")
+    FromDate = models.CharField(max_length=10, verbose_name="تاریخ شروع")
     UntilDate = models.CharField(
         max_length=10,
         null=True,
-        unique=True,
-        help_text=(
-            "برای تاکید کردن روی غیر قابل استفاده بودن سوبسید این "
-            "فیلد باید False شود در واقع این محدودیت دیتابیسی است که "
-            "منطق unique بودن سوبسید فعال را تضمین می کند"
-        ),
+        verbose_name="تاریخ پایان",
+        help_text="خود تاریخ شروع و پایان نیز با همین سوبسید محاسبه می شود",
     )
+
+    def current_subsidy_amount(self) -> int:
+        """میزان سوبسید فعلی شرکت"""
+        ...
+
+    def __str__(self):
+        ...
+
+    class Meta:
+        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class Item(models.Model):
     """هر چیز قابل سفارش دادن
     می تواند غذا باشد یا نوشیدنی / پک قاشق چنگال مثلا و ...
-
-    #todo
-    درباره IsActive: توجه شود که هنگام سفارش دادن یک غذا باید فیلد IsActive
-     برای دو مدل چک شود هم مدل Item و هم مدل PriceItemHistory
-     در صورتی که برای هر دو مدل IsActive=True بود امکان اضافه کردن به سفارش
-     وجود دارد
-
     """
-
-    class Meta:
-        verbose_name = "اطلاعات ایتم"
-        verbose_name_plural = "اطلاعات ایتم ها"
 
     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
     Category = models.ForeignKey(
         "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
     )
-    ItemDesc = models.TextField(blank=True, null=True)
-    IsActive = models.BooleanField(default=True)
+    ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
+    IsActive = models.BooleanField(
+        default=True,
+        help_text=""  # todo
+    )
+    Image = models.ImageField(
+        upload_to="media/items/",
+        null=True,
+        blank=True,
+        help_text="در صورتی که عکس آپلود نشود سیستم به صورت خودکار عکس پیشفرض "
+                  "قرار می دهد")
 
-    # در صورتی که غذایی عکس نداشت باید به صورت پیش فرض به کلاینت عکس دهیم
-    Image = models.CharField(max_length=500, null=True, blank=True)
-    CurrentPrice = models.PositiveIntegerField()
+    # این فیلد نباید قابل تغییر توسط ادمین و یا حتی DBA باشد. تغییرات این
+    # فیلد باید در صورت اضافه کردن رکورد جدید در جدول ItemPriceHistory صورت
+    # بگیرد
+    CurrentPrice = models.PositiveIntegerField(
+        verbose_name="قیمت فعلی آیتم به تومان",
+        help_text="برای تغییر این فیلد باید رکورد جدید در تاریخچه قیمت "
+                  "مربوط به این آیتم ایجاد کنید"
+                    )
 
     def __str__(self):
         return self.ItemName
 
+    class Meta:
+        verbose_name = "اطلاعات ایتم"
+        verbose_name_plural = "اطلاعات ایتم ها"
+
 
 class Order(models.Model):
+    """
+    *** PersonnelDebt = TotalPrice - SubsidyAmount
+    توجه شود که PersonnelDebt هیچ گاه منفی نخواهد شد
+    """
+
+    Id = models.PositiveIntegerField(primary_key=True)
+    Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
+    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    SubsidyAmount = models.PositiveIntegerField(verbose_name="یارانه فناوران به تومان")
+    TotalPrice = models.PositiveIntegerField(verbose_name="مبلغ کل سفارش به "
+                                                          "تومان")
+    PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
+
     class Meta:
         managed = False
         db_table = "Order"
-
-    Id = models.PositiveIntegerField(primary_key=True)
-    Personnel = models.CharField(max_length=250)
-    DeliveryDate = models.CharField(max_length=10)
-    SubsidyAmount = models.PositiveIntegerField()
-    TotalPrice = models.PositiveIntegerField()
-    PersonnelDebt = models.PositiveIntegerField()
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class OrderItem(models.Model):
-    Personnel = models.CharField(max_length=250)
-    DeliveryDate = models.CharField(max_length=10)
-    OrderedItem = models.ForeignKey(Item, on_delete=models.CASCADE)
-    Quantity = models.PositiveSmallIntegerField(default=1)
-    PricePerOne = models.PositiveIntegerField()
+    """ایتم های سفارش داده شده برای کاربران"""
+
+    Personnel = models.CharField(max_length=250,verbose_name="پرسنل")
+    DeliveryDate = models.CharField(max_length=10,verbose_name="سفارش برای")
+    Item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        verbose_name="آیتم")
+    Quantity = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name="تعداد")
+
+    # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
+    # افزونگی تکنیکی
+    PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
 
     class Meta:
         models.UniqueConstraint(
-            fields=["OrderedItem", "Order"], name="unique_ordered_item_order"
+            fields=["Item", "Order"], name="unique_item_order"
         )
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class ItemsOrdersPerDay(models.Model):
+    """
+    ویوو زیر نمایان این که ایتم های روزانه ای که توسط اداری ثبت شده است تا
+    به حال چند عدد ثبت سفارش گرفته است؟‌
+    در صورتی که ایتمی ثبت سفارش نداشته باشد عدد 0 به عنوان TotalOrders
+    بازگردانده می شود
+    """
+    Id = models.PositiveIntegerField(primary_key=True)
+    Item = models.PositiveIntegerField(verbose_name="آیتم")
+    Date = models.CharField(max_length=10, verbose_name="سفارش برای")
+    TotalOrders = models.PositiveIntegerField(verbose_name="مجموع سفارش ها")
+
     class Meta:
         managed = False
         db_table = "ItemsOrdersPerDay"
-
-    Item = models.PositiveIntegerField(primary_key=True)
-    Date = models.CharField(max_length=10)
-    TotalOrders = models.PositiveIntegerField()
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class ItemPriceHistory(models.Model):
-    """به توجه به تغییر قسمت ایتم ها در طول زمان وجود این جدول ضروری است
+    """
     این جدول تاریخچه تغییر قیمت اقلام را نگه می دارد و لاگ ان در جدول
-    جداگانه ذخیره می شود"""
+    جداگانه ذخیره می شود
+
+    توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب می شود
+    """
 
     Item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, null=False, blank=False
+        Item,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        verbose_name="ایتم"
     )
 
-    Price = models.PositiveIntegerField()
-    FromDate = models.CharField(max_length=10)
-    UntilDate = models.CharField(max_length=10, null=True, unique=True)
+    Price = models.PositiveIntegerField(verbose_name="قیمت به تومان")
+    FromDate = models.CharField(max_length=10, verbose_name="تاریخ شروع")
+    UntilDate = models.CharField(
+        max_length=10,
+        null=True,
+        unique=True,
+        verbose_name="تاریخ پایان",
+        help_text="توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب می شود")
 
     def __str__(self):
         return f"{self.Item.ItemName} {self.Price}"
 
+    class Meta:
+        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
+        verbose_name = ...
+        verbose_name_plural = ...
+
 
 class DailyMenuItem(models.Model):
     """
-    اطلاعات غذای قابل سفارش در هر روز را مشخص می کند.
-     بدیهی است که ارتباط این جدول با ItemPrice است و نه Item
-     به این علت که غذای قابل سفارش باید رفرنس به قیمت روز غذا را باید داشته
-     باشد
+    اطلاعات غذای قابل سفارش در هر روز را مشخص می کند
     """
 
-    AvailableDate = models.CharField(max_length=10)
-    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    IsActive = models.BooleanField(default=True)
+    AvailableDate = models.CharField(max_length=10, verbose_name="قابل سفارش برای")
+    Item = models.ForeignKey(Item,
+                             on_delete=models.CASCADE,
+                             verbose_name="ایتم")
+    IsActive = models.BooleanField(
+        help_text="", #todo
+        default=True)
 
     @property
-    def AvailableYear(self): ...
+    def AvailableYear(self):
+        ...
 
     @property
-    def AvailableMonth(self): ...
+    def AvailableMonth(self):
+        ...
 
     @property
-    def AvailableDay(self): ...
+    def AvailableDay(self):
+        ...
 
     class Meta:
         constraints = [
@@ -218,6 +281,8 @@ class DailyMenuItem(models.Model):
                 name="unique_AvailableDate_Item",
             )
         ]
+        verbose_name = ...
+        verbose_name_plural = ...
 
 
 class ActionLog(models.Model):
