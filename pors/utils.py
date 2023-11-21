@@ -7,9 +7,14 @@ from persiantools.jdatetime import JalaliDate, timedelta
 from .config import ORDER_REGISTRATION_CLOSED_IN
 
 
-def first_and_last_day_date(
-    month: int, year: int
-) -> tuple[jdatetime.date, jdatetime.date]:
+def get_str(date: jdatetime.date) -> str:
+    """تبدیل کردن آبجکت دیت جلالی به رشته
+    yyyy/mm/dd
+    """
+    return date.strftime("%Y/%m/%d")
+
+
+def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
     """
     این تابع یک ابکجت دیت جلالی از روز اول و روز اخر تاریخ وارد شده
     بر می‌گرداند.
@@ -25,15 +30,10 @@ def first_and_last_day_date(
 
     # Todo convert year and month to gro
     last_day_of_month = JalaliDate.days_in_month(month, year)
-    first_day_date = (
-        jdatetime.date(year, month, 1).strftime("%Y-%m-%d").replace("-", "/")
-    )
-    last_day_date = (
-        jdatetime.date(year, month, last_day_of_month)
-        .strftime("%Y-%m-%d")
-        .replace("-", "/")
-    )
-    return str(first_day_date), str(last_day_date)
+    first_day_date = get_str(jdatetime.date(year, month, 1))
+    last_day_date = get_str(jdatetime.date(year, month, last_day_of_month))
+
+    return first_day_date, last_day_date
 
 
 def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
@@ -70,6 +70,7 @@ def get_first_orderable_date() -> tuple[int, int, int]:
     else:
         now += timedelta(days=1)
     return now.year, now.month, now.day
+
 
 def replace_hyphens_from_date(*dates: str):
     if len(dates) == 1:

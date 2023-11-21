@@ -35,6 +35,7 @@ from .utils import (
     get_first_orderable_date,
 )
 
+
 # Create your views here.
 
 
@@ -58,9 +59,7 @@ def remove_item_from_menu(request):
     validatior = b.ValidateRemove(request.data)
     if validatior.is_valid():
         validatior.remove_item()
-        return Response(
-            "Successsfully deleted the item from menu.", status.HTTP_200_OK
-        )
+        return Response("Successsfully deleted the item from menu.", status.HTTP_200_OK)
     return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
@@ -251,6 +250,7 @@ def edari_calendar(request):
     personnel = ...
     year = request.query_params.get("year")
     month = request.query_params.get("month")
+
     if year is None or month is None:
         return Response(
             "'year' and 'month' parameters must specified.",
@@ -261,14 +261,18 @@ def edari_calendar(request):
         year = int(year)
     except ValueError:
         return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
-    if month > 12:
+
+    if not 1 <= month <= 12:
         return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
-    first_day_date, last_day_date = first_and_last_day_date(month, year)
+
+    month_first_day_date, month_last_day_date = first_and_last_day_date(month, year)
     general_calendar = get_general_calendar(year, month)
+
     selected_items = ItemsOrdersPerDay.objects.filter(
-        Date__range=[first_day_date, last_day_date]
+        Date__range=[month_first_day_date, month_last_day_date]
     )
     selected_items_serializer = SelectedItemSerializer(selected_items).data
+
     return Response(
         data=(general_calendar, selected_items_serializer),
         status=status.HTTP_200_OK,
@@ -283,6 +287,7 @@ def edari_first_page(request):
     profile = "test"  # DONT FORGET TO SPECIFY ...
     year, month, day = get_first_orderable_date()
     current_date = {"day": day, "month": month, "year": year}
+
     serializer = EdariFirstPageSerializer(
         data={
             "isOpen": is_open,
@@ -291,6 +296,7 @@ def edari_first_page(request):
             "currentDate": current_date,
         }
     ).initial_data
+
     return Response(serializer, status.HTTP_200_OK)
 
 
