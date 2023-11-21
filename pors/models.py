@@ -43,8 +43,8 @@ class Holiday(models.Model):
         ...
 
     class Meta:
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "تعطیل رسمی"
+        verbose_name_plural = "تعطیلات رسمی"
 
 
 class Category(models.Model):
@@ -108,8 +108,8 @@ class Subsidy(models.Model):
 
     class Meta:
         models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "یارانه"
+        verbose_name_plural = "یارانه ها"
 
 
 class Item(models.Model):
@@ -167,8 +167,8 @@ class Order(models.Model):
     class Meta:
         managed = False
         db_table = "Order"
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "سفارش"
+        verbose_name_plural = "سفارشات"
 
 
 class OrderItem(models.Model):
@@ -192,8 +192,8 @@ class OrderItem(models.Model):
         models.UniqueConstraint(
             fields=["Item", "Order"], name="unique_item_order"
         )
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "آیتم سفارشی"
+        verbose_name_plural = "آیتم های سفارشی"
 
 
 class ItemsOrdersPerDay(models.Model):
@@ -211,8 +211,8 @@ class ItemsOrdersPerDay(models.Model):
     class Meta:
         managed = False
         db_table = "ItemsOrdersPerDay"
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "تعداد سفارش بر حسب آیتم"
+        verbose_name_plural = "تعداد سفارشات بر حسب آیتم"
 
 
 class ItemPriceHistory(models.Model):
@@ -245,8 +245,8 @@ class ItemPriceHistory(models.Model):
 
     class Meta:
         models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "تاریخچه قیمت آیتم"
+        verbose_name_plural = "تاریخچه قیمت آیتم ها"
 
 
 class DailyMenuItem(models.Model):
@@ -281,8 +281,8 @@ class DailyMenuItem(models.Model):
                 name="unique_AvailableDate_Item",
             )
         ]
-        verbose_name = ...
-        verbose_name_plural = ...
+        verbose_name = "منو"
+        verbose_name_plural = "منو ها"
 
 
 class ActionLog(models.Model):
