@@ -36,7 +36,7 @@ class ValidateRemove:
         if not instance:
             raise ValueError("Item does not exists in provided date.")
         orders = m.OrderItem.objects.filter(
-            DeliveryDate=self.date, OrderedItem=self.id
+            DeliveryDate=self.date, Item=self.id
         )
         if orders:
             raise ValueError(

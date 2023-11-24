@@ -117,12 +117,12 @@ class DebtSerializer(serializers.Serializer):
 
 
 class OrderItemSerializer(serializers.Serializer):
-    id = serializers.IntegerField(source="OrderedItem__id")
-    title = serializers.CharField(source="OrderedItem__ItemName")
-    currentPrice = serializers.IntegerField(source="OrderedItem__CurrentPrice")
-    img = serializers.CharField(source="OrderedItem__Image")
-    category = serializers.IntegerField(source="OrderedItem__Category_id")
-    description = serializers.CharField(source="OrderedItem__ItemDesc")
+    id = serializers.IntegerField(source="Item__id")
+    title = serializers.CharField(source="Item__ItemName")
+    currentPrice = serializers.IntegerField(source="Item__CurrentPrice")
+    img = serializers.CharField(source="Item__Image")
+    category = serializers.IntegerField(source="Item__Category_id")
+    description = serializers.CharField(source="Item__ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
 
@@ -193,7 +193,7 @@ class AddMenuItemSerializer(serializers.Serializer):
 class CreateOrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = m.OrderItem
-        fields = ("OrderedItem", "Quantity", "PricePerOne", "Order")
+        fields = ("Item", "Quantity", "PricePerOne", "Order")
 
     # def create(self, validated_data):
     #     validated_data.pop("PricePerOne", None)
