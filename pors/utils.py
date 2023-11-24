@@ -2,7 +2,7 @@ import json
 import re
 
 import jdatetime
-from persiantools.jdatetime import JalaliDate, timedelta
+from persiantools.jdatetime import JalaliDate
 
 from .config import ORDER_REGISTRATION_CLOSED_IN
 
@@ -66,9 +66,9 @@ def get_first_orderable_date() -> tuple[int, int, int]:
     now = jdatetime.datetime.now()
 
     if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-        now += timedelta(days=2)
+        now += jdatetime.timedelta(days=2)
     else:
-        now += timedelta(days=1)
+        now += jdatetime.timedelta(days=1)
     return now.year, now.month, now.day
 
 
@@ -104,14 +104,14 @@ def split_dates(dates, mode: str):
         return new_dates
 
 
-def split_json_dates(dates: str):
+def split_json_dates(dates: str) -> dict[str, str]:
     dates = json.loads(dates)
     for obj in dates:
         obj["day"] = int(obj["day"].split("/")[2])
     return dates
 
 
-def validate_date(date: str):
+def validate_date(date: str) -> bool:
     pattern = r"^\d{4}\/\d{2}\/\d{2}$"
     if not isinstance(date, str):
         return None
@@ -121,3 +121,28 @@ def validate_date(date: str):
         return date
     else:
         return None
+
+
+def is_date_valid_for_submission(date: str) -> bool:
+    """
+    This function is responsible for checking if the date
+    is valid for submission.
+    Deadline is fetched from config.
+
+    Args:
+        date: the corresponding date
+
+    Returns:
+        bool: is the date valid or not.
+    """
+    now = jdatetime.datetime.now()
+
+    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
+        now += jdatetime.timedelta(days=2)
+    else:
+        now += jdatetime.timedelta(days=1)
+
+    eligable_date = now.strftime("%Y/%m/%d")
+    if date < eligable_date:
+        return True
+    return False

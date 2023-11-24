@@ -35,7 +35,6 @@ from .utils import (
     get_first_orderable_date,
 )
 
-
 # Create your views here.
 
 
@@ -59,7 +58,9 @@ def remove_item_from_menu(request):
     validatior = b.ValidateRemove(request.data)
     if validatior.is_valid():
         validatior.remove_item()
-        return Response("Successsfully deleted the item from menu.", status.HTTP_200_OK)
+        return Response(
+            "Successsfully deleted the item from menu.", status.HTTP_200_OK
+        )
     return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
@@ -265,7 +266,9 @@ def edari_calendar(request):
     if not 1 <= month <= 12:
         return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
 
-    month_first_day_date, month_last_day_date = first_and_last_day_date(month, year)
+    month_first_day_date, month_last_day_date = first_and_last_day_date(
+        month, year
+    )
     general_calendar = get_general_calendar(year, month)
 
     selected_items = ItemsOrdersPerDay.objects.filter(
@@ -300,26 +303,15 @@ def edari_first_page(request):
     return Response(serializer, status.HTTP_200_OK)
 
 
-# @api_view(["GET"])
-# def create_order(request):
-#     # pas auth ...
-#     personnel = ...
-#     item = request.data.get("item")
-#     date = request.data.get("date")
-#     quantity = request.data.get("quantity")
-#     if not item or date or quantity:
-#         return Response(
-#             "'item','date' and 'quantity' must specified.",
-#             status.HTTP_400_BAD_REQUEST,
-#         )
-#     date = validate_date(date)
-#     order = Order.objects.filter(DeliveryDate=date, Personnel=personnel)
-#     if not order:
-#         order_serializer = CreateOrderSerializer(data=request.data)
-#         if not order_serializer.is_valid():
-#             return Response(
-#                 order_serializer.errors, status.HTTP_400_BAD_REQUEST
-#             )
-#     else:
-#         CreateOrderItemSerializer(request.data)
-#         ...
+@api_view(["GET"])
+def create_order(request):
+    # past auth ...
+    # past check is app open for creating order.
+    personnel = ...
+    validator = b.ValidateOrder(request.data)
+    if validator.is_valid():
+        validator.create_order(personnel)
+        return Response(
+            "Order has been created successfully.", status.HTTP_201_CREATED
+        )
+    return Response(validator.error, status.HTTP_400_BAD_REQUEST)
