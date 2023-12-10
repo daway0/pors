@@ -34,40 +34,6 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("id", "Title")
 
 
-# class ItemSerializer(serializers.ModelSerializer):
-#     name = serializers.SerializerMethodField()
-#     img = serializers.SerializerMethodField()``
-#     category = serializers.SerializerMethodField()
-#     description = serializers.SerializerMethodField()
-#     is_active = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = m.ItemPrice
-#         fields = (
-#             "name",
-#             "Price",
-#             "img",
-#             "category",
-#             "description",
-#             "is_active",
-#         )
-
-#     def get_name(self, obj: m.ItemPrice):
-#         return obj.Item.ItemName
-
-#     def get_img(self, obj: m.ItemPrice):
-#         return obj.Item.ItemName
-
-#     def get_category(self, obj: m.ItemPrice):
-#         return obj.Item.Category
-
-#     def get_description(self, obj: m.ItemPrice):
-#         return obj.Item.ItemDesc
-
-#     def get_is_active(self, obj: m.ItemPrice):
-#         return obj.Item.IsActive
-
-
 class HolidaySerializer(serializers.Serializer):
     holidays = serializers.SerializerMethodField()
 
@@ -188,65 +154,3 @@ class AddMenuItemSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return m.DailyMenuItem.objects.create(**validated_data)
-
-
-class CreateOrderItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = m.OrderItem
-        fields = ("Item", "Quantity", "PricePerOne", "Order")
-
-    # def create(self, validated_data):
-    #     validated_data.pop("PricePerOne", None)
-    #     validated_data.pop("Order", None)
-    #     instance = m.OrderItem.objects.create(**validated_data)
-
-
-# class CreateOrderSerializer(serializers.Serializer):
-#     item = serializers.IntegerField()
-#     personnel = serializers.CharField(max_length=250, source="Personnel")
-#     date = serializers.CharField(max_length=10, source="DeliveryDate")
-#     quantity = serializers.IntegerField()
-
-#     def validate(self, data):
-#         date = validate_date(data.get("DeliveryDate"))
-#         if not date:
-#             raise serializers.ValidationError("Invalid 'date' value.")
-#         if not self._validate_item(date, data.get("item")):
-#             raise serializers.ValidationError("Invalid 'item' value.")
-#         return data
-
-#     def _validate_item(self, date: str, item_id: int) -> bool:
-#         is_item_available = m.DailyMenuItem.objects.select_related(
-#             "Item"
-#         ).filter(
-#             Item__IsActive=True,
-#             Item__id=item_id,
-#             IsActive=True,
-#             AvailableDate=date,
-#         )
-#         return bool(is_item_available)
-
-#     def create(self, validated_data):
-#         subsidy = m.Subsidy.objects.get(UntilDate__isnull=True).Amount
-#         instance = m.Order.objects.create(**validated_data)
-#         instance.AppliedSubsidy = subsidy
-#         return instance
-
-
-# class EdariCalendarSchemaSerializer(serializers.Serializer):
-#     generalCalendar = serializers.SerializerMethodField()
-#     daysWithMenu = serializers.SerializerMethodField()
-#     orderedDays = serializers.SerializerMethodField()
-#     totalIndebtedness = serializers.SerializerMethodField()
-#     orders = serializers.SerializerMethodField()
-
-#     def get_generalCalendar(self, obj):
-#         ...
-
-
-# def foo():
-#     qs = result = PorsOrderItem.objects.filter(
-#         Order_id__DeliveryDate__range=["1402-08-28", "1402-08-29"]
-#     ).values("OrderedItem_id", "Order_id__DeliveryDate")
-
-#     return reposone(SelectedItemsSerializer(qs))
