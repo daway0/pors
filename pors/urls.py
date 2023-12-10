@@ -1,10 +1,17 @@
 from django.urls import path, include
-from . import views
+select oi.DeliveryDate, oi.Quantity, oi.PricePerOne, i.id, i.ItemName,
+       i.Image, i.CurrentPrice, i.Category_id, i.ItemDesc, oi.Personnel,
+        o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
+from pors_orderitem as oi
+inner join pors_item as i on oi.Item_id = i.id
+inner join "Order" as o on o.Personnel = oi.Personnel
+where oi.Personnel = "e.rezaee@eit"
+
 
 app_name = "pors"
 
 urlpatterns = [
-    # path("calendar/", views.personnel_calendar, name="calendar"),
+    path("calendar/", views.personnel_calendar, name="calendar"),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(

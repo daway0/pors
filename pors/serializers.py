@@ -79,7 +79,7 @@ class SelectedItemSerializer(serializers.Serializer):
 
 
 class DebtSerializer(serializers.Serializer):
-    debt = serializers.IntegerField()
+    totalDebt = serializers.IntegerField()
 
 
 class OrderItemSerializer(serializers.Serializer):
@@ -99,17 +99,45 @@ class OrderBillSerializer(serializers.Serializer):
     debt = serializers.IntegerField()
 
 
+# class OrderSerializer(serializers.Serializer):
+#     orderDate = serializers.CharField()
+#     orderItems = serializers.SerializerMethodField()
+#     orderBill = serializers.SerializerMethodField()
+
+#     def get_orderItems(self, obj):
+#         result = OrderItemSerializer(obj.get("orderItems"), many=True).data
+#         return result
+
+#     def get_orderBill(self, obj):
+#         return OrderBillSerializer(obj.get("orderBill")).data
+
+
 class OrderSerializer(serializers.Serializer):
-    orderDate = serializers.CharField()
-    orderItems = serializers.SerializerMethodField()
-    orderBill = serializers.SerializerMethodField()
+    orders = serializers.SerializerMethodField()
 
-    def get_orderItems(self, obj):
-        result = OrderItemSerializer(obj.get("orderItems"), many=True).data
+    def get_orders(self, obj):
+        result = []
+        schema = {}
+        for object in obj:
+            serializer = OrderItemSerializer(object).data
+            date = schema.get("orderDate")
+            if date == object["DeliveryDate"]:
+                schema["orderItems"].append(serializer)
+                continue
+            if len(result) != 0:
+                result.append(schema)
+            schema = {}
+            schema["orderDate"] = object["DeliveryDate"]
+            schema["orderItems"] = []
+            schema["orderItems"].append(serializer)
+            schema["orderBill"] = {
+                "total": object["TotalPrice"],
+                "fanavaran": object["SubsidyAmount"],
+                "debt": object["PersonnelDebt"],
+            }
+            result.append(schema)
+
         return result
-
-    def get_orderBill(self, obj):
-        return OrderBillSerializer(obj.get("orderBill")).data
 
 
 class GeneralCalendarSerializer(serializers.Serializer):
@@ -154,3 +182,8 @@ class AddMenuItemSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return m.DailyMenuItem.objects.create(**validated_data)
+
+
+class PersonnelSchemaSerializer(serializers.Serializer):
+    orderedDays = serializers.ListField()
+    totalDebt = serializers.IntegerField()

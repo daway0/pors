@@ -71,20 +71,17 @@ class ValidateOrder:
     def _validate_request(self):
         item = self.data.get("item")
         date = self.data.get("date")
-        quantity = self.data.get("quantity")
-        if not (item and date and quantity):
+        if not (item and date):
             raise ValueError(
                 "'item', 'date' and 'quantity' parameters must specified."
             )
         try:
             item = int(item)
-            quantity = int(quantity)
         except ValueError:
-            raise ValueError("invalid 'item', 'quantity' value.")
+            raise ValueError("invalid 'item' value.")
 
         self.item = item
         self.date = date
-        self.quantity = quantity
 
     def _validate_date(self):
         date = validate_date(self.date)
@@ -108,7 +105,7 @@ class ValidateOrder:
             Personnel=personnel, DeliveryDate=self.date, Item=self.item
         ).first()
         if instance:
-            instance.Quantity += self.quantity
+            instance.Quantity += 1
             instance.save()
             return
 
@@ -116,5 +113,5 @@ class ValidateOrder:
             Personnel=personnel,
             DeliveryDate=self.date,
             Item=self.item,
-            Quantity=self.quantity,
+            Quantity=1,
         )

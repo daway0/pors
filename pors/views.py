@@ -17,22 +17,31 @@ from rest_framework.response import Response
 from . import business as b
 from .config import OPEN_FOR_ADMINISTRATIVE
 from .general_actions import get_general_calendar
-from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay
+from .models import (
+    Category,
+    DailyMenuItem,
+    Item,
+    ItemsOrdersPerDay,
+    Order,
+    OrderItem,
+)
 from .serializers import (
     AddMenuItemSerializer,
     AvailableItemsSerializer,
     CategorySerializer,
-    CreateOrderItemSerializer,
     DayMenuSerializer,
+    DebtSerializer,
     EdariFirstPageSerializer,
     ItemOrderSerializer,
+    OrderItemSerializer,
     OrderSerializer,
+    PersonnelSchemaSerializer,
     SelectedItemSerializer,
 )
 from .utils import (
     first_and_last_day_date,
-    get_current_date,
     get_first_orderable_date,
+    split_dates,
 )
 
 # Create your views here.
@@ -94,155 +103,83 @@ class Categories(ListAPIView):
     serializer_class = CategorySerializer
 
 
-# @api_view(["GET"])
-# def personnel_calendar(request):
-#     """
-#     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
-#     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
-#     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
-#     """
-#     # Past Auth...
-#     personnel = ...
-#     year = request.query_params.get("year")
-#     month = request.query_params.get("month")
-#     if year is None or month is None:
-#         return Response(
-#             "'year' and 'month' parameters must specified.",
-#             status.HTTP_400_BAD_REQUEST,
-#         )
-#     try:
-#         month = int(month)
-#         year = int(year)
-#     except ValueError:
-#         return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
-#     if month > 12:
-#         return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
-#     first_day_date, last_day_date = first_and_last_day_date(month, year)
-#     general_calendar = get_general_calendar(year, month)
-#     ordered_days = Order.objects.filter(
-#         DeliveryDate__range=(first_day_date, last_day_date),
-#         Personnel=personnel,
-#     ).values("DeliveryDate")
-#     ordered_days_list = [date["DeliveryDate"] for date in ordered_days]
-#     # Todo handle the difference between subidy and total cost
-#     debt = (
-#         Order.objects.filter(DeliveryDate__range=["1402/00/00", "1403/00/00"])
-#         .annotate(
-#             total_price=Sum(
-#                 ExpressionWrapper(
-#                     F("orderitem__Quantity") * F("orderitem__PricePerOne"),
-#                     output_field=fields.IntegerField(),
-#                 )
-#             )
-#         )
-#         .aggregate(
-#             total_price=Sum("total_price"),
-#             total_subsidy=Sum("AppliedSubsidy"),
-#             difference=Sum(
-#                 ExpressionWrapper(
-#                     F("orderitem__Quantity") * F("orderitem__PricePerOne"),
-#                     output_field=fields.IntegerField(),
-#                 )
-#             )
-#             - Sum("AppliedSubsidy"),
-#         )
-#     )
-#     """
-#     ```sql
-#     SELECT SUM(OI."Quantity" * OI."PricePerOne") AS total_cost,
-#     SUM(O."AppliedSubsidy") AS subsidy,
-#     CASE
-#                     WHEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy") > 0 THEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy")
-#                     ELSE 0
-#     END AS debt
-#     FROM PORS_ORDER AS O
-#     INNER JOIN PORS_ORDERITEM AS OI ON O."id" = OI."Order_id"
-#     WHERE o."IsDeleted" = False
-#     """
-#
-#     # debt_serializer = DebtSerializer(debt).data
-#     orders_items_qs = (
-#         OrderItem.objects.filter(
-#             Order__DeliveryDate__range=(first_day_date, last_day_date),
-#             Order__IsDeleted=False,
-#         )
-#         .select_related("Order", "OrderedItem")
-#         .values(
-#             "Order__DeliveryDate",
-#             "OrderedItem__id",
-#             "OrderedItem__ItemName",
-#             "OrderedItem__ItemDesc",
-#             "OrderedItem__Image",
-#             "OrderedItem__CurrentPrice",
-#             "OrderedItem__Category_id",
-#             "Quantity",
-#             "PricePerOne",
-#         )
-#         .annotate(
-#             total=ExpressionWrapper(
-#                 F("Quantity") * F("PricePerOne"),
-#                 output_field=fields.IntegerField(),
-#             ),
-#             fanavaran=F("Order__AppliedSubsidy"),
-#             debt=ExpressionWrapper(
-#                 F("Quantity") * F("PricePerOne") - F("Order__AppliedSubsidy"),
-#                 output_field=fields.IntegerField(),
-#             ),
-#         )
-#     )
-#
-#     orders = []
-#     order_items = {}
-#     order_bill = {}
-#
-#     for order in orders_items_qs:
-#         if order["Order__DeliveryDate"] in order_bill.keys():
-#             continue
-#
-#         order_bill[order["Order__DeliveryDate"]] = {
-#             "total": order["total"],
-#             "fanavaran": order["fanavaran"],
-#             "debt": order["debt"],
-#         }
-#
-#     for order in orders_items_qs:
-#         if order["Order__DeliveryDate"] not in order_items:
-#             order_items[order["Order__DeliveryDate"]] = []
-#
-#         order_items[order["Order__DeliveryDate"]].append(
-#             {
-#                 "OrderedItem__id": order["OrderedItem__id"],
-#                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
-#                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
-#                 "OrderedItem__Image": order["OrderedItem__Image"],
-#                 "OrderedItem__CurrentPrice": order[
-#                     "OrderedItem__CurrentPrice"
-#                 ],
-#                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
-#                 "Quantity": order["Quantity"],
-#                 "PricePerOne": order["PricePerOne"],
-#             }
-#         )
-#
-#     for order_date in order_bill.keys():
-#         orders.append(
-#             {
-#                 "orderDate": order_date,
-#                 "orderItems": order_items[order_date],
-#                 "orderBill": order_bill[order_date],
-#             }
-#         )
-#
-#     orders_serializer = OrderSerializer(instance=orders, many=True).data
-#     return Response(
-#         data=(
-#             general_calendar,
-#             ordered_days_list,
-#             # debt_serializer,
-#             orders_serializer,
-#         ),
-#         status=status.HTTP_200_OK,
-#     )
+@api_view(["GET"])
+def personnel_calendar(request):
+    """
+    این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
+    این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
+    در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
+    """
+    # Past Auth...
+    personnel = "e.rezaee@eit"
+    year = request.query_params.get("year")
+    month = request.query_params.get("month")
+    if year is None or month is None:
+        return Response(
+            "'year' and 'month' parameters must specified.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        month = int(month)
+        year = int(year)
+    except ValueError:
+        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
+    if month > 12:
+        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
+
+    first_day_date, last_day_date = first_and_last_day_date(month, year)
+
+    general_calendar = get_general_calendar(year, month)
+
+    orders = Order.objects.filter(
+        DeliveryDate__range=(first_day_date, last_day_date),
+        Personnel=personnel,
+    )
+    totalDebt = sum([obj.PersonnelDebt for obj in orders])
+
+    ordered_days_list = [obj.DeliveryDate for obj in orders]
+    spilitted_ordered_days_list = split_dates(ordered_days_list, "day")
+
+    orders_items_qs = (
+        OrderItem.objects.filter(
+            Personnel=personnel, DeliveryDate=[first_day_date, last_day_date]
+        )
+        .select_related("Item", "Order")
+        .values(
+            "DeliveryDate",
+            "Quantity",
+            "PricePerOne",
+            "Personnel",
+            "Item__id",
+            "Item__ItemName",
+            "Item__Image",
+            "Item__CurrentPrice",
+            "Item__Category_id",
+            "Item__ItemDesc",
+            "Order__SubsidyAmount",
+            "Order__PersonnelDebt",
+            "Order__TotalPrice",
+        )
+    )
+
+    # select oi.DeliveryDate, oi.Quantity, oi.PricePerOne, i.id, i.ItemName,
+    #    i.Image, i.CurrentPrice, i.Category_id, i.ItemDesc, oi.Personnel,
+    #     o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
+    # from pors_orderitem as oi
+    # inner join pors_item as i on oi.Item_id = i.id
+    # inner join "Order" as o on o.Personnel = oi.Personnel
+    # where oi.Personnel = "e.rezaee@eit"
+
+    
+    orders_items_data = OrderSerializer(orders_items_qs).data
+    schema = {
+        "orderedDays": spilitted_ordered_days_list,
+        "totalDebt": totalDebt,
+    }
+    return Response(
+        data=(general_calendar, schema, orders_items_data),
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
@@ -304,7 +241,7 @@ def edari_first_page(request):
 
 
 @api_view(["GET"])
-def create_order(request):
+def create_order_item(request):
     # past auth ...
     # past check is app open for creating order.
     personnel = ...

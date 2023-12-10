@@ -81,7 +81,7 @@ def replace_hyphens_from_date(*dates: str):
     return new_date
 
 
-def split_dates(dates, mode: str):
+def split_dates(dates, mode: str) -> int | list[int]:
     new_dates = []
 
     if mode == "day":
@@ -143,6 +143,6 @@ def is_date_valid_for_submission(date: str) -> bool:
         now += jdatetime.timedelta(days=1)
 
     eligable_date = now.strftime("%Y/%m/%d")
-    if date < eligable_date:
+    if date <= eligable_date:
         return True
     return False
