@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Optional
 
 import jdatetime
 from django.db import connection
@@ -59,11 +60,18 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 
 def get_current_date() -> tuple[int, int, int]:
+    "Returning current date"
     now = jdatetime.datetime.now()
     return now.year, now.month, now.day
 
 
 def get_first_orderable_date() -> tuple[int, int, int]:
+    """
+    Returning the first valid date for order submission.
+    If the current hour is greater than `ORDER_REGISTRATION_CLOSED_IN`,
+    returned day is 2 days later, if not, its 1 day later.
+    """
+
     now = jdatetime.datetime.now()
 
     if now.hour > ORDER_REGISTRATION_CLOSED_IN:
@@ -73,16 +81,17 @@ def get_first_orderable_date() -> tuple[int, int, int]:
     return now.year, now.month, now.day
 
 
-def replace_hyphens_from_date(*dates: str):
-    if len(dates) == 1:
-        return dates[0].replace("-", "/")
-    new_date = []
-    for date in dates:
-        new_date.append(date.replace("-", "/"))
-    return new_date
-
-
 def split_dates(dates, mode: str) -> int | list[int]:
+    """
+    Splitting date and returning requested section based on mode.
+
+    Args:
+        dates: List of dates, or a single date to split.
+        mode: The section, choose between `year`, `month` and `day`.
+
+    Returns:
+        List or single integer.
+    """
     new_dates = []
 
     if mode == "day":
@@ -112,7 +121,22 @@ def split_json_dates(dates: str) -> dict[str, str]:
     return dates
 
 
-def validate_date(date: str) -> bool:
+def validate_date(date: str) -> Optional[str]:
+    """
+    Validating date value and format.
+    Replacing "-" with "/" if the value is valid.
+
+    Example:
+        "1402/00/01" = valid
+        "1402/0/1" = invalid, month and day section must have 2 integers.
+
+    Args:
+        date: the date for validation.
+
+    Returns:
+        date | None: date value or None if it was invalid.
+    """
+
     pattern = r"^\d{4}\/\d{2}\/\d{2}$"
     if not isinstance(date, str):
         return None
@@ -144,7 +168,7 @@ def is_date_valid_for_submission(date: str) -> bool:
         now += jdatetime.timedelta(days=1)
 
     eligable_date = now.strftime("%Y/%m/%d")
-    if date <= eligable_date:
+    if date >= eligable_date:
         return True
     return False
 
@@ -158,7 +182,7 @@ def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
         params: parameters used in query, avoiding sql injections
 
     Returns:
-        result: the data retrived by query
+        result: the data retrieved by query
     """
     with connection.cursor() as cursor:
         cursor.execute(query, params)

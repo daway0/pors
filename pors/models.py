@@ -23,27 +23,33 @@ from django.db import models
 
 class SystemSetting(models.Model):
     """
-        متغیر های سیستمی. برای مثال برای از دسترس خارج سیستم به جای اینکه
-        برویم و توی IIS سیستم رو داون کنیم فیلد این جدول رو از 1 به صفر
-        تغییر می دهیم و اینطوری دیگه سفارشی پردازش نمیشه
+    متغیر های سیستمی. برای مثال برای از دسترس خارج سیستم به جای اینکه
+    برویم و توی IIS سیستم رو داون کنیم فیلد این جدول رو از 1 به صفر
+    تغییر می دهیم و اینطوری دیگه سفارشی پردازش نمیشه
 
-        همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
+    همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
     """
+
     IsSystemOpenForPersonnel = models.BooleanField(
         default=True,
-        help_text="در صورت بسته بودن برای پرسنل استاتوس در دسترس نبودن سیستم "
-                  "به کاربر نمایش "
-                  "داده می شود "
-                  "و ریکوعست های سمت بک پردازش نمی شوند")
+        help_text=(
+            "در صورت بسته بودن برای پرسنل استاتوس در دسترس نبودن سیستم "
+            "به کاربر نمایش "
+            "داده می شود "
+            "و ریکوعست های سمت بک پردازش نمی شوند"
+        ),
+    )
     IsSystemOpenForAdmin = models.BooleanField(
-        default=True,
-        help_text="مانند فیلد بالا"
-        )
+        default=True, help_text="مانند فیلد بالا"
+    )
     SystemUpdating = models.BooleanField(
         default=False,
-        help_text="هنگام آپدیت کردن سیستم گزینه را فعال کرده تا به یوزر "
-                  "نشان دهد که سیستم در حال آپدیت شدن است و امکان ثبت سفارش "
-                  "فعال نیست")
+        help_text=(
+            "هنگام آپدیت کردن سیستم گزینه را فعال کرده تا به یوزر "
+            "نشان دهد که سیستم در حال آپدیت شدن است و امکان ثبت سفارش "
+            "فعال نیست"
+        ),
+    )
 
     # برای ارسال لاگ به ادمین سیستم استفاده می شود
     SuperAdmins = models.CharField(max_length=250, null=True)
@@ -63,16 +69,16 @@ class Holiday(models.Model):
     HolidayDate = models.CharField(max_length=10, verbose_name="تاریخ")
 
     @property
-    def HolidayYear(self):
-        ...
+    def HolidayYear(self): ...
 
     @property
-    def HolidayMonth(self):
-        ...
+    def HolidayMonth(self): ...
 
     @property
-    def HolidayDay(self):
-        ...
+    def HolidayDay(self): ...
+
+    def __str__(self) -> str:
+        return self.HolidayDate
 
     class Meta:
         verbose_name = "تعطیل رسمی"
@@ -85,8 +91,9 @@ class Category(models.Model):
 
     برای مثال پک قاشق و چنگال نیز می تواند در دسته اضافات قرار گیرد"""
 
-    CategoryName = models.CharField(max_length=300,
-                                    verbose_name="نام دسته بندی")
+    CategoryName = models.CharField(
+        max_length=300, verbose_name="نام دسته بندی"
+    )
 
     def __str__(self):
         return self.CategoryName
@@ -135,8 +142,7 @@ class Subsidy(models.Model):
         """میزان سوبسید فعلی شرکت"""
         ...
 
-    def __str__(self):
-        ...
+    def __str__(self): ...
 
     class Meta:
         models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
@@ -152,6 +158,7 @@ class Item(models.Model):
     class MealType(models.TextChoices):
         """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
         می کنیم"""
+
         BREAKFAST = "BRF", "صبحانه"
         LAUNCH = "LNC", "ناهار"
 
@@ -159,28 +166,30 @@ class Item(models.Model):
     Category = models.ForeignKey(
         "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
     )
-    MealType = models.CharField(choices=MealType.choices,
-                                default=MealType.BREAKFAST,
-                                max_length=3)
-    ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
-    IsActive = models.BooleanField(
-        default=True,
-        help_text=""  # todo
+    MealType = models.CharField(
+        choices=MealType.choices, default=MealType.BREAKFAST, max_length=3
     )
+    ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
+    IsActive = models.BooleanField(default=True, help_text="")  # todo
     Image = models.ImageField(
         upload_to="media/items/",
         null=True,
         blank=True,
-        help_text="در صورتی که عکس آپلود نشود سیستم به صورت خودکار عکس پیشفرض "
-                  "قرار می دهد")
+        help_text=(
+            "در صورتی که عکس آپلود نشود سیستم به صورت خودکار عکس پیشفرض "
+            "قرار می دهد"
+        ),
+    )
 
     # این فیلد نباید قابل تغییر توسط ادمین و یا حتی DBA باشد. تغییرات این
     # فیلد باید در صورت اضافه کردن رکورد جدید در جدول ItemPriceHistory صورت
     # بگیرد
     CurrentPrice = models.PositiveIntegerField(
         verbose_name="قیمت فعلی آیتم به تومان",
-        help_text="برای تغییر این فیلد باید رکورد جدید در تاریخچه قیمت "
-                  "مربوط به این آیتم ایجاد کنید"
+        help_text=(
+            "برای تغییر این فیلد باید رکورد جدید در تاریخچه قیمت "
+            "مربوط به این آیتم ایجاد کنید"
+        ),
     )
 
     def __str__(self):
@@ -201,9 +210,11 @@ class Order(models.Model):
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     SubsidyAmount = models.PositiveIntegerField(
-        verbose_name="یارانه فناوران به تومان")
-    TotalPrice = models.PositiveIntegerField(verbose_name="مبلغ کل سفارش به "
-                                                          "تومان")
+        verbose_name="یارانه فناوران به تومان"
+    )
+    TotalPrice = models.PositiveIntegerField(
+        verbose_name="مبلغ کل سفارش به تومان"
+    )
     PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
 
     class Meta:
@@ -219,12 +230,11 @@ class OrderItem(models.Model):
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     Item = models.ForeignKey(
-        Item,
-        on_delete=models.CASCADE,
-        verbose_name="آیتم")
+        Item, on_delete=models.CASCADE, verbose_name="آیتم"
+    )
     Quantity = models.PositiveSmallIntegerField(
-        default=1,
-        verbose_name="تعداد")
+        default=1, verbose_name="تعداد"
+    )
 
     # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
     # افزونگی تکنیکی
@@ -245,6 +255,7 @@ class ItemsOrdersPerDay(models.Model):
     در صورتی که ایتمی ثبت سفارش نداشته باشد عدد 0 به عنوان TotalOrders
     بازگردانده می شود
     """
+
     Id = models.PositiveIntegerField(primary_key=True)
     Item = models.PositiveIntegerField(verbose_name="آیتم")
     Date = models.CharField(max_length=10, verbose_name="سفارش برای")
@@ -270,7 +281,7 @@ class ItemPriceHistory(models.Model):
         on_delete=models.CASCADE,
         null=False,
         blank=False,
-        verbose_name="ایتم"
+        verbose_name="ایتم",
     )
 
     Price = models.PositiveIntegerField(verbose_name="قیمت به تومان")
@@ -280,7 +291,11 @@ class ItemPriceHistory(models.Model):
         null=True,
         unique=True,
         verbose_name="تاریخ پایان",
-        help_text="توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب می شود")
+        help_text=(
+            "توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب"
+            " می شود"
+        ),
+    )
 
     def __str__(self):
         return f"{self.Item.ItemName} {self.Price}"
@@ -296,26 +311,22 @@ class DailyMenuItem(models.Model):
     اطلاعات غذای قابل سفارش در هر روز را مشخص می کند
     """
 
-    AvailableDate = models.CharField(max_length=10,
-                                     verbose_name="قابل سفارش برای")
-    Item = models.ForeignKey(Item,
-                             on_delete=models.CASCADE,
-                             verbose_name="ایتم")
-    IsActive = models.BooleanField(
-        help_text="",  # todo
-        default=True)
+    AvailableDate = models.CharField(
+        max_length=10, verbose_name="قابل سفارش برای"
+    )
+    Item = models.ForeignKey(
+        Item, on_delete=models.CASCADE, verbose_name="ایتم"
+    )
+    IsActive = models.BooleanField(help_text="", default=True)  # todo
 
     @property
-    def AvailableYear(self):
-        ...
+    def AvailableYear(self): ...
 
     @property
-    def AvailableMonth(self):
-        ...
+    def AvailableMonth(self): ...
 
     @property
-    def AvailableDay(self):
-        ...
+    def AvailableDay(self): ...
 
     class Meta:
         constraints = [

@@ -7,6 +7,7 @@ app_name = "pors"
 
 urlpatterns = [
     path("calendar/", views.personnel_calendar, name="calendar"),
+    path("create-order/", views.create_order_item, name="order"),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(

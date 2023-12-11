@@ -1,13 +1,3 @@
-from django.db.models import (
-    Case,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Sum,
-    Value,
-    When,
-    fields,
-)
 from django.shortcuts import get_list_or_404, render
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -16,26 +6,15 @@ from rest_framework.response import Response
 
 from . import business as b
 from .config import OPEN_FOR_ADMINISTRATIVE
-from .general_actions import get_general_calendar
-from .models import (
-    Category,
-    DailyMenuItem,
-    Item,
-    ItemsOrdersPerDay,
-    Order,
-    OrderItem,
-)
+from .general_actions import GeneralCalendar
+from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay, Order
 from .serializers import (
     AddMenuItemSerializer,
     AvailableItemsSerializer,
     CategorySerializer,
     DayMenuSerializer,
-    DebtSerializer,
     EdariFirstPageSerializer,
-    ItemOrderSerializer,
-    OrderItemSerializer,
     OrderSerializer,
-    PersonnelSchemaSerializer,
     SelectedItemSerializer,
 )
 from .utils import (
@@ -130,7 +109,7 @@ def personnel_calendar(request):
 
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
-    general_calendar = get_general_calendar(year, month)
+    general_calendar = GeneralCalendar(year, month)
 
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
@@ -165,7 +144,7 @@ def personnel_calendar(request):
 
     # Unpacking Serializers data into 1 single dictionary
     final_schema = {
-        **general_calendar,
+        **general_calendar.get_calendar(),
         **ordered_days_and_debt,
         **orders_items_data,
     }
@@ -199,7 +178,7 @@ def edari_calendar(request):
     month_first_day_date, month_last_day_date = first_and_last_day_date(
         month, year
     )
-    general_calendar = get_general_calendar(year, month)
+    general_calendar = GeneralCalendar(year, month)
 
     selected_items = ItemsOrdersPerDay.objects.filter(
         Date__range=[month_first_day_date, month_last_day_date]
@@ -207,7 +186,7 @@ def edari_calendar(request):
     selected_items_serializer = SelectedItemSerializer(selected_items).data
 
     return Response(
-        data=(general_calendar, selected_items_serializer),
+        data=(general_calendar.get_calendar(), selected_items_serializer),
         status=status.HTTP_200_OK,
     )
 
@@ -233,11 +212,11 @@ def edari_first_page(request):
     return Response(serializer, status.HTTP_200_OK)
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 def create_order_item(request):
     # past auth ...
     # past check is app open for creating order.
-    personnel = ...
+    personnel = "e.rezaee@eit"
     validator = b.ValidateOrder(request.data)
     if validator.is_valid():
         validator.create_order(personnel)
