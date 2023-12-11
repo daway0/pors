@@ -14,6 +14,7 @@ from .serializers import (
     CategorySerializer,
     DayMenuSerializer,
     EdariFirstPageSerializer,
+    ListedDaysWithMenu,
     OrderSerializer,
     SelectedItemSerializer,
 )
@@ -111,6 +112,19 @@ def personnel_calendar(request):
 
     general_calendar = GeneralCalendar(year, month)
 
+    # Days that have menues.
+    days_with_menu_qs = (
+        DailyMenuItem.objects.filter(
+            AvailableDate__range=[first_day_date, last_day_date]
+        )
+        .values("AvailableDate")
+        .distinct()
+    )
+    days_with_menu_data = ListedDaysWithMenu(days_with_menu_qs).data
+    splited_days_with_menu = split_dates(
+        days_with_menu_data["dates"], mode="day"
+    )
+    
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
         Personnel=personnel,
@@ -145,6 +159,7 @@ def personnel_calendar(request):
     # Unpacking Serializers data into 1 single dictionary
     final_schema = {
         **general_calendar.get_calendar(),
+        "daysWithMenu": splited_days_with_menu,
         **ordered_days_and_debt,
         **orders_items_data,
     }
@@ -179,14 +194,20 @@ def edari_calendar(request):
         month, year
     )
     general_calendar = GeneralCalendar(year, month)
+    days_with_menu = b.get_days_with_menu(month, year)
 
     selected_items = ItemsOrdersPerDay.objects.filter(
         Date__range=[month_first_day_date, month_last_day_date]
     )
     selected_items_serializer = SelectedItemSerializer(selected_items).data
 
+    final_schema = {
+        **general_calendar.get_calendar(),
+        "daysWithMenu": days_with_menu,
+        **selected_items_serializer,
+    }
     return Response(
-        data=(general_calendar.get_calendar(), selected_items_serializer),
+        data=final_schema,
         status=status.HTTP_200_OK,
     )
 
