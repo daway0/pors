@@ -21,6 +21,38 @@ ActionLog ثبت شود.
 from django.db import models
 
 
+class SystemSetting(models.Model):
+    """
+        متغیر های سیستمی. برای مثال برای از دسترس خارج سیستم به جای اینکه
+        برویم و توی IIS سیستم رو داون کنیم فیلد این جدول رو از 1 به صفر
+        تغییر می دهیم و اینطوری دیگه سفارشی پردازش نمیشه
+
+        همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
+    """
+    IsSystemOpenForPersonnel = models.BooleanField(
+        default=True,
+        help_text="در صورت بسته بودن برای پرسنل استاتوس در دسترس نبودن سیستم "
+                  "به کاربر نمایش "
+                  "داده می شود "
+                  "و ریکوعست های سمت بک پردازش نمی شوند")
+    IsSystemOpenForAdmin = models.BooleanField(
+        default=True,
+        help_text="مانند فیلد بالا"
+        )
+    SystemUpdating = models.BooleanField(
+        default=False,
+        help_text="هنگام آپدیت کردن سیستم گزینه را فعال کرده تا به یوزر "
+                  "نشان دهد که سیستم در حال آپدیت شدن است و امکان ثبت سفارش "
+                  "فعال نیست")
+
+    # برای ارسال لاگ به ادمین سیستم استفاده می شود
+    SuperAdmins = models.CharField(max_length=250, null=True)
+
+    @property
+    def SuperAdminUsername(self):
+        return self.SuperAdmins.split(",") if self.SuperAdmins else []
+
+
 class Holiday(models.Model):
     """
        روز های تعطیلی رسمی کشور.
@@ -117,10 +149,19 @@ class Item(models.Model):
     می تواند غذا باشد یا نوشیدنی / پک قاشق چنگال مثلا و ...
     """
 
+    class MealType(models.TextChoices):
+        """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
+        می کنیم"""
+        BREAKFAST = "BRF", "صبحانه"
+        LAUNCH = "LNC", "ناهار"
+
     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
     Category = models.ForeignKey(
         "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
     )
+    MealType = models.CharField(choices=MealType.choices,
+                                default=MealType.BREAKFAST,
+                                max_length=3)
     ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
     IsActive = models.BooleanField(
         default=True,
@@ -140,7 +181,7 @@ class Item(models.Model):
         verbose_name="قیمت فعلی آیتم به تومان",
         help_text="برای تغییر این فیلد باید رکورد جدید در تاریخچه قیمت "
                   "مربوط به این آیتم ایجاد کنید"
-                    )
+    )
 
     def __str__(self):
         return self.ItemName
@@ -159,7 +200,8 @@ class Order(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    SubsidyAmount = models.PositiveIntegerField(verbose_name="یارانه فناوران به تومان")
+    SubsidyAmount = models.PositiveIntegerField(
+        verbose_name="یارانه فناوران به تومان")
     TotalPrice = models.PositiveIntegerField(verbose_name="مبلغ کل سفارش به "
                                                           "تومان")
     PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
@@ -174,8 +216,8 @@ class Order(models.Model):
 class OrderItem(models.Model):
     """ایتم های سفارش داده شده برای کاربران"""
 
-    Personnel = models.CharField(max_length=250,verbose_name="پرسنل")
-    DeliveryDate = models.CharField(max_length=10,verbose_name="سفارش برای")
+    Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
+    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     Item = models.ForeignKey(
         Item,
         on_delete=models.CASCADE,
@@ -254,12 +296,13 @@ class DailyMenuItem(models.Model):
     اطلاعات غذای قابل سفارش در هر روز را مشخص می کند
     """
 
-    AvailableDate = models.CharField(max_length=10, verbose_name="قابل سفارش برای")
+    AvailableDate = models.CharField(max_length=10,
+                                     verbose_name="قابل سفارش برای")
     Item = models.ForeignKey(Item,
                              on_delete=models.CASCADE,
                              verbose_name="ایتم")
     IsActive = models.BooleanField(
-        help_text="", #todo
+        help_text="",  # todo
         default=True)
 
     @property
