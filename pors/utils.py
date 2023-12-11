@@ -2,6 +2,7 @@ import json
 import re
 
 import jdatetime
+from django.db import connection
 from persiantools.jdatetime import JalaliDate
 
 from .config import ORDER_REGISTRATION_CLOSED_IN
@@ -146,3 +147,21 @@ def is_date_valid_for_submission(date: str) -> bool:
     if date <= eligable_date:
         return True
     return False
+
+
+def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
+    """
+    Executing raw queries via context manager
+
+    Args:
+        query: the raw query
+        params: parameters used in query, avoiding sql injections
+
+    Returns:
+        result: the data retrived by query
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(query, params)
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return result

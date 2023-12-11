@@ -5,7 +5,6 @@ from .utils import validate_date
 
 
 class AvailableItemsSerializer(serializers.ModelSerializer):
-    # id = serializers.IntegerField(source="id")
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
 
@@ -83,33 +82,14 @@ class DebtSerializer(serializers.Serializer):
 
 
 class OrderItemSerializer(serializers.Serializer):
-    id = serializers.IntegerField(source="Item__id")
-    title = serializers.CharField(source="Item__ItemName")
-    currentPrice = serializers.IntegerField(source="Item__CurrentPrice")
-    img = serializers.CharField(source="Item__Image")
-    category = serializers.IntegerField(source="Item__Category_id")
-    description = serializers.CharField(source="Item__ItemDesc")
+    id = serializers.IntegerField()
+    title = serializers.CharField(source="ItemName")
+    currentPrice = serializers.IntegerField(source="CurrentPrice")
+    img = serializers.CharField(source="Image")
+    category = serializers.IntegerField(source="Category_id")
+    description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
-
-
-class OrderBillSerializer(serializers.Serializer):
-    total = serializers.IntegerField()
-    fanavaran = serializers.IntegerField()
-    debt = serializers.IntegerField()
-
-
-# class OrderSerializer(serializers.Serializer):
-#     orderDate = serializers.CharField()
-#     orderItems = serializers.SerializerMethodField()
-#     orderBill = serializers.SerializerMethodField()
-
-#     def get_orderItems(self, obj):
-#         result = OrderItemSerializer(obj.get("orderItems"), many=True).data
-#         return result
-
-#     def get_orderBill(self, obj):
-#         return OrderBillSerializer(obj.get("orderBill")).data
 
 
 class OrderSerializer(serializers.Serializer):
@@ -124,8 +104,7 @@ class OrderSerializer(serializers.Serializer):
             if date == object["DeliveryDate"]:
                 schema["orderItems"].append(serializer)
                 continue
-            if len(result) != 0:
-                result.append(schema)
+
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
             schema["orderItems"] = []

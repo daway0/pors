@@ -1,11 +1,6 @@
 from django.urls import path, include
-select oi.DeliveryDate, oi.Quantity, oi.PricePerOne, i.id, i.ItemName,
-       i.Image, i.CurrentPrice, i.Category_id, i.ItemDesc, oi.Personnel,
-        o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
-from pors_orderitem as oi
-inner join pors_item as i on oi.Item_id = i.id
-inner join "Order" as o on o.Personnel = oi.Personnel
-where oi.Personnel = "e.rezaee@eit"
+from . import views
+
 
 
 app_name = "pors"

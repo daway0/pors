@@ -39,6 +39,7 @@ from .serializers import (
     SelectedItemSerializer,
 )
 from .utils import (
+    execute_raw_sql_with_params,
     first_and_last_day_date,
     get_first_orderable_date,
     split_dates,
@@ -111,7 +112,7 @@ def personnel_calendar(request):
     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
     """
     # Past Auth...
-    personnel = "e.rezaee@eit"
+    personnel = "j.pashootan@eit"
     year = request.query_params.get("year")
     month = request.query_params.get("month")
     if year is None or month is None:
@@ -140,44 +141,36 @@ def personnel_calendar(request):
     ordered_days_list = [obj.DeliveryDate for obj in orders]
     spilitted_ordered_days_list = split_dates(ordered_days_list, "day")
 
-    orders_items_qs = (
-        OrderItem.objects.filter(
-            Personnel=personnel, DeliveryDate=[first_day_date, last_day_date]
-        )
-        .select_related("Item", "Order")
-        .values(
-            "DeliveryDate",
-            "Quantity",
-            "PricePerOne",
-            "Personnel",
-            "Item__id",
-            "Item__ItemName",
-            "Item__Image",
-            "Item__CurrentPrice",
-            "Item__Category_id",
-            "Item__ItemDesc",
-            "Order__SubsidyAmount",
-            "Order__PersonnelDebt",
-            "Order__TotalPrice",
-        )
-    )
+    # Couldn't use django orm because "Order" doesn't have
+    # relation with orderitem table.
+    query = """
+    SELECT oi.DeliveryDate, oi.Quantity, oi.PricePerOne,
+           i.id, i.ItemName, i.Image, i.CurrentPrice,
+           i.Category_id, i.ItemDesc, oi.Personnel,
+           o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
+    FROM pors_orderitem AS oi
+    INNER JOIN pors_item AS i ON oi.Item_id = i.id
+    INNER JOIN "Order" AS o ON o.Personnel = oi.Personnel AND o.DeliveryDate = oi.DeliveryDate
+    WHERE oi.DeliveryDate between %s AND %s and oi.Personnel = %s
+    ORDER BY oi.DeliveryDate
+    """
+    params = (first_day_date, last_day_date, personnel)
+    order_items = execute_raw_sql_with_params(query, params)
 
-    # select oi.DeliveryDate, oi.Quantity, oi.PricePerOne, i.id, i.ItemName,
-    #    i.Image, i.CurrentPrice, i.Category_id, i.ItemDesc, oi.Personnel,
-    #     o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
-    # from pors_orderitem as oi
-    # inner join pors_item as i on oi.Item_id = i.id
-    # inner join "Order" as o on o.Personnel = oi.Personnel
-    # where oi.Personnel = "e.rezaee@eit"
-
-    
-    orders_items_data = OrderSerializer(orders_items_qs).data
-    schema = {
+    orders_items_data = OrderSerializer(order_items).data
+    ordered_days_and_debt = {
         "orderedDays": spilitted_ordered_days_list,
         "totalDebt": totalDebt,
     }
+
+    # Unpacking Serializers data into 1 single dictionary
+    final_schema = {
+        **general_calendar,
+        **ordered_days_and_debt,
+        **orders_items_data,
+    }
     return Response(
-        data=(general_calendar, schema, orders_items_data),
+        data=(final_schema),
         status=status.HTTP_200_OK,
     )
 
