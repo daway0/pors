@@ -1,5 +1,15 @@
+import json
+
+from django.db.models import Sum
+
 from . import models as m
-from .utils import is_date_valid_for_submission, validate_date
+from . import serializers as s
+from .utils import (
+    is_date_valid_for_submission,
+    split_json_dates,
+    validate_date,
+    first_and_last_day_date
+)
 
 
 class ValidateRemove:
@@ -204,3 +214,19 @@ class ValidateOrder:
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
         )
+
+
+def get_days_with_menu(month: int, year: int):
+    first_day, last_day = first_and_last_day_date(month, year)
+    days_with_menu = (
+        m.ItemsOrdersPerDay.objects.filter(Date__range=[first_day, last_day])
+        .values("Date")
+        .annotate(TotalOrders=Sum("TotalOrders"))
+    )
+    days_with_menu_serializer = s.DayWithMenuSerializer(
+        days_with_menu, many=True
+    ).data
+    splited_days_with_menu = split_json_dates(
+        json.dumps(days_with_menu_serializer)
+    )
+    return splited_days_with_menu

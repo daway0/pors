@@ -140,6 +140,18 @@ class DayWithMenuSerializer(serializers.Serializer):
     ordersNumber = serializers.IntegerField(source="TotalOrders")
 
 
+class ListedDaysWithMenu(serializers.Serializer):
+    dates = serializers.SerializerMethodField()
+
+    def get_dates(self, obj):
+        result = []
+        for date in obj.values():
+            if date["AvailableDate"] not in result:
+                result.append(date["AvailableDate"])
+
+        return result
+
+
 class AddMenuItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="Item")
     date = serializers.CharField(max_length=10, source="AvailableDate")
