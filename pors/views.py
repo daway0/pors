@@ -34,6 +34,15 @@ def ui(request):
 
 @api_view(["POST"])
 def add_item_to_menu(request):
+    """
+    Adding items to menu.
+    Data will pass several validations in order to add item in menu.
+
+    Args:
+        date: The date which you want to add item on.
+        item: Id of the specific item.
+    """
+
     serializer = AddMenuItemSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -45,6 +54,18 @@ def add_item_to_menu(request):
 
 @api_view(["POST"])
 def remove_item_from_menu(request):
+    """
+    Removing items from menu.
+    Data will pass several validations in order to remove item.
+
+    If any order has been submitted on that menu's item, then the
+    item will not get removed.
+
+    Args:
+        date: The date which you want to remove item from.
+        item: Id of the specific item.
+    """
+
     validatior = b.ValidateRemove(request.data)
     if validatior.is_valid():
         validatior.remove_item()
@@ -91,6 +112,7 @@ def personnel_calendar(request):
     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
     """
+
     # Past Auth...
     personnel = "j.pashootan@eit"
     year = request.query_params.get("year")
@@ -124,7 +146,7 @@ def personnel_calendar(request):
     splited_days_with_menu = split_dates(
         days_with_menu_data["dates"], mode="day"
     )
-    
+
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
         Personnel=personnel,
@@ -171,6 +193,25 @@ def personnel_calendar(request):
 
 @api_view(["GET"])
 def edari_calendar(request):
+    """
+    Admin's calendar which have more detailed information about menus, orders.
+
+    Args:
+        year: Requested year.
+        month: Requested month.
+
+    Returns:
+        will return several information which are:
+        general calendar data,
+
+        days that contains menu, and number of orders on each day,
+
+        list of selected items on each day and
+        the number of orders on each item on.
+
+
+    """
+
     # Past Auth...
     personnel = ...
     year = request.query_params.get("year")
@@ -214,6 +255,17 @@ def edari_calendar(request):
 
 @api_view(["GET"])
 def edari_first_page(request):
+    """
+    First page information for `edari` users only.
+    will pass authentication first.
+
+    Returns:
+        isOpnen: Is today valid for actions
+        fullName: User's full name
+        profile: User's profile picture
+        currentDate: Current date of system (jalali).
+    """
+
     # ... past auth
     is_open = OPEN_FOR_ADMINISTRATIVE
     full_name = "test"  # DONT FORGET TO SPECIFY ...
@@ -235,6 +287,16 @@ def edari_first_page(request):
 
 @api_view(["POST"])
 def create_order_item(request):
+    """
+    Responsible for submitting orders.
+    The data will pass several validations in order to submit.
+    check `ValidateOrder` docs for mor info.
+
+    Args:
+        date: The date which you want to submit order on.
+        item: The item id which you want to buy.
+    """
+
     # past auth ...
     # past check is app open for creating order.
     personnel = "e.rezaee@eit"

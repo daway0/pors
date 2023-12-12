@@ -115,6 +115,18 @@ def split_dates(dates, mode: str) -> int | list[int]:
 
 
 def split_json_dates(dates: str) -> dict[str, str]:
+    """
+    Splitting a json list of dates and generating a dict with day number.
+    This function assumes that you have a `day` key in your json data that
+    contains a VALID date
+
+    Args:
+        dates: serialized (json) data contains a `date` key.
+
+    Returns:
+        Deserialized data, date key will contain the number of day only.
+    """
+
     dates = json.loads(dates)
     for obj in dates:
         obj["day"] = int(obj["day"].split("/")[2])

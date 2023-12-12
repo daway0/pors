@@ -33,6 +33,10 @@ class GeneralCalendar:
         self.month = month
 
     def get_calendar(self):
+        """
+        Returning the general calendar serilized data.
+        """
+
         return GeneralCalendarSerializer(
             data={
                 "year": self.year,
@@ -62,6 +66,11 @@ class GeneralCalendar:
         return first_day_date, last_day_date
 
     def _get_holidays(self):
+        """
+        Fetching holidays from database,
+        Then calculating weekend holidays and packing them into unique list.
+        """
+
         first_day, last_day = self._get_first_and_last_day_of_month()
         weekend_holidays = get_weekend_holidays(self.year, self.month)
         holidays = Holiday.objects.filter(
@@ -77,18 +86,3 @@ class GeneralCalendar:
 
         # Making it a set due to removing duplicate.
         return set(splited_holidays)
-
-    def _get_days_with_menu(self):
-        first_day, last_day = self._get_first_and_last_day_of_month()
-        days_with_menu = (
-            ItemsOrdersPerDay.objects.filter(Date__range=[first_day, last_day])
-            .values("Date")
-            .annotate(TotalOrders=Sum("TotalOrders"))
-        )
-        days_with_menu_serializer = DayWithMenuSerializer(
-            days_with_menu, many=True
-        ).data
-        splited_days_with_menu = split_json_dates(
-            json.dumps(days_with_menu_serializer)
-        )
-        return splited_days_with_menu

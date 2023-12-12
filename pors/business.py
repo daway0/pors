@@ -5,10 +5,10 @@ from django.db.models import Sum
 from . import models as m
 from . import serializers as s
 from .utils import (
+    first_and_last_day_date,
     is_date_valid_for_submission,
     split_json_dates,
     validate_date,
-    first_and_last_day_date
 )
 
 
@@ -199,6 +199,7 @@ class ValidateOrder:
         If the user has already ordered that item on the requested date,
         will instead increase its quantity by 1.
         """
+
         instance = m.OrderItem.objects.filter(
             Personnel=personnel, DeliveryDate=self.date, Item=self.item
         ).first()
@@ -216,8 +217,21 @@ class ValidateOrder:
         )
 
 
-def get_days_with_menu(month: int, year: int):
+def get_days_with_menu(month: int, year: int) -> dict[str, str]:
+    """
+    Fetching the days with menu on database and total orders
+    on each day.
+
+    Args:
+        month: requested month.
+        year: requested year.
+
+    Returns:
+        Serialized data contains the day with menus and total orders.
+    """
+
     first_day, last_day = first_and_last_day_date(month, year)
+
     days_with_menu = (
         m.ItemsOrdersPerDay.objects.filter(Date__range=[first_day, last_day])
         .values("Date")
@@ -229,4 +243,5 @@ def get_days_with_menu(month: int, year: int):
     splited_days_with_menu = split_json_dates(
         json.dumps(days_with_menu_serializer)
     )
+
     return splited_days_with_menu
