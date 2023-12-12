@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from .drf_mini_msg import Msg
 
 from . import business as b
 from .config import OPEN_FOR_ADMINISTRATIVE
@@ -25,8 +26,7 @@ from .utils import (
     split_dates,
 )
 
-# Create your views here.
-
+messages = Msg()
 
 def ui(request):
     return render(request, "administrativeMainPanel.html")
@@ -43,13 +43,24 @@ def add_item_to_menu(request):
         item: Id of the specific item.
     """
 
+
+
     serializer = AddMenuItemSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
+
+        messages.add_msg(
+            "گود جاب مرد",
+            Msg.SUCCESS)
+
         return Response(
-            "Successfully added the item into the menu.", status.HTTP_200_OK
+            {"messages": messages.msgs()}, status.HTTP_200_OK
         )
-    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    messages.add_msg(
+        "ملعون به ارور خوردم",
+        Msg.ERROR)
+    return Response({"erorr":serializer.errors, "messages":messages.msgs()},
+                    status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
