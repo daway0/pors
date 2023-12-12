@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from . import models as m
-from .utils import validate_date
+from .utils import is_date_valid_for_action, validate_date
 
 
 class AllItemSerializer(serializers.ModelSerializer):
@@ -178,6 +178,13 @@ class AddMenuItemSerializer(serializers.Serializer):
         date = validate_date(data["AvailableDate"])
         if not date:
             raise serializers.ValidationError("Date is not valid.")
+
+        is_date_valid_for_add = is_date_valid_for_action(date)
+        if not is_date_valid_for_add:
+            raise serializers.ValidationError(
+                "Deadline for any action on this date is over."
+            )
+
         instance = m.DailyMenuItem.objects.filter(
             AvailableDate=date, Item=data["Item"]
         )
@@ -185,6 +192,7 @@ class AddMenuItemSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "Item already exist on provided date."
             )
+
         data["Item"] = m.Item.objects.get(id=data["Item"])
         data["IsActive"] = True
         return data
