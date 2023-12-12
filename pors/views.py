@@ -115,12 +115,12 @@ def personnel_calendar(request):
 
     # Past Auth...
     personnel = "j.pashootan@eit"
-    error_message = b.validate_calendar_request(request.query_param)
+    error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         return Response(error_message, status.HTTP_400_BAD_REQUEST)
 
-    month = request.query_param.get("month")
-    year = request.query_param.get("year")
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
 
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
@@ -193,7 +193,7 @@ def edari_calendar(request):
         month: Requested month.
 
     Returns:
-        will return several information which are:
+        will return several information which are
         general calendar data,
 
         days that contains menu, and number of orders on each day,
@@ -203,12 +203,12 @@ def edari_calendar(request):
     """
 
     # Past Auth...
-    error_message = b.validate_calendar_request(request.query_param)
+    error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         return Response(error_message, status.HTTP_400_BAD_REQUEST)
 
-    month = request.query_param.get("month")
-    year = request.query_param.get("year")
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
 
     month_first_day_date, month_last_day_date = first_and_last_day_date(
         month, year
@@ -298,4 +298,3 @@ def remove_order_item(request):
             "Order has been removed successfully.", status.HTTP_200_OK
         )
     return Response(validator.error, status.HTTP_400_BAD_REQUEST)
-    ...
