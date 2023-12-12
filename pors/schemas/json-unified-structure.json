@@ -1,0 +1,8 @@
+{
+//  "data": {}/ [] (optional) ,
+//  "messages":[{}] must be list of objects,
+//  "errors": [] optional, there is no force to make it machine readable and consistent
+}
+
+
+
