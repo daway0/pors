@@ -11,7 +11,7 @@ class AllItemSerializer(serializers.ModelSerializer):
         queryset=m.Category.objects.all(), source="Category"
     )
     currentPrice = serializers.IntegerField(source="CurrentPrice")
-    mealType = serializers.CharField(source="MealType")
+    mealType = serializers.CharField(source="get_MealType_display")
     isActive = serializers.BooleanField(source="IsActive")
 
     class Meta:
