@@ -38,7 +38,7 @@ class Msg:
     def __init__(self):
         self._msgs: list[dict[str, str]] = []
 
-    def add_msg(self, msg: str, lvl: INFO, display_duration=DT_SHORT):
+    def add_msg(self, msg: str, lvl=INFO, display_duration=DT_SHORT):
         self._msgs.append(
             {
                 "level": lvl,
