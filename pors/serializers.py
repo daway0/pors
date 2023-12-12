@@ -7,8 +7,10 @@ from .utils import validate_date
 class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=m.Category.objects.all(), source="Category"
+    category = serializers.SlugRelatedField(
+        slug_field="CategoryName",
+        queryset=m.Category.objects.all().values("CategoryName"),
+        source="Category",
     )
     currentPrice = serializers.IntegerField(source="CurrentPrice")
     mealType = serializers.CharField(source="get_MealType_display")
