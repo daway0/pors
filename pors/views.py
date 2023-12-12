@@ -10,7 +10,7 @@ from .general_actions import GeneralCalendar
 from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay, Order
 from .serializers import (
     AddMenuItemSerializer,
-    AvailableItemsSerializer,
+    AllItemSerializer,
     CategorySerializer,
     DayMenuSerializer,
     EdariFirstPageSerializer,
@@ -80,8 +80,8 @@ class AvailableItems(ListAPIView):
     تمام ایتم های موجود برگشت داده می‌شود.
     """
 
-    queryset = Item.objects.filter(IsActive=True)
-    serializer_class = AvailableItemsSerializer
+    queryset = Item.objects.filter()
+    serializer_class = AllItemSerializer
 
 
 @api_view(["GET"])
@@ -193,7 +193,7 @@ def edari_calendar(request):
         month: Requested month.
 
     Returns:
-        will return several information which are
+        will return several information which are:
         general calendar data,
 
         days that contains menu, and number of orders on each day,
