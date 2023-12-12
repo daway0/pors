@@ -115,20 +115,12 @@ def personnel_calendar(request):
 
     # Past Auth...
     personnel = "j.pashootan@eit"
-    year = request.query_params.get("year")
-    month = request.query_params.get("month")
-    if year is None or month is None:
-        return Response(
-            "'year' and 'month' parameters must specified.",
-            status.HTTP_400_BAD_REQUEST,
-        )
-    try:
-        month = int(month)
-        year = int(year)
-    except ValueError:
-        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
-    if month > 12:
-        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
+    error_message = b.validate_calendar_request(request.query_param)
+    if error_message:
+        return Response(error_message, status.HTTP_400_BAD_REQUEST)
+
+    month = request.query_param.get("month")
+    year = request.query_param.get("year")
 
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
@@ -208,28 +200,15 @@ def edari_calendar(request):
 
         list of selected items on each day and
         the number of orders on each item on.
-
-
     """
 
     # Past Auth...
-    personnel = ...
-    year = request.query_params.get("year")
-    month = request.query_params.get("month")
+    error_message = b.validate_calendar_request(request.query_param)
+    if error_message:
+        return Response(error_message, status.HTTP_400_BAD_REQUEST)
 
-    if year is None or month is None:
-        return Response(
-            "'year' and 'month' parameters must specified.",
-            status.HTTP_400_BAD_REQUEST,
-        )
-    try:
-        month = int(month)
-        year = int(year)
-    except ValueError:
-        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
-
-    if not 1 <= month <= 12:
-        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
+    month = request.query_param.get("month")
+    year = request.query_param.get("year")
 
     month_first_day_date, month_last_day_date = first_and_last_day_date(
         month, year

@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from django.db.models import Sum
 
@@ -215,6 +216,35 @@ class ValidateOrder:
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
         )
+
+
+def validate_calendar_request(
+    data: dict,
+) -> Optional[str]:
+    """
+    Responsible for validating request data for calendars.
+
+    Args:
+        data: request data which must contains `year` and `month` value.
+
+    Returns:
+        Error message if data violates the validation.
+
+    """
+
+    year = data.get("year")
+    month = data.get("month")
+
+    if not (year and month):
+        return "'year' and 'month' parameters must specifed."
+    try:
+        month = int(month)
+        year = int(year)
+    except ValueError:
+        return "Invalid parameters."
+
+    if not 1 <= month <= 12:
+        return "Invalid month value."
 
 
 def get_days_with_menu(month: int, year: int) -> dict[str, str]:
