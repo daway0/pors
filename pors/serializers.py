@@ -12,6 +12,7 @@ class AllItemSerializer(serializers.ModelSerializer):
     )
     currentPrice = serializers.IntegerField(source="CurrentPrice")
     mealType = serializers.CharField(source="get_MealType_display")
+    itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
 
     class Meta:
@@ -23,6 +24,7 @@ class AllItemSerializer(serializers.ModelSerializer):
             "category",
             "currentPrice",
             "mealType",
+            "itemDesc",
             "isActive",
         )
 

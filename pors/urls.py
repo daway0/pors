@@ -12,7 +12,7 @@ urlpatterns = [
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(
         "all-items/",
-        views.AvailableItems.as_view(),
+        views.AllItems.as_view(),
         name="all_items",
     ),
     path(
