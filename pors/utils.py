@@ -160,10 +160,10 @@ def validate_date(date: str) -> Optional[str]:
         return None
 
 
-def is_date_valid_for_submission(date: str) -> bool:
+def is_date_valid_for_action(date: str) -> bool:
     """
     This function is responsible for checking if the date
-    is valid for submission.
+    is valid for any action (submission | removal).
     Deadline is fetched from config.
 
     Args:

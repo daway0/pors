@@ -7,7 +7,8 @@ from . import models as m
 from . import serializers as s
 from .utils import (
     first_and_last_day_date,
-    is_date_valid_for_submission,
+    get_current_date,
+    is_date_valid_for_action,
     split_json_dates,
     validate_date,
 )
@@ -76,6 +77,10 @@ class ValidateRemove:
         date = validate_date(self.date)
         if not date:
             raise ValueError("Date is not valid.")
+
+        is_date_valid_for_removal = is_date_valid_for_action(date)
+        if not is_date_valid_for_removal:
+            raise ValueError("Deadline for any action on this date is over.")
 
     def _validate_item(self):
         """
@@ -191,10 +196,10 @@ class ValidateOrder:
         date = validate_date(self.date)
         if not date:
             raise ValueError("invalid 'date' value.")
-        is_valid = is_date_valid_for_submission(date)
+        is_valid = is_date_valid_for_action(date)
         if not is_valid:
             raise ValueError(
-                "your deadline for any action on this date is over."
+                "Deadline for any action on this date is over."
             )
 
     def _validate_item(self):
