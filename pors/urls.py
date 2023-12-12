@@ -11,9 +11,9 @@ urlpatterns = [
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(
-        "administrative/available-items/",
+        "all-items/",
         views.AvailableItems.as_view(),
-        name="aavailable_items",
+        name="all_items",
     ),
     path(
         "administrative/add-item-to-menu/",

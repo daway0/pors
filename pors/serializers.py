@@ -4,13 +4,27 @@ from . import models as m
 from .utils import validate_date
 
 
-class AvailableItemsSerializer(serializers.ModelSerializer):
+class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=m.Category.objects.all(), source="Category"
+    )
+    currentPrice = serializers.IntegerField(source="CurrentPrice")
+    mealType = serializers.CharField(source="MealType")
+    isActive = serializers.BooleanField(source="IsActive")
 
     class Meta:
         model = m.Item
-        fields = ("id", "itemName", "image")
+        fields = (
+            "id",
+            "itemName",
+            "image",
+            "category",
+            "currentPrice",
+            "mealType",
+            "isActive",
+        )
 
 
 class DayMenuSerializer(serializers.ModelSerializer):

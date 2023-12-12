@@ -155,7 +155,7 @@ class Item(models.Model):
     می تواند غذا باشد یا نوشیدنی / پک قاشق چنگال مثلا و ...
     """
 
-    class MealType(models.TextChoices):
+    class MealTypeChoices(models.TextChoices):
         """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
         می کنیم"""
 
@@ -167,7 +167,9 @@ class Item(models.Model):
         "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
     )
     MealType = models.CharField(
-        choices=MealType.choices, default=MealType.BREAKFAST, max_length=3
+        choices=MealTypeChoices.choices,
+        default=MealTypeChoices.BREAKFAST,
+        max_length=3,
     )
     ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
     IsActive = models.BooleanField(default=True, help_text="")  # todo
