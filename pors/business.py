@@ -124,23 +124,42 @@ class ValidateOrder:
     def __init__(self, request_data) -> None:
         self.data: dict = request_data
 
-    def is_valid(self):
+    def is_valid(self, create=False, remove=False):
         """
-        Applying validations to the request data.
+        Applying validations to the request data based on the request type.
         if the request was not valid, will return false and
         store error result inside `self.error`.
 
+        Its essential to specify ONE of the optional parameters,
+        Otherwise will raise ValueError
+
+        Args:
+            Optional[create]: Apply submission validations.
+            Optional[remove]: Apply removal validations.
+
         Returns:
             bool: was the request data valid or not.
+
+        Raises:
+            ValueError: If no parameters are specified.
         """
+
+        if not (create or remove):
+            raise ValueError(
+                "No parameters are specified for applying validations."
+            )
 
         try:
             self._validate_request()
             self._validate_date()
-            self._validate_item()
+            if create:
+                self._validate_item()
+            elif remove:
+                self._validate_removal()
         except ValueError as e:
             self.error = str(e)
             return False
+
         return True
 
     def _validate_request(self):
@@ -166,7 +185,7 @@ class ValidateOrder:
         """
         Validating date value based on `validate_date` logic first,
         Then checking if the order date is within deadline
-        and valid for submision.
+        and valid for submission | removal.
         """
 
         date = validate_date(self.date)
@@ -175,7 +194,7 @@ class ValidateOrder:
         is_valid = is_date_valid_for_submission(date)
         if not is_valid:
             raise ValueError(
-                "your deadline for submission on this date is over."
+                "your deadline for any action on this date is over."
             )
 
     def _validate_item(self):
@@ -193,6 +212,21 @@ class ValidateOrder:
         if not is_item_available:
             raise ValueError("item is not available in corresponding date.")
         self.item = m.Item.objects.filter(id=self.item).first()
+
+    def _validate_removal(self):
+        """
+        Checking if the user has ordered the specified item on validated date.
+        """
+
+        order_item = m.OrderItem.objects.filter(
+            Personnel=self.data.get("Personnel"),
+            DeliveryDate=self.date,
+            Item=self.item,
+        ).first()
+        if not order_item:
+            raise ValueError("No order has been created with provided data.")
+
+        self.order_item = order_item
 
     def create_order(self, personnel: str):
         """
@@ -216,6 +250,20 @@ class ValidateOrder:
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
         )
+
+    def remove_order(self):
+        """
+        Removing the specified order.
+
+        If the order quantity is greater than 1, then will decrease
+            its value by 1,
+        otherwise will remove the record.
+        """
+
+        if self.order_item.Quantity > 1:
+            self.order_item.Quantity -= 1
+        else:
+            self.order_item.delete()
 
 
 def validate_calendar_request(

@@ -280,9 +280,22 @@ def create_order_item(request):
     # past check is app open for creating order.
     personnel = "e.rezaee@eit"
     validator = b.ValidateOrder(request.data)
-    if validator.is_valid():
+    if validator.is_valid(create=True):
         validator.create_order(personnel)
         return Response(
             "Order has been created successfully.", status.HTTP_201_CREATED
         )
     return Response(validator.error, status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def remove_order_item(request):
+    personnel = "e.rezaee@eit"
+    validator = b.ValidateOrder(request.data)
+    if validator.is_valid(remove=True):
+        validator.remove_order()
+        return Response(
+            "Order has been removed successfully.", status.HTTP_200_OK
+        )
+    return Response(validator.error, status.HTTP_400_BAD_REQUEST)
+    ...
