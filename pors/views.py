@@ -75,7 +75,7 @@ def remove_item_from_menu(request):
     return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
-class AvailableItems(ListAPIView):
+class AllItems(ListAPIView):
     """
     تمام ایتم های موجود برگشت داده می‌شود.
     """
