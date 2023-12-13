@@ -15,7 +15,7 @@ from .utils import (
 )
 
 
-def _validate_request(data: dict) -> tuple[str, int]:
+def validate_request(data: dict) -> tuple[str, int]:
     """
     This function is responsible for validating request data for
         validator classes which are defined in this module.
@@ -33,7 +33,7 @@ def _validate_request(data: dict) -> tuple[str, int]:
         item: Validated item value.
     """
 
-    date = data.get("date")
+    date = validate_date(data.get("date"))
     item = data.get("item")
     if not (date and item):
         raise ValueError("'item' and 'date' must specified.")
@@ -136,7 +136,7 @@ class ValidateRemove:
         """
 
         try:
-            self.date, self.item = _validate_request(self.data)
+            self.date, self.item = validate_request(self.data)
             self._validate_date()
             self._validate_item()
         except ValueError as e:
@@ -232,7 +232,7 @@ class ValidateOrder:
             )
 
         try:
-            self.date, self.item = _validate_request(self.data)
+            self.date, self.item = validate_request(self.data)
             self._validate_date()
             if create:
                 self._validate_item()
@@ -364,7 +364,7 @@ class ValidateBreakfast:
         """
 
         try:
-            self.date, self.item = _validate_request(self.data)
+            self.date, self.item = validate_request(self.data)
             self._validate_date()
             self._validate_item()
             self._validate_order()
