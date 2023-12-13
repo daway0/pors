@@ -13,9 +13,9 @@ urlpatterns = [
         name="breakfast_order",
     ),
     path(
-        "specific-item-orderer-report/",
-        views.specific_item_orderer_report,
-        name="item_orderes_report",
+        "administrative/reports/item-ordering-personnel-list/",
+        views.item_ordering_personnel_list_report,
+        name="item_ordering_personnel_list_report",
     ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),

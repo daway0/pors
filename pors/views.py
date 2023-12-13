@@ -342,27 +342,30 @@ def create_breakfast_order(request):
 
 
 @api_view(["POST"])
-def specific_item_orderer_report(request):
+def item_ordering_personnel_list_report(request):
     # past auth ...
-    personnel = "e.rezaee@eit"
     try:
-        date, item = b.validate_request(request.data)
+        date, item_id = b.validate_request(request.data)
     except ValueError as err:
         message.add_message("مشکلی در اعتبارسنجی درخواست شما رخ داده است.")
         return Response({"messages": message.messages(), "errors": str(err)})
 
-    personnels = OrderItem.objects.filter(
-        DeliveryDate=date, Item=item
-    ).values_list("Personnel", flat=True)
-    # serialized_data = SpecificItemOrdererSerializer(personnels).data
+    item_name = Item.objects.filter(id=item_id).first().ItemName
+    personnel = OrderItem.objects.filter(
+        DeliveryDate=date,
+        Item=item_id
+    ).values(
+        "Personnel",
+        "Quantity",
+    )
 
-    file_name = f"{date + '-' + str(item) + '-' + 'لیست سفارش دهنده‌ها'}.csv"
+    file_name = f"{date + '-' + item_name + '-' + 'لیست سفارش دهنده‌ها'}.csv"
     response = HttpResponse(
         content_type="text/csv",
         headers={"Content-Disposition": f"attachment;filename={file_name}"},
     )
     writer = csv.writer(response)
-    writer.writerow("PersonnelID")
-    for id in personnels:
-        writer.writerow(id)
+    writer.writerow(["Personnel", "Quantity"])
+    for p in personnel:
+        writer.writerow([p["Personnel"], p["Quantity"]])
     return response
