@@ -1,13 +1,17 @@
-from django.urls import path, include
+from django.urls import path
+
 from . import views
-
-
 
 app_name = "pors"
 
 urlpatterns = [
     path("calendar/", views.personnel_calendar, name="calendar"),
     path("create-order/", views.create_order_item, name="order"),
+    path(
+        "create-breakfast-order/",
+        views.create_breakfast_order,
+        name="breakfast_order",
+    ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(
