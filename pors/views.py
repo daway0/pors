@@ -3,11 +3,11 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from .drf_mini_msg import Msg
 
 from . import business as b
 from .config import OPEN_FOR_ADMINISTRATIVE
 from .general_actions import GeneralCalendar
+from .messages import Message
 from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay, Order
 from .serializers import (
     AddMenuItemSerializer,
@@ -26,7 +26,8 @@ from .utils import (
     split_dates,
 )
 
-messages = Msg()
+message = Message()
+
 
 def ui(request):
     return render(request, "administrativeMainPanel.html")
@@ -43,24 +44,18 @@ def add_item_to_menu(request):
         item: Id of the specific item.
     """
 
-
-
     serializer = AddMenuItemSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
 
-        messages.add_msg(
-            "گود جاب مرد",
-            Msg.SUCCESS)
+        message.add_message("گود جاب مرد", Message.SUCCESS)
 
-        return Response(
-            {"messages": messages.msgs()}, status.HTTP_200_OK
-        )
-    messages.add_msg(
-        "ملعون به ارور خوردم",
-        Msg.ERROR)
-    return Response({"erorr":serializer.errors, "messages":messages.msgs()},
-                    status.HTTP_400_BAD_REQUEST)
+        return Response({"message": message.messages()}, status.HTTP_200_OK)
+    message.add_message("ملعون به ارور خوردم", Message.ERROR)
+    return Response(
+        {"erorr": serializer.errors, "message": message.messages()},
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["POST"])
@@ -290,9 +285,11 @@ def create_order_item(request):
     # past auth ...
     # past check is app open for creating order.
     personnel = "e.rezaee@eit"
+    request.data["personnel"] = personnel
+
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(create=True):
-        validator.create_order(personnel)
+        validator.create_order()
         return Response(
             "Order has been created successfully.", status.HTTP_201_CREATED
         )
@@ -302,6 +299,7 @@ def create_order_item(request):
 @api_view(["POST"])
 def remove_order_item(request):
     personnel = "e.rezaee@eit"
+    request.data["personnel"] = personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
         validator.remove_order()
@@ -309,3 +307,23 @@ def remove_order_item(request):
             "Order has been removed successfully.", status.HTTP_200_OK
         )
     return Response(validator.error, status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def create_breakfast_order(request):
+    # past auth ...
+    personnel = "e.rezaee@eit"
+    request.data["personnel"] = personnel
+    validator = b.ValidateBreakfast(request.data)
+    if validator.is_valid():
+        validator.create_breakfast_order()
+        message.add_message("صبحانه با موفقیت ثبت شد.")
+        return Response(
+            {"messages": message.messages()}, status.HTTP_201_CREATED
+        )
+
+    message.add_message("ثبت صحبانه با مشکل مواجه شد.")
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )

@@ -1,4 +1,4 @@
-class Msg:
+class Message:
     """
     it's a very simple class to handle the msgs for displaying in front.
 
@@ -6,20 +6,20 @@ class Msg:
         You have to instantiated in view module for once.
 
         ```
-        m=Msg()
+        m=Message()
         def some_view(request):
-            m.add_msg(
+            m.add_message(
             "قرمه سبزی به سفارش امروز اضافه شد"
-            ,Msg.SUCCESS
-            ,Msg.DT_SHORT
+            ,Message.SUCCESS
+            ,Message.DT_SHORT
             )
-            return Response ({"data":date, "messages":m.msgs()})
+            return Response ({"data":date, "messages":m.messages()})
         ```
 
     Warnings:
 
-        * BE CAREFUL THAT AFTER CALLING THE msgs() METHOD THE _msgs ATTR GET FLUSHED.
-        * use msgs() only in return statements
+        * BE CAREFUL THAT AFTER CALLING THE messages() METHOD THE _messages ATTR GET FLUSHED.
+        * use messages() only in return statements
     """
 
     SUCCESS = "SUCCESS"
@@ -36,19 +36,19 @@ class Msg:
     DT_PARAMENT = "DISPLAY_TIME_PARAMENT"
 
     def __init__(self):
-        self._msgs: list[dict[str, str]] = []
+        self._messages: list[dict[str, str]] = []
 
-    def add_msg(self, msg: str, lvl=INFO, display_duration=DT_SHORT):
-        self._msgs.append(
+    def add_message(self, message: str, level=INFO, display_duration=DT_SHORT):
+        self._messages.append(
             {
-                "level": lvl,
-                "msg": msg,
+                "level": level,
+                "message": message,
                 "displayDuration": display_duration
             }
         )
 
-    def msgs(self):
-        temp = self._msgs
-        # clear the msgs list
-        self._msgs = []
+    def messages(self):
+        temp = self._messages
+        # clear the messages list
+        self._messages = []
         return temp
