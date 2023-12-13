@@ -352,9 +352,9 @@ def specific_item_orderer_report(request):
         return Response({"messages": message.messages(), "errors": str(err)})
 
     personnels = OrderItem.objects.filter(
-        DeliveryDate=date, Personnel=personnel, Item=item
-    ).values("Personnel")
-    serialized_data = SpecificItemOrdererSerializer(personnels).data
+        DeliveryDate=date, Item=item
+    ).values_list("Personnel", flat=True)
+    # serialized_data = SpecificItemOrdererSerializer(personnels).data
 
     file_name = f"{date + '-' + str(item) + '-' + 'لیست سفارش دهنده‌ها'}.csv"
     response = HttpResponse(
@@ -362,5 +362,7 @@ def specific_item_orderer_report(request):
         headers={"Content-Disposition": f"attachment;filename={file_name}"},
     )
     writer = csv.writer(response)
-    writer.writerow(serialized_data)
+    writer.writerow("PersonnelID")
+    for id in personnels:
+        writer.writerow(id)
     return response
