@@ -362,8 +362,8 @@ def item_ordering_personnel_list_report(request):
     file_name = f"{date + '-' + item_name + '-' + 'لیست سفارش دهنده‌ها'}.csv"
     response = HttpResponse(
         content_type="text/csv",
-        headers={"Content-Disposition": f"attachment;filename={file_name}"},
     )
+
     writer = csv.writer(response)
     writer.writerow(["Personnel", "Quantity"])
     for p in personnel:

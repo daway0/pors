@@ -664,6 +664,34 @@ $(document).ready(function () {
             ),
             success: function (data) {
 
+
+                // Create a Blob object from the CSV data
+                var blob = new Blob([data], {type: 'text/csv;charset=utf-8;'});
+
+                // Create a temporary link element
+                var link = document.createElement('a');
+
+                // Set the link's href to a data URL representing the Blob
+                link.href = window.URL.createObjectURL(blob);
+
+                // Set the link's download attribute to specify the filename
+                let cd = toShamsiFormat(selectedDate)
+                let item = allItems.find(function (obj) {
+                    return obj.id=id
+                })
+                let farsiPrefix = "لیست سفارش دهنده های ایتم"
+                link.download = `${farsiPrefix}-${cd}-${item.itemName}.csv`;
+
+                // Append the link to the document
+                document.body.appendChild(link);
+
+                // Programmatically click the link to trigger the download
+                link.click();
+
+                // Remove the link from the document
+                document.body.removeChild(link);
+
+
             },
             error: function (xhr, status, error) {
                 console.error('the report didnt downloaded', status, 'and' +
