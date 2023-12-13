@@ -27,6 +27,8 @@ class SystemSetting(models.Model):
     برویم و توی IIS سیستم رو داون کنیم فیلد این جدول رو از 1 به صفر
     تغییر می دهیم و اینطوری دیگه سفارشی پردازش نمیشه
 
+    کلا همه متغیر های زیر از طریق دیتابیس باید دستخوش تغییر قرار گیرند
+
     همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
     """
 
@@ -51,12 +53,40 @@ class SystemSetting(models.Model):
         ),
     )
 
-    # برای ارسال لاگ به ادمین سیستم استفاده می شود
+    # برای ارسال لاگ به ادمین سیستم استفاده می شود و از طریق دیتابیس قابل
+    # تغییر است ضمن اینکه می دونم خیلی بده ولی باید به صورت زیر باشه
+    # "heshmat@eit,kabud@eit,abud@eit"
     SuperAdmins = models.CharField(max_length=250, null=True)
+
+    # این عدد در دیتابیس به صورت دستی تعیین می شود
+    BreakfastRegistrationWindowHours = models.PositiveIntegerField(
+        default=0,
+        help_text="فرض کنیم 48 باشه این عدد. یعنی اینکه برای ثبت سفارش "
+                  "صبحانه امروز کاربر  باید 48 ساعت پیش صبحانه اش را "
+                  "ثبت سفارش کرده باشد یا به عبارت دیگر از الان برای پس از "
+                  "48 ساعت اینده می تواند ثبت سفارش صبحانه کند"
+        )
+
+    # این عدد در دیتابیس به صورت دستی تعیین می شود
+    LaunchRegistrationWindowHours = models.PositiveIntegerField(
+        default=0,
+        help_text="مانند فیلد BreakfastRegistrationWindowHours"
+    )
+
+    IsSystemOpenForLaunchSubmission = models.BooleanField(
+        default=False,
+        help_text="سیستم خدمات مربوط به ناهار را انجام می دهد یا خیر"
+    )
+
+    IsSystemOpenForBreakfastSubmission = models.BooleanField(
+        default=True,
+        help_text="سیستم خدمات مربوط به صبحانه را انجام می دهد یا خیر"
+    )
 
     @property
     def SuperAdminUsername(self):
-        return self.SuperAdmins.split(",") if self.SuperAdmins else []
+        return self.SuperAdmins.replace(" ", "").split(",") if \
+            self.SuperAdmins else []
 
 
 class Holiday(models.Model):
