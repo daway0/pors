@@ -12,6 +12,11 @@ urlpatterns = [
         views.create_breakfast_order,
         name="breakfast_order",
     ),
+    path(
+        "administrative/reports/item-ordering-personnel-list/",
+        views.item_ordering_personnel_list_report,
+        name="item_ordering_personnel_list_report",
+    ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
     path("administrative/panel/", views.edari_first_page, name="apanel"),
     path(

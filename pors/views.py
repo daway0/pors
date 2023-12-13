@@ -1,3 +1,6 @@
+import csv
+
+from django.http import HttpResponse
 from django.shortcuts import get_list_or_404, render
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -8,7 +11,14 @@ from . import business as b
 from .config import OPEN_FOR_ADMINISTRATIVE
 from .general_actions import GeneralCalendar
 from .messages import Message
-from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay, Order
+from .models import (
+    Category,
+    DailyMenuItem,
+    Item,
+    ItemsOrdersPerDay,
+    Order,
+    OrderItem,
+)
 from .serializers import (
     AddMenuItemSerializer,
     AllItemSerializer,
@@ -18,6 +28,7 @@ from .serializers import (
     ListedDaysWithMenu,
     OrderSerializer,
     SelectedItemSerializer,
+    SpecificItemOrdererSerializer,
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -312,6 +323,7 @@ def remove_order_item(request):
 @api_view(["POST"])
 def create_breakfast_order(request):
     # past auth ...
+    # TODO decorator for checking is system open for breakfast submission
     personnel = "e.rezaee@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateBreakfast(request.data)
@@ -327,3 +339,33 @@ def create_breakfast_order(request):
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
+
+
+@api_view(["POST"])
+def item_ordering_personnel_list_report(request):
+    # past auth ...
+    try:
+        date, item_id = b.validate_request(request.data)
+    except ValueError as err:
+        message.add_message("مشکلی در اعتبارسنجی درخواست شما رخ داده است.")
+        return Response({"messages": message.messages(), "errors": str(err)})
+
+    item_name = Item.objects.filter(id=item_id).first().ItemName
+    personnel = OrderItem.objects.filter(
+        DeliveryDate=date,
+        Item=item_id
+    ).values(
+        "Personnel",
+        "Quantity",
+    )
+
+    file_name = f"{date + '-' + item_name + '-' + 'لیست سفارش دهنده‌ها'}.csv"
+    response = HttpResponse(
+        content_type="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={file_name}"},
+    )
+    writer = csv.writer(response)
+    writer.writerow(["Personnel", "Quantity"])
+    for p in personnel:
+        writer.writerow([p["Personnel"], p["Quantity"]])
+    return response
