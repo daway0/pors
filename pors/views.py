@@ -1,5 +1,3 @@
-import csv
-
 from django.http import HttpResponse
 from django.shortcuts import get_list_or_404, render
 from rest_framework import status
@@ -8,7 +6,6 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .config import OPEN_FOR_ADMINISTRATIVE
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -18,6 +15,7 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
+    SystemSetting
 )
 from .serializers import (
     AddMenuItemSerializer,
@@ -28,13 +26,11 @@ from .serializers import (
     ListedDaysWithMenu,
     OrderSerializer,
     SelectedItemSerializer,
-    SpecificItemOrdererSerializer,
 )
 from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_csv,
-    get_first_orderable_date,
     split_dates,
 )
 
@@ -60,7 +56,11 @@ def add_item_to_menu(request):
     if serializer.is_valid():
         serializer.save()
 
-        message.add_message("گود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مرد", Message.ERROR)
+        message.add_message(
+            "گود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب"
+            " مردگود جاب مردگود جاب مردگود جاب مرد",
+            Message.ERROR,
+        )
 
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
     message.add_message("ملعون به ارور خوردم", Message.ERROR)
@@ -264,10 +264,12 @@ def edari_first_page(request):
     """
 
     # ... past auth
-    is_open = OPEN_FOR_ADMINISTRATIVE
+    is_open = SystemSetting.objects.last().IsSystemOpenForAdmin
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
-    year, month, day = get_first_orderable_date()
+    year, month, day = b.get_first_orderable_date(
+        meal_type=Item.MealTypeChoices.LAUNCH
+    )
     current_date = {"day": day, "month": month, "year": year}
 
     serializer = EdariFirstPageSerializer(

@@ -9,8 +9,6 @@ from django.db import connection
 from django.db.models import QuerySet
 from persiantools.jdatetime import JalaliDate
 
-from .config import ORDER_REGISTRATION_CLOSED_IN
-
 
 def get_str(date: jdatetime.date) -> str:
     """تبدیل کردن آبجکت دیت جلالی به رشته
@@ -65,22 +63,6 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 def get_current_date() -> tuple[int, int, int]:
     "Returning current date"
     now = jdatetime.datetime.now()
-    return now.year, now.month, now.day
-
-
-def get_first_orderable_date() -> tuple[int, int, int]:
-    """
-    Returning the first valid date for order submission.
-    If the current hour is greater than `ORDER_REGISTRATION_CLOSED_IN`,
-    returned day is 2 days later, if not, its 1 day later.
-    """
-
-    now = jdatetime.datetime.now()
-
-    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-        now += jdatetime.timedelta(days=2)
-    else:
-        now += jdatetime.timedelta(days=1)
     return now.year, now.month, now.day
 
 
@@ -161,31 +143,6 @@ def validate_date(date: str) -> Optional[str]:
         return date
     else:
         return None
-
-
-def is_date_valid_for_action(date: str) -> bool:
-    """
-    This function is responsible for checking if the date
-    is valid for any action (submission | removal).
-    Deadline is fetched from config.
-
-    Args:
-        date: the corresponding date
-
-    Returns:
-        bool: is the date valid or not.
-    """
-    now = jdatetime.datetime.now()
-
-    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-        now += jdatetime.timedelta(days=2)
-    else:
-        now += jdatetime.timedelta(days=1)
-
-    eligable_date = now.strftime("%Y/%m/%d")
-    if date >= eligable_date:
-        return True
-    return False
 
 
 def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:

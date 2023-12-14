@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from . import models as m
-from .utils import is_date_valid_for_action, validate_date
+from .utils import validate_date
 
 
 class AllItemSerializer(serializers.ModelSerializer):
@@ -204,17 +204,3 @@ class AddMenuItemSerializer(serializers.Serializer):
 class PersonnelSchemaSerializer(serializers.Serializer):
     orderedDays = serializers.ListField()
     totalDebt = serializers.IntegerField()
-
-
-class SpecificItemOrdererSerializer(serializers.Serializer):
-    personnel = serializers.SerializerMethodField()
-
-    def get_personnel(self, obj):
-        result = []
-        for data in obj:
-            result.append(data["Personnel"])
-
-        return result
-    # class Meta:
-    #     model = m.OrderItem
-    #     fields = ("personnel",)
