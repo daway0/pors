@@ -404,6 +404,11 @@ function addNewItemToMenu(id) {
 
 }
 
+function finishLoadingDisplay() {
+    $("#loading").addClass("hidden")
+    $("#main-panel").removeClass("hidden")
+
+}
 function removeItemFromMenu(id) {
     $(`#menu-items-container li[data-item-id='${id}']`).remove();
 
@@ -645,6 +650,7 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 
 
