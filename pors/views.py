@@ -6,6 +6,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
+from .decorators import check, is_open_for_admins, is_open_for_personnel
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -25,8 +26,8 @@ from .serializers import (
     FirstPageSerializer,
     ListedDaysWithMenu,
     OrderSerializer,
+    PersonnelMenuItemSerializer,
     SelectedItemSerializer,
-    PersonnelMenuItemSerializer
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -43,6 +44,7 @@ def ui(request):
 
 
 @api_view(["POST"])
+@api_view([is_open_for_admins])
 def add_item_to_menu(request):
     """
     Adding items to menu.
@@ -72,6 +74,7 @@ def add_item_to_menu(request):
 
 
 @api_view(["POST"])
+@api_view([is_open_for_admins])
 def remove_item_from_menu(request):
     """
     Removing items from menu.
@@ -94,6 +97,7 @@ def remove_item_from_menu(request):
     return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
+@api_view([is_open_for_personnel])
 class AllItems(ListAPIView):
     """
     تمام ایتم های موجود برگشت داده می‌شود.
@@ -104,6 +108,7 @@ class AllItems(ListAPIView):
 
 
 @api_view(["GET"])
+@api_view([is_open_for_personnel])
 def DayMenu(request):
     """
     این ویو مسئولیت ارائه منو غذایی مطابق پارامتر `date` را دارا است.
@@ -119,12 +124,14 @@ def DayMenu(request):
     return Response(serializer.data, status.HTTP_200_OK)
 
 
+@api_view([is_open_for_personnel])
 class Categories(ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 @api_view(["GET"])
+@api_view([is_open_for_personnel])
 def personnel_calendar(request):
     """
     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
@@ -158,10 +165,14 @@ def personnel_calendar(request):
         days_with_menu_data["dates"], mode="day"
     )
 
-    menu_items = DailyMenuItem.objects.filter(
-        AvailableDate__range=[first_day_date, last_day_date],
-        IsActive=True,
-    ).order_by("-AvailableDate").values("AvailableDate", "Item_id")
+    menu_items = (
+        DailyMenuItem.objects.filter(
+            AvailableDate__range=[first_day_date, last_day_date],
+            IsActive=True,
+        )
+        .order_by("-AvailableDate")
+        .values("AvailableDate", "Item_id")
+    )
     menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
 
     orders = Order.objects.filter(
@@ -210,6 +221,7 @@ def personnel_calendar(request):
 
 
 @api_view(["GET"])
+@check([is_open_for_admins])
 def edari_calendar(request):
     """
     Admin's calendar which have more detailed information about menus, orders.
@@ -272,10 +284,8 @@ def first_page(request):
     """
 
     # ... past auth
-    is_open_for_admins = SystemSetting.objects.last().IsSystemOpenForAdmin
-    is_open_for_personnel = (
-        SystemSetting.objects.last().IsSystemOpenForPersonnel
-    )
+    open_for_admins = SystemSetting.objects.last().IsSystemOpenForAdmin
+    open_for_personnel = SystemSetting.objects.last().IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
     year, month, day = b.get_first_orderable_date(
@@ -285,8 +295,8 @@ def first_page(request):
 
     serializer = FirstPageSerializer(
         data={
-            "isOpenForAdmins": is_open_for_admins,
-            "isOpenForPersonnel": is_open_for_personnel,
+            "isOpenForAdmins": open_for_admins,
+            "isOpenForPersonnel": open_for_personnel,
             "fullName": full_name,
             "profile": profile,
             "currentDate": current_date,
@@ -307,7 +317,7 @@ def create_order_item(request):
         date: The date which you want to submit order on.
         item: The item id which you want to buy.
     """
-
+    
     # past auth ...
     # past check is app open for creating order.
     personnel = "e.rezaee@eit"
@@ -323,6 +333,7 @@ def create_order_item(request):
 
 
 @api_view(["POST"])
+@api_view([is_open_for_personnel])
 def remove_order_item(request):
     personnel = "e.rezaee@eit"
     request.data["personnel"] = personnel
@@ -336,6 +347,7 @@ def remove_order_item(request):
 
 
 @api_view(["POST"])
+@api_view([is_open_for_personnel])
 def create_breakfast_order(request):
     # past auth ...
     # TODO decorator for checking is system open for breakfast submission
@@ -357,6 +369,7 @@ def create_breakfast_order(request):
 
 
 @api_view(["POST"])
+@api_view([is_open_for_admins])
 def item_ordering_personnel_list_report(request):
     """
     This view is responsible for generating a csv file that contains
