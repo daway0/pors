@@ -22,20 +22,23 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-    const DISMISSDURATIONS = {
-        "DISPLAY_TIME_SHORT" : 2000,
-        "DISPLAY_TIME_TEN" : 10000,
-        "DISPLAY_TIME_LONG": 200000,
-        "DISPLAY_TIME_PARAMENT": 999999
-    }
+const DEFAULTITEMIMAGE = "https://snappfood.ir/static/images/placeholder.png"
 
-    const DISMISSLEVELS = {
-        "SUCCESS":"green",
-        "WARNING":"yellow",
-        "ERROR":"red",
-        "INFO":"blue",
-        "ANNOUNCEMENT":"purple"
-    }
+
+const DISMISSDURATIONS = {
+    "DISPLAY_TIME_SHORT": 2000,
+    "DISPLAY_TIME_TEN": 10000,
+    "DISPLAY_TIME_LONG": 200000,
+    "DISPLAY_TIME_PARAMENT": 999999
+}
+
+const DISMISSLEVELS = {
+    "SUCCESS": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "INFO": "blue",
+    "ANNOUNCEMENT": "purple"
+}
 
 let isSystemOpen = false
 // منظور از currentDate در واقع currentDate قابل سفارش است
@@ -420,6 +423,11 @@ function loadAvailableItem() {
         success: function (data) {
             $("#dropdown-menu").append(makeDropDownChoices(data))
             allItems = data
+             // همین جا بررسی می کنیم اگه که ایتم عکس نداشت عکس پیشفرض رو
+            // قرار می دهیم
+            allItems.forEach(function (item) {
+                if (item.image==="") item.image = DEFAULTITEMIMAGE
+            })
             availableItems = filterObjectsByAttrValue(allItems, "isActive", true)
             catchResponseMessagesToDisplay(data.messages)
             console.log(availableItems)
