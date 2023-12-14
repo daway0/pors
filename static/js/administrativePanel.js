@@ -21,6 +21,22 @@ const YEAR_MONTHS = {
     11: "بهمن",
     12: "اسفند",
 }
+
+    const DISMISSDURATIONS = {
+        "DISPLAY_TIME_SHORT" : 2000,
+        "DISPLAY_TIME_TEN" : 10000,
+        "DISPLAY_TIME_LONG": 200000,
+        "DISPLAY_TIME_PARAMENT": 999999
+    }
+
+    const DISMISSLEVELS = {
+        "SUCCESS":"green",
+        "WARNING":"yellow",
+        "ERROR":"red",
+        "INFO":"blue",
+        "ANNOUNCEMENT":"purple"
+    }
+
 let isSystemOpen = false
 // منظور از currentDate در واقع currentDate قابل سفارش است
 let currentDate = {
@@ -120,6 +136,35 @@ function zfill(number, width) {
         numberString = '0' + numberString;
     }
     return numberString;
+}
+
+function catchResponseMessagesToDisplay(messages) {
+    if (messages===undefined) return
+    messages.forEach(function (msg){
+        displayDismiss(DISMISSLEVELS[msg.level], msg.message, DISMISSDURATIONS[msg.displayDuration])
+    })
+}
+function displayDismiss(color, content, duration) {
+
+    let HTML = `
+        <div class="dismiss flex items-center p-4 mb-4 text-${color}-800 border-t-4 border-${color}-300 bg-${color}-50 " role="alert">
+    <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+    </svg>
+    <div class="ms-3 text-sm font-medium">
+        ${content}
+    </div>
+</div>
+`
+        $("#dismiss").append(HTML)
+
+    let fadingElement = $(".dismiss")
+    setTimeout(function() {
+                fadingElement.fadeOut(500, function() {
+                    fadingElement.remove();
+                });
+            }, duration);
+
 }
 
 function canAdminChangeMenu() {
@@ -240,8 +285,8 @@ function makeDropDownChoices(items) {
 function makeSelectedMenu(items) {
     let HTML = ""
     items.forEach(function (itemObj) {
-        let selectedItem = allItems.find(item => item.id == itemObj.id);
-        HTML += menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image, itemObj.orderedBy)
+        let selectedMenuItem = allItems.find(item => item.id === itemObj.id);
+        HTML += menuItemBlock(selectedMenuItem.id, selectedMenuItem.itemName, selectedMenuItem.image, itemObj.orderedBy)
     })
     return HTML
 }
@@ -347,7 +392,7 @@ function blurMainPanel() {
 }
 
 function addNewItemToMenu(id) {
-    let selectedItem = availableItems.find(item => item.id == id);
+    let selectedItem = availableItems.find(item => item.id === id);
     $("#menu-items-container").append(
         menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
     )
@@ -376,11 +421,13 @@ function loadAvailableItem() {
             $("#dropdown-menu").append(makeDropDownChoices(data))
             allItems = data
             availableItems = filterObjectsByAttrValue(allItems, "isActive", true)
+            catchResponseMessagesToDisplay(data.messages)
             console.log(availableItems)
         },
         error: function (xhr, status, error) {
             console.error('Available Items cannot be loaded', status, 'and' +
                 ' error:', error, 'detail:', xhr.responseJSON);
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
 }
@@ -397,10 +444,12 @@ function updateSelectedItems(month, year) {
         success: function (data) {
             selectedItems = data["selectedItems"]
             daysWithMenu = data["daysWithMenu"]
+            catchResponseMessagesToDisplay(data.messages)
 
         },
         error: function (xhr, status, error) {
             console.error('Selected Items cannot be updated!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
 }
@@ -588,18 +637,22 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    catchResponseMessagesToDisplay(data.messages)
 
 
                 },
                 error: function (xhr, status, error) {
                     console.error('Default calendar load failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
+            catchResponseMessagesToDisplay(data.messages)
 
         },
         error: function (xhr, status, error) {
             console.error('Administrative is Unreachable', status, 'and' +
                 ' error:', error);
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
     if (isSystemOpen === false) return
@@ -628,10 +681,12 @@ $(document).ready(function () {
                 updateSelectedItems(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasMenuCalendarDayBlock()
+                catchResponseMessagesToDisplay(data.messages)
 
             },
             error: function (xhr, status, error) {
                 console.error('Item not added!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
 
@@ -677,7 +732,7 @@ $(document).ready(function () {
                 // Set the link's download attribute to specify the filename
                 let cd = toShamsiFormat(selectedDate)
                 let item = allItems.find(function (obj) {
-                    return obj.id=id
+                    return obj.id===id
                 })
                 let farsiPrefix = "لیست سفارش دهنده های ایتم"
                 link.download = `${farsiPrefix}-${cd}-${item.itemName}.csv`;
@@ -691,11 +746,14 @@ $(document).ready(function () {
                 // Remove the link from the document
                 document.body.removeChild(link);
 
+                let dm = `دانلود گزارش روز ${item.itemName} شروع شد `
+                displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
 
             },
             error: function (xhr, status, error) {
                 console.error('the report didnt downloaded', status, 'and' +
                     ' error:', error, 'detail:', xhr.responseJSON );
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
             return
@@ -722,9 +780,11 @@ $(document).ready(function () {
                 updateSelectedItems(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasMenuCalendarDayBlock()
+                catchResponseMessagesToDisplay(data.messages)
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON );
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
 
@@ -764,10 +824,12 @@ $(document).ready(function () {
                     let systemToday = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(currentDate)}"]`)
                     selectDayOnCalendar(systemToday)
                     updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+                    catchResponseMessagesToDisplay(data.messages)
 
                 },
                 error: function (xhr, status, error) {
                     console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
         } else {
@@ -806,9 +868,11 @@ $(document).ready(function () {
                     1402
                 )
                 updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+                catchResponseMessagesToDisplay(data.messages)
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
     })

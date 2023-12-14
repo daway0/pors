@@ -60,12 +60,12 @@ def add_item_to_menu(request):
     if serializer.is_valid():
         serializer.save()
 
-        message.add_message("گود جاب مرد", Message.SUCCESS)
+        message.add_message("گود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مرد", Message.ERROR)
 
-        return Response({"message": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
     message.add_message("ملعون به ارور خوردم", Message.ERROR)
     return Response(
-        {"erorr": serializer.errors, "message": message.messages()},
+        {"erorr": serializer.errors, "messages": message.messages()},
         status.HTTP_400_BAD_REQUEST,
     )
 
