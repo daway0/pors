@@ -33,6 +33,7 @@ from .serializers import (
 from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
+    generate_csv,
     get_first_orderable_date,
     split_dates,
 )
@@ -343,6 +344,16 @@ def create_breakfast_order(request):
 
 @api_view(["POST"])
 def item_ordering_personnel_list_report(request):
+    """
+    This view is responsible for generating a csv file that contains
+        personnel who have ordered a specific item on specific date.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to look for.
+        -  'item' (str): The item which you want to look for.
+    """
+
     # past auth ...
     try:
         date, item_id = b.validate_request(request.data)
@@ -350,22 +361,16 @@ def item_ordering_personnel_list_report(request):
         message.add_message("مشکلی در اعتبارسنجی درخواست شما رخ داده است.")
         return Response({"messages": message.messages(), "errors": str(err)})
 
-    item_name = Item.objects.filter(id=item_id).first().ItemName
     personnel = OrderItem.objects.filter(
-        DeliveryDate=date,
-        Item=item_id
+        DeliveryDate=date, Item=item_id
     ).values(
         "Personnel",
         "Quantity",
     )
+    csv_content = generate_csv(personnel)
 
-    file_name = f"{date + '-' + item_name + '-' + 'لیست سفارش دهنده‌ها'}.csv"
     response = HttpResponse(
+        content=csv_content,
         content_type="text/csv",
     )
-
-    writer = csv.writer(response)
-    writer.writerow(["Personnel", "Quantity"])
-    for p in personnel:
-        writer.writerow([p["Personnel"], p["Quantity"]])
     return response

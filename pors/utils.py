@@ -1,9 +1,12 @@
+import csv
 import json
 import re
+from io import StringIO
 from typing import Optional
 
 import jdatetime
 from django.db import connection
+from django.db.models import QuerySet
 from persiantools.jdatetime import JalaliDate
 
 from .config import ORDER_REGISTRATION_CLOSED_IN
@@ -201,3 +204,37 @@ def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
         columns = [col[0] for col in cursor.description]
         result = [dict(zip(columns, row)) for row in cursor.fetchall()]
     return result
+
+
+def generate_csv(queryset: QuerySet):
+    """
+    This function generates a dynamic csv content based on
+        the queryset data argument.
+
+    Warnings:
+        Please note that you have to customize your queryset via filter, values
+            and other stuffs before using this function.
+        All fields and values on received queryset will used in csv.
+
+    Args:
+        queryset: The queryset that you want to generate csv from it.
+
+    Returns:
+        csv content that generated from queryset.
+    """
+
+    csv_component = StringIO()
+    writer = csv.writer(csv_component)
+
+    headers_appended = False
+
+    for obj in queryset:
+        data = obj.values()
+        if not headers_appended:
+            writer.writerow(obj.keys())
+            headers_appended = True
+        writer.writerow(data)
+
+    csv_content = csv_component.getvalue()
+    csv_component.close()
+    return csv_content
