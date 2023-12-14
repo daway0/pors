@@ -15,14 +15,14 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
-    SystemSetting
+    SystemSetting,
 )
 from .serializers import (
     AddMenuItemSerializer,
     AllItemSerializer,
     CategorySerializer,
     DayMenuSerializer,
-    EdariFirstPageSerializer,
+    FirstPageSerializer,
     ListedDaysWithMenu,
     OrderSerializer,
     SelectedItemSerializer,
@@ -251,9 +251,9 @@ def edari_calendar(request):
 
 
 @api_view(["GET"])
-def edari_first_page(request):
+def first_page(request):
     """
-    First page information for `edari` users only.
+    First page information.
     will pass authentication first.
 
     Returns:
@@ -264,7 +264,10 @@ def edari_first_page(request):
     """
 
     # ... past auth
-    is_open = SystemSetting.objects.last().IsSystemOpenForAdmin
+    is_open_for_admins = SystemSetting.objects.last().IsSystemOpenForAdmin
+    is_open_for_personnel = (
+        SystemSetting.objects.last().IsSystemOpenForPersonnel
+    )
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
     year, month, day = b.get_first_orderable_date(
@@ -272,9 +275,10 @@ def edari_first_page(request):
     )
     current_date = {"day": day, "month": month, "year": year}
 
-    serializer = EdariFirstPageSerializer(
+    serializer = FirstPageSerializer(
         data={
-            "isOpen": is_open,
+            "isOpenForAdmins": is_open_for_admins,
+            "isOpenForPersonnel": is_open_for_personnel,
             "fullName": full_name,
             "profile": profile,
             "currentDate": current_date,

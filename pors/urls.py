@@ -18,7 +18,7 @@ urlpatterns = [
         name="item_ordering_personnel_list_report",
     ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
-    path("administrative/panel/", views.edari_first_page, name="apanel"),
+    path("panel/", views.first_page, name="apanel"),
     path(
         "all-items/",
         views.AllItems.as_view(),

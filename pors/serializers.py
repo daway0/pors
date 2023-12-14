@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from . import business as b
 from . import models as m
 from .utils import validate_date
 
@@ -146,8 +147,9 @@ class GeneralCalendarSerializer(serializers.Serializer):
     daysWithMenu = serializers.ListField()
 
 
-class EdariFirstPageSerializer(serializers.Serializer):
-    isOpen = serializers.BooleanField()
+class FirstPageSerializer(serializers.Serializer):
+    isOpenForAdmins = serializers.BooleanField()
+    isOpenForPersonnel = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
     currentDate = serializers.DictField()
@@ -179,21 +181,26 @@ class AddMenuItemSerializer(serializers.Serializer):
         if not date:
             raise serializers.ValidationError("Date is not valid.")
 
-        is_date_valid_for_add = is_date_valid_for_action(date)
-        if not is_date_valid_for_add:
-            raise serializers.ValidationError(
-                "Deadline for any action on this date is over."
-            )
-
         instance = m.DailyMenuItem.objects.filter(
-            AvailableDate=date, Item=data["Item"]
+            AvailableDate=date,
+            Item=data["Item"],
+            IsActive=True,
+            Item__IsActive=True,
         )
         if instance:
             raise serializers.ValidationError(
                 "Item already exist on provided date."
             )
+        item = m.Item.objects.filter(pk=data["Item"]).first()
+        data["Item"] = item
 
-        data["Item"] = m.Item.objects.get(id=data["Item"])
+        is_date_valid_for_add = b.is_date_valid_for_action(
+            date, item.MealType
+        )
+        if not is_date_valid_for_add:
+            raise serializers.ValidationError(
+                "Deadline for any action on this date is over."
+            )
         data["IsActive"] = True
         return data
 
