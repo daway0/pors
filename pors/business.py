@@ -6,13 +6,7 @@ from django.db.models import Sum
 
 from . import models as m
 from . import serializers as s
-from .config import ORDER_REGISTRATION_CLOSED_IN
-from .utils import (
-    first_and_last_day_date,
-    is_date_valid_for_action,
-    split_json_dates,
-    validate_date,
-)
+from .utils import first_and_last_day_date, split_json_dates, validate_date
 
 
 def validate_request(data: dict) -> tuple[str, int]:
@@ -104,6 +98,73 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
     return splited_days_with_menu
 
 
+def is_date_valid_for_action(
+    date: str, meal_type: m.Item.MealTypeChoices
+) -> bool:
+    """
+    This function is responsible for checking if the date
+    is valid for any action (submission | removal) for different meal types.
+    Deadline is fetched from config.
+
+    Args:
+        date: the corresponding date
+        meal_type: The meal type of the item ( breakfast | launch ).
+
+    Returns:
+        bool: is the date valid or not.
+    """
+    now = jdatetime.datetime.now()
+
+    match meal_type:
+        case m.Item.MealTypeChoices.LAUNCH:
+            deadline = (
+                m.SystemSetting.objects.last().LaunchRegistrationWindowHours
+            )
+        case m.Item.MealTypeChoices.BREAKFAST:
+            deadline = (
+                m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
+            )
+
+    now += jdatetime.timedelta(hours=deadline)
+    eligable_date = now.strftime("%Y/%m/%d")
+
+    if date >= eligable_date:
+        return True
+    return False
+
+
+def get_first_orderable_date(
+    meal_type: m.Item.MealTypeChoices,
+) -> tuple[int, int, int]:
+    """
+    Returning the first valid date for order submission.
+    Deadline for submission is different based on the meal type, and
+        its fetched from the SystemSetting db table.
+
+    Args:
+        meal_type: The type of the item.
+
+    Returns:
+        Tuple of `year`, `month` and `day` values, don't forget the order :).
+    """
+
+    now = jdatetime.datetime.now()
+
+    match meal_type:
+        case m.Item.MealTypeChoices.LAUNCH:
+            deadline = (
+                m.SystemSetting.objects.last().LaunchRegistrationWindowHours
+            )
+        case m.Item.MealTypeChoices.BREAKFAST:
+            deadline = (
+                m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
+            )
+
+    now += jdatetime.timedelta(hours=deadline)
+
+    return now.year, now.month, now.day
+
+
 class ValidateRemove:
     """
     This class is responsible for validating item removal in menus.
@@ -137,23 +198,13 @@ class ValidateRemove:
 
         try:
             self.date, self.item = validate_request(self.data)
-            self._validate_date()
             self._validate_item()
+            self._validate_date()
         except ValueError as e:
             self.error = str(e)
             return False
+
         return True
-
-    def _validate_date(self):
-        """Validating date based on `validate_date` logic."""
-
-        date = validate_date(self.date)
-        if not date:
-            raise ValueError("Date is not valid.")
-
-        is_date_valid_for_removal = is_date_valid_for_action(date)
-        if not is_date_valid_for_removal:
-            raise ValueError("Deadline for any action on this date is over.")
 
     def _validate_item(self):
         """
@@ -178,6 +229,16 @@ class ValidateRemove:
                 "This item is not eligable for deleting, an order has already"
                 "owned this item."
             )
+        self.item = m.Item.objects.filter(pk=self.item).first()
+
+    def _validate_date(self):
+        """Validating date based on `is_date_valid_for_action` logic."""
+
+        is_date_valid_for_removal = is_date_valid_for_action(
+            self.date, self.item.MealType
+        )
+        if not is_date_valid_for_removal:
+            raise ValueError("Deadline for any action on this date is over.")
 
     def remove_item(self):
         m.DailyMenuItem.objects.get(
@@ -233,30 +294,16 @@ class ValidateOrder:
 
         try:
             self.date, self.item = validate_request(self.data)
-            self._validate_date()
             if create:
                 self._validate_item()
             elif remove:
                 self._validate_removal()
+            self._validate_date()
         except ValueError as e:
             self.error = str(e)
             return False
 
         return True
-
-    def _validate_date(self):
-        """
-        Validating date value based on `validate_date` logic first,
-        Then checking if the order date is within deadline
-        and valid for submission | removal.
-        """
-
-        date = validate_date(self.date)
-        if not date:
-            raise ValueError("invalid 'date' value.")
-        is_valid = is_date_valid_for_action(date)
-        if not is_valid:
-            raise ValueError("Deadline for any action on this date is over.")
 
     def _validate_item(self):
         """
@@ -274,6 +321,16 @@ class ValidateOrder:
             raise ValueError("item is not available in corresponding date.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
+
+    def _validate_date(self):
+        """
+        Checking if the order date is within deadline
+        and valid for submission | removal.
+        """
+
+        is_valid = is_date_valid_for_action(self.date, self.item.MealType)
+        if not is_valid:
+            raise ValueError("Deadline for any action on this date is over.")
 
     def _validate_removal(self):
         """
@@ -365,36 +422,14 @@ class ValidateBreakfast:
 
         try:
             self.date, self.item = validate_request(self.data)
-            self._validate_date()
             self._validate_item()
+            self._validate_date()
             self._validate_order()
         except ValueError as e:
             self.error = str(e)
             return False
 
         return True
-
-    def _validate_date(self):
-        """
-        Validating date value.
-        Personnel must submit breakfast orders 1 week sooner.
-        """
-
-        date = validate_date(self.date)
-        if not date:
-            raise ValueError("Invalid date value.")
-
-        now = jdatetime.datetime.now()
-        if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-            now += jdatetime.timedelta(days=8)
-        else:
-            now += jdatetime.timedelta(days=7)
-
-        eligable_date = now.strftime("%Y/%m/%d")
-        if date >= eligable_date:
-            return
-
-        raise ValueError("Deadline for submitting breakfast order is over.")
 
     def _validate_item(self):
         """
@@ -415,6 +450,20 @@ class ValidateBreakfast:
             raise ValueError("Item is not valid.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
+
+    def _validate_date(self):
+        """
+        Validating date value.
+        Personnel must submit breakfast orders 1 week sooner.
+        """
+
+        is_valid_for_submission = is_date_valid_for_action(
+            self.date, m.Item.MealTypeChoices.BREAKFAST
+        )
+        if not is_valid_for_submission:
+            raise ValueError(
+                "Deadline for submitting breakfast order is over."
+            )
 
     def _validate_order(self):
         """
