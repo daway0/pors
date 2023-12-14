@@ -194,9 +194,7 @@ class AddMenuItemSerializer(serializers.Serializer):
         item = m.Item.objects.filter(pk=data["Item"]).first()
         data["Item"] = item
 
-        is_date_valid_for_add = b.is_date_valid_for_action(
-            date, item.MealType
-        )
+        is_date_valid_for_add = b.is_date_valid_for_action(date, item.MealType)
         if not is_date_valid_for_add:
             raise serializers.ValidationError(
                 "Deadline for any action on this date is over."
@@ -211,3 +209,27 @@ class AddMenuItemSerializer(serializers.Serializer):
 class PersonnelSchemaSerializer(serializers.Serializer):
     orderedDays = serializers.ListField()
     totalDebt = serializers.IntegerField()
+
+
+class MenuItems(serializers.Serializer):
+    id = serializers.IntegerField(source="Item_id")
+
+
+class PersonnelMenuItemSerializer(serializers.Serializer):
+    menuItems = serializers.SerializerMethodField()
+
+    def get_menuItems(self, obj):
+        result = []
+        current_date_obj = {}
+        for object in obj:
+            serializer = MenuItems(object).data
+            if current_date_obj.get("date") == object.get("AvailableDate"):
+                current_date_obj["items"].append(serializer)
+            else:
+                current_date_obj = {}
+                current_date_obj["date"] = object.get("AvailableDate")
+                current_date_obj["items"] = []
+                current_date_obj["items"].append(serializer)
+                result.append(current_date_obj)
+
+        return result

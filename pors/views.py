@@ -26,6 +26,7 @@ from .serializers import (
     ListedDaysWithMenu,
     OrderSerializer,
     SelectedItemSerializer,
+    PersonnelMenuItemSerializer
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -157,6 +158,12 @@ def personnel_calendar(request):
         days_with_menu_data["dates"], mode="day"
     )
 
+    menu_items = DailyMenuItem.objects.filter(
+        AvailableDate__range=[first_day_date, last_day_date],
+        IsActive=True,
+    ).order_by("-AvailableDate").values("AvailableDate", "Item_id")
+    menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
+
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
         Personnel=personnel,
@@ -192,6 +199,7 @@ def personnel_calendar(request):
     final_schema = {
         **general_calendar.get_calendar(),
         "daysWithMenu": splited_days_with_menu,
+        **menu_items_serialized_data,
         **ordered_days_and_debt,
         **orders_items_data,
     }
