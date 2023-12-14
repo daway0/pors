@@ -214,13 +214,13 @@ def generate_csv(queryset: QuerySet):
     Warnings:
         Please note that you have to customize your queryset via filter, values
             and other stuffs before using this function.
-        All fields and values on received queryset will used in csv.
+        All fields and values on received queryset will use in csv.
 
     Args:
         queryset: The queryset that you want to generate csv from it.
 
     Returns:
-        csv content that generated from queryset.
+        str: csv content that generated from queryset.
     """
 
     csv_component = StringIO()
