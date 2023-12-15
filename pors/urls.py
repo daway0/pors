@@ -39,6 +39,7 @@ urlpatterns = [
         views.remove_order_item,
         name="remove_order_item",
     ),
+    path("get-subsidy/", views.get_subsidy, name="get_subsidy"),
     path("", views.uiadmin),
     path("personnel/", views.ui),
 ]

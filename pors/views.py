@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework import status
@@ -16,6 +17,7 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
+    Subsidy,
     SystemSetting,
 )
 from .serializers import (
@@ -478,3 +480,23 @@ def item_ordering_personnel_list_report(request):
         content_type="text/csv",
     )
     return response
+
+
+@api_view(["GET"])
+@check([is_open_for_personnel])
+def get_subsidy(request):
+    date = b.validate_date(request.query_params.get("date"))
+    if not date:
+        message.add_message(
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": "Invalid 'date' value."}
+        )
+
+    subsidy = Subsidy.objects.filter(
+        Q(FromDate__lte=date, UntilDate__isnull=True)
+        | Q(FromDate__lte=date, UntilDate__gte=date)
+    ).first().Amount
+
+    return Response({"data": {"subsidy": subsidy}})
