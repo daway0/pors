@@ -348,6 +348,7 @@ class ValidateOrder:
             raise ValueError("No order has been created with provided data.")
 
         self.order_item = order_item
+        self.item = m.Item.objects.filter(pk=self.item).first()
 
     def create_order(self):
         """
@@ -386,7 +387,7 @@ class ValidateOrder:
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
         else:
-            self.order_item.delete()
+            self.item.delete()
 
 
 class ValidateBreakfast:
