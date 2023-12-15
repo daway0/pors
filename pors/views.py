@@ -44,7 +44,7 @@ def ui(request):
 
 
 @api_view(["POST"])
-@api_view([is_open_for_admins])
+@check([is_open_for_admins])
 def add_item_to_menu(request):
     """
     Adding items to menu.
@@ -74,7 +74,7 @@ def add_item_to_menu(request):
 
 
 @api_view(["POST"])
-@api_view([is_open_for_admins])
+@check([is_open_for_admins])
 def remove_item_from_menu(request):
     """
     Removing items from menu.
@@ -97,7 +97,6 @@ def remove_item_from_menu(request):
     return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
 
 
-@api_view([is_open_for_personnel])
 class AllItems(ListAPIView):
     """
     تمام ایتم های موجود برگشت داده می‌شود.
@@ -108,7 +107,7 @@ class AllItems(ListAPIView):
 
 
 @api_view(["GET"])
-@api_view([is_open_for_personnel])
+@check([is_open_for_personnel])
 def DayMenu(request):
     """
     این ویو مسئولیت ارائه منو غذایی مطابق پارامتر `date` را دارا است.
@@ -124,14 +123,13 @@ def DayMenu(request):
     return Response(serializer.data, status.HTTP_200_OK)
 
 
-@api_view([is_open_for_personnel])
 class Categories(ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 @api_view(["GET"])
-@api_view([is_open_for_personnel])
+@check([is_open_for_personnel])
 def personnel_calendar(request):
     """
     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
@@ -307,6 +305,7 @@ def first_page(request):
 
 
 @api_view(["POST"])
+@check([is_open_for_personnel])
 def create_order_item(request):
     """
     Responsible for submitting orders.
@@ -317,7 +316,7 @@ def create_order_item(request):
         date: The date which you want to submit order on.
         item: The item id which you want to buy.
     """
-    
+
     # past auth ...
     # past check is app open for creating order.
     personnel = "e.rezaee@eit"
@@ -333,7 +332,7 @@ def create_order_item(request):
 
 
 @api_view(["POST"])
-@api_view([is_open_for_personnel])
+@check([is_open_for_personnel])
 def remove_order_item(request):
     personnel = "e.rezaee@eit"
     request.data["personnel"] = personnel
@@ -347,7 +346,7 @@ def remove_order_item(request):
 
 
 @api_view(["POST"])
-@api_view([is_open_for_personnel])
+@check([is_open_for_personnel])
 def create_breakfast_order(request):
     # past auth ...
     # TODO decorator for checking is system open for breakfast submission
@@ -369,7 +368,7 @@ def create_breakfast_order(request):
 
 
 @api_view(["POST"])
-@api_view([is_open_for_admins])
+@check([is_open_for_admins])
 def item_ordering_personnel_list_report(request):
     """
     This view is responsible for generating a csv file that contains

@@ -34,5 +34,10 @@ urlpatterns = [
         views.remove_item_from_menu,
         name="aremove_item_from_menu",
     ),
+    path(
+        "remove-item-from-order/",
+        views.remove_order_item,
+        name="remove_order_item",
+    ),
     path("", views.ui),
 ]
