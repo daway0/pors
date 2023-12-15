@@ -393,6 +393,7 @@ class ValidateOrder:
 
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
+            self.order_item.save()
         else:
             self.order_item.delete()
 
