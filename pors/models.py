@@ -83,6 +83,17 @@ class SystemSetting(models.Model):
         help_text="سیستم خدمات مربوط به صبحانه را انجام می دهد یا خیر"
     )
 
+    TotalItemsCanOrderedForBreakfastByPersonnel = (
+            models.PositiveSmallIntegerField(
+                null=True,
+                default=1,
+                help_text="در حال حاضر با توجه به قوانین واحد اداری هر فرد "
+                          "از منوی صبحانه فقط یک ایتم می تونه سفارش بده."
+                          "این فیلد جمع ایتم های قابل سفارش برای صبحانه را "
+                          "تعیین می کند"
+                            )
+            )
+
     @property
     def SuperAdminUsername(self):
         return self.SuperAdmins.replace(" ", "").split(",") if \
@@ -187,7 +198,12 @@ class Item(models.Model):
 
     class MealTypeChoices(models.TextChoices):
         """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
-        می کنیم"""
+        می کنیم
+
+        توجه**********: در صورت سینتکس کد باید کد متناظر در  فرانت هم
+        بازنویسی شود!!!!
+        پس با احتیاط عمل کن دوست خوب من
+        """
 
         BREAKFAST = "BRF", "صبحانه"
         LAUNCH = "LNC", "ناهار"
