@@ -390,8 +390,6 @@ function addNewItemToMenu(id) {
         menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
     )
     updateAvailableItemForThisDay()
-
-
 }
 
 function finishLoadingDisplay() {
@@ -609,7 +607,7 @@ $(document).ready(function () {
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
                     daysWithMenu = data["daysWithMenu"]
-                    selectedItems = data["selectedItems"]
+                    selectedItems = data["menuItems"]
 
                     let requestedYear = data["year"]
                     let requestedMonth = data["month"]
@@ -810,7 +808,7 @@ $(document).ready(function () {
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
                     daysWithMenu = data["daysWithMenu"]
-                    selectedItems = data["selectedItems"]
+                    selectedItems = data["menuItems"]
                     makeCalendar(
                         parseInt(firstDayOfWeek),
                         parseInt(lastDayOfMonth),
@@ -859,7 +857,7 @@ $(document).ready(function () {
                 lastDayOfMonth = data["lastDayOfMonth"]
                 holidays = data["holidays"]
                 daysWithMenu = data["daysWithMenu"]
-                selectedItems = data["selectedItems"]
+                selectedItems = data["menuItems"]
                 makeCalendar(
                     parseInt(firstDayOfWeek),
                     parseInt(lastDayOfMonth),

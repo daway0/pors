@@ -58,8 +58,9 @@ let orderedDays = undefined
 let menuItems = undefined
 let availableItems = undefined
 let allItems = undefined
-let orderableBreakFastItemCount = 1
+let orderableBreakFastItemCount = undefined
 let orders = undefined
+
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -172,20 +173,9 @@ function displayDismiss(color, content, duration) {
 
 }
 
-function canPersonnelChangeMenu() {
-    // این تابع کاری به این نداره که ایتمی که ملت سفارش دادن حذف بشه یا
-    // نشه؟‌اون در جای دیگری چک میشه
-    let can = true
-    let currentDateMomentObj = moment(toShamsiFormat(currentDate),'YYYY-MM-DD')
-    let selectedDateMomentObj = moment(toShamsiFormat(selectedDate),'YYYY-MM-DD')
-
-    // با تفریق این دو از هم یک عدد بهمون میده اگه که عدد منفی بود یعنی
-    // اولی از دومی کوچک تره و برعکس
-    if (currentDateMomentObj-selectedDateMomentObj > 0){
-            can = false
-        }
-    return can
-
+function canPersonnelChangeMenuItem(serveTime,openForLaunch,openForBreakfast) {
+    if (serveTime === "LNC") return openForLaunch
+    return openForBreakfast
 }
 
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, hasOrder) {
@@ -223,7 +213,7 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
                             </div>`
 }
 
-function menuItemBlock(id, serveTime,itemName, pic, itemDesc, price, itemCount=0, editable=true) {
+function menuItemBlock(selected, id, serveTime,itemName, pic, itemDesc, price, itemCount=0, editable=true) {
     let minus = `
     <div class="ml-2">
                         <img class="remove-item w-6 h-6"
@@ -236,7 +226,9 @@ function menuItemBlock(id, serveTime,itemName, pic, itemDesc, price, itemCount=0
     `
     return `
     <li data-item-id="${id}" data-item-order-count=${itemCount} data-item-serve-time="${serveTime}"
-    class="flex flex-col gap-0 bg-gray-200 border  rounded p-4 shadow-md hover:bg-gray-300 ">
+class="flex flex-col gap-0  ${selected ?  "bg-blue-100" : "bg-gray-200"}
+     border ${selected ? "border-blue-500" : ""} rounded p-4 shadow-md 
+      ${selected ? "hover:bg-blue-200" : "hover:bg-gray-300" }">
 
             <div class="flex items-center gap-4">
                 <img
@@ -310,24 +302,68 @@ function makeDropDownChoices(items) {
     return HTML
 }
 
-function makeSelectedMenu(items) {
+function makeSelectedMenu(items, openForLaunch,openForBreakfast, ordered) {
     let HTML = ""
     items.forEach(function (itemObj) {
+        let price = 0
         let selectedMenuItem = allItems.find(item => item.id === itemObj.id);
+        let quantity = 0
+        let editableItem = canPersonnelChangeMenuItem(
+                selectedMenuItem.serveTime,
+                openForLaunch,
+                openForBreakfast)
+
+        if (editableItem && ordered) {
+            price = selectedMenuItem.currentPrice
+            quantity = itemObj.quantity
+        }
+        if (editableItem && !ordered) price = selectedMenuItem.currentPrice
+        if (!editableItem && ordered) {
+            price = itemObj.pricePerItem
+            quantity = itemObj.quantity
+        }
+        if (!editableItem && !ordered) price = 0
+
+
+
         HTML += menuItemBlock(
+            ordered,
             selectedMenuItem.id,
             selectedMenuItem.serveTime,
             selectedMenuItem.itemName,
             selectedMenuItem.image,
             selectedMenuItem.itemDesc,
-            selectedMenuItem.currentPrice,
-            0,
-            canPersonnelChangeMenu()
+            price,
+            quantity,
+            editableItem,
         )
     })
     return HTML
 }
 
+
+function loadOrder(day, month, year) {
+    let requestedDate = toShamsiFormat({year: year, month: month, day: day})
+    let selectedMenu = menuItems.find(function (entry) {
+        return entry.date === requestedDate;
+    });
+    let order = orders.find(function (orderObj) {
+        return orderObj.orderDate === requestedDate
+    })
+    if (order===undefined) return
+
+    let orderHTML = makeSelectedMenu(
+            order.orderItems,
+            selectedMenu.openForLaunch,
+            selectedMenu.openForBreakfast,
+            true
+        )
+    orderHTML += "</hr>"
+    $("#menu-items-container").prepend(orderHTML)
+
+
+
+}
 function loadMenu(day, month, year) {
 
     // allMenus در واقع همون selectedItems هست
@@ -345,14 +381,32 @@ function loadMenu(day, month, year) {
 
     // حالا باید آیتم هارو بگیریم
     if (selectedMenu !== undefined) {
+        // let menuItemsId = extractIds(selectedMenu.items)
 
+        let order = orders.find(function (orderObj) {
+        return orderObj.orderDate === requestedDate
+    })
+        let orderItemsId = extractIds(order.orderItems)
+
+        let justMenu = selectedMenu.items.filter(function (item) {
+            return !orderItemsId.includes(item.id);
+        });
+
+        // در صورتی که وقتش جفتشون گذشته باشه خب هیچی  منویی لازم نیست که
+        // لود بشه
+        if (!selectedMenu.openForLaunch && !selectedMenu.openForBreakfast) return
         // تعداد سفارش ها به ازای هر آیتم در آیتم های selectedMenu هم
         // فرستاده می شود که به صورت زیر است
         // {
         //  1: 12,
         //  5 :26
         // }
-        let menuHTML = makeSelectedMenu(selectedMenu.items)
+        let menuHTML = makeSelectedMenu(
+            justMenu,
+            selectedMenu.openForLaunch,
+            selectedMenu.openForBreakfast,
+            false
+        )
         $("#menu-items-container").append(menuHTML)
     }
 
@@ -568,7 +622,10 @@ function changeMenuDate(dateTitle) {
 }
 
 function updateItemsCounter() {
-    $("#menu-items-counter").text(orderTotalItemsQuantity(["BRF","LNC"]))
+    $("#menu-items-counter").text(
+        convertToPersianNumber(
+            orderTotalItemsQuantity(["BRF","LNC"])
+        ))
 }
 
 function orderTotalItemsQuantity(serveTime) {
@@ -596,7 +653,6 @@ function updateHasOrderedCalendarDayBlock() {
         return
     }
     checkLogo.removeClass("hidden")
-
 }
 
 function updateSelectedDayOnCalendar(shamsiFormatDate) {
@@ -614,26 +670,7 @@ function updateSelectedDayOnCalendar(shamsiFormatDate) {
 
 }
 
-function updateAvailableItemForThisDay() {
-    // اول قبلی ها رو پاک می کنیم
-    $("#dropdown-menu a").remove();
 
-    //     ابتدا می بینیم که چه چیز هایی در منوی روز انتخاب شده وجود دارد
-    let thisDaySelectedItemIds = []
-    $("#menu-items-container li").each(function (index, element) {
-        thisDaySelectedItemIds.push(parseInt($(this).attr("data-item-id")))
-    })
-
-//     خب حالا هر چیزی که انتخاب نشده باشه رو قابل انتخاب می گذاریم
-    let allAvailableItemsIds = extractIds(availableItems)
-    let remainingItemsIds = allAvailableItemsIds.filter(function (element) {
-        return !thisDaySelectedItemIds.includes(element);
-    });
-
-    let data = filterObjectsById(availableItems, remainingItemsIds)
-    $("#dropdown-menu").append(makeDropDownChoices(data))
-
-}
 
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
@@ -642,6 +679,7 @@ function selectDayOnCalendar(e) {
     updateSelectedDayOnCalendar(selectedShamsiDate)
     changeMenuDate(selectedShamsiDateTitle)
     loadMenu(selectedDate.day, selectedDate.month, selectedDate.year)
+    loadOrder(selectedDate.day, selectedDate.month, selectedDate.year)
     updateItemsCounter()
     updateHasOrderedCalendarDayBlock()
 }
@@ -698,6 +736,7 @@ $(document).ready(function () {
         success: function (data) {
             console.log(data)
             isSystemOpen = data["isOpenForPersonnel"]
+            orderableBreakFastItemCount = data["totalItemsCanOrderedForBreakfastByPersonnel"]
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
             currentDate.year = data["firstOrderableDate"]["year"]
@@ -754,6 +793,11 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    loadOrder(
+                        currentDate.day,
+                        currentDate.month,
+                        currentDate.year
+                    )
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 
@@ -776,7 +820,7 @@ $(document).ready(function () {
     if (isSystemOpen === false) return
 
     $(document).on('click', '#menu-items-container li .add-item', function () {
-        // اضافه کردن یک غذا از منوی دراپ دان به منوی روز انتخاب شده
+        // اضافه کردن غذا به منو
 
 
         let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
