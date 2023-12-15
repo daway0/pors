@@ -86,6 +86,7 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
     days_with_menu = (
         m.ItemsOrdersPerDay.objects.filter(Date__range=[first_day, last_day])
         .values("Date")
+        .order_by("Date")
         .annotate(TotalOrders=Sum("TotalOrders"))
     )
     days_with_menu_serializer = s.DayWithMenuSerializer(
@@ -467,19 +468,22 @@ class ValidateBreakfast:
 
     def _validate_order(self):
         """
-        Checking if the personnel has already submitted breakfast order
-            on the provided date.
-        The resason is each personnel can only submit ONE breakfast a day.
+        Counting total number of breakfast orders on the provided date
+            and comparing it to the SystemSetting configs.
+        The resason is the number of breakfast orders is limited.
 
         """
-        does_personnel_already_submitted_breakfast_order = (
-            m.OrderItem.objects.filter(
-                Personnel=self.data.get("personnel"),
-                DeliveryDate=self.date,
-                Item=self.item,
-            )
+
+        total_breakfast_orders = m.OrderItem.objects.filter(
+            Personnel=self.data.get("personnel"),
+            DeliveryDate=self.date,
+            Item=self.item,
         )
-        if does_personnel_already_submitted_breakfast_order:
+
+        threshold = (
+            m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
+        )
+        if total_breakfast_orders.count() > threshold:
             raise ValueError(
                 "Personnel has already submitted a breakfast order on this"
                 " date."

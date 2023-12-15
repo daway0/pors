@@ -1,21 +1,9 @@
-import json
-
 import jdatetime
-from django.db.models import Sum
 from persiantools.jdatetime import JalaliDate
 
-from .models import Holiday, ItemsOrdersPerDay
-from .serializers import (
-    DayWithMenuSerializer,
-    GeneralCalendarSerializer,
-    HolidaySerializer,
-)
-from .utils import (
-    first_and_last_day_date,
-    get_weekend_holidays,
-    split_dates,
-    split_json_dates,
-)
+from .models import Holiday
+from .serializers import GeneralCalendarSerializer, HolidaySerializer
+from .utils import first_and_last_day_date, get_weekend_holidays, split_dates
 
 
 class GeneralCalendar:
@@ -75,7 +63,7 @@ class GeneralCalendar:
         weekend_holidays = get_weekend_holidays(self.year, self.month)
         holidays = Holiday.objects.filter(
             HolidayDate__range=(first_day, last_day)
-        )
+        ).order_by("HolidayDate")
         holidays_serializer = HolidaySerializer(holidays).data
 
         # Unpacking dict into list
