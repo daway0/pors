@@ -1,6 +1,5 @@
-from django.db.models import F, Q
 from django.http import HttpResponse
-from django.shortcuts import get_list_or_404, render
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
@@ -55,8 +54,9 @@ def add_item_to_menu(request):
     Data will pass several validations in order to add item in menu.
 
     Args:
-        date: The date which you want to add item on.
-        item: Id of the specific item.
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to add item on.
+        -  'item' (str): The item which you want to add.
     """
 
     serializer = AddMenuItemSerializer(data=request.data)
@@ -90,8 +90,9 @@ def remove_item_from_menu(request):
     item will not get removed.
 
     Args:
-        date: The date which you want to remove item from.
-        item: Id of the specific item.
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to remove item from.
+        -  'item' (str): The item which you want to remove.
     """
 
     validatior = b.ValidateRemove(request.data)
@@ -111,7 +112,7 @@ def remove_item_from_menu(request):
 
 class AllItems(ListAPIView):
     """
-    تمام ایتم های موجود برگشت داده می‌شود.
+    Returning list of all items from database.
     """
 
     queryset = Item.objects.filter()
@@ -119,6 +120,8 @@ class AllItems(ListAPIView):
 
 
 class Categories(ListAPIView):
+    """Returning list of all categories from dataase."""
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
@@ -127,9 +130,19 @@ class Categories(ListAPIView):
 @check([is_open_for_personnel])
 def personnel_calendar(request):
     """
-    این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
-    این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
-    در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
+    Personnel's calendar which have enough information
+        to generate the calendar from them.
+
+    Args:
+        year: Requested year.
+        month: Requested month.
+
+    Returns:
+        Will return several information which are:
+        -  General calendar data.
+        -  Days that contains menu.
+        -  List of menu items on each day.
+        -  All ordered items and their detailed information.
     """
 
     # Past Auth...
@@ -231,13 +244,10 @@ def edari_calendar(request):
         month: Requested month.
 
     Returns:
-        will return several information which are:
-        general calendar data,
-
-        days that contains menu, and number of orders on each day,
-
-        list of selected items on each day and
-        the number of orders on each item on.
+        Will return several information which are:
+        -  General calendar data.
+        -  Days that contains menu, and number of orders on each day.
+        -  List of menu items on each day and number of orders on each item.
     """
 
     # Past Auth...
@@ -282,10 +292,11 @@ def first_page(request):
     will pass authentication first.
 
     Returns:
-        isOpnen: Is today valid for actions
+        isOpenForAdmins: Is system responsive to any admin actions.
+        isOpenForPersonnel: Is system responsive to any personnel actions.
         fullName: User's full name
         profile: User's profile picture
-        currentDate: Current date of system (jalali).
+        firstOrderableDate: First valid date for order submission.
     """
 
     # ... past auth
@@ -334,8 +345,9 @@ def create_order_item(request):
     check `ValidateOrder` docs for mor info.
 
     Args:
-        date: The date which you want to submit order on.
-        item: The item id which you want to buy.
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to submit order.
+        -  'item' (str): The item which you want to order.
     """
 
     # past auth ...
@@ -369,6 +381,16 @@ def create_order_item(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 def remove_order_item(request):
+    """
+    This view will remove an item from specific order.
+    Check `ValidateOrder` docs for more information about validators.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to remove order item from.
+        -  'item' (str): The item which you want to remove.
+    """
+
     personnel = "e.rezaee@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateOrder(request.data)
@@ -391,8 +413,19 @@ def remove_order_item(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 def create_breakfast_order(request):
+    """
+    Responsible for submitting breakfast orders.
+    The data will pass several validations in order to submit.
+    check `ValidateBreakfast` docs for mor info.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to submit order.
+        -  'item' (str): The item which you want to order.
+    """
+
     # past auth ...
-    # TODO decorator for checking is system open for breakfast submission
+
     personnel = "e.rezaee@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateBreakfast(request.data)

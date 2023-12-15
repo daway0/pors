@@ -239,7 +239,10 @@ class ValidateRemove:
             self.date, self.item.MealType
         )
         if not is_date_valid_for_removal:
-            raise ValueError(f"Deadline for {self.item.MealType} related actions on this date is over.")
+            raise ValueError(
+                f"Deadline for {self.item.MealType} related actions on this"
+                " date is over."
+            )
 
     def remove_item(self):
         m.DailyMenuItem.objects.get(

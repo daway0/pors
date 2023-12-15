@@ -1,4 +1,5 @@
 import functools
+from typing import Callable
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,15 +10,37 @@ from .messages import Message
 messages = Message()
 
 
-def is_open_for_admins():
+def is_open_for_admins() -> bool:
+    """Returning current system state for admin users."""
+
     return m.SystemSetting.objects.last().IsSystemOpenForAdmin
 
 
-def is_open_for_personnel():
+def is_open_for_personnel() -> bool:
+    """Returning current system state for personnel."""
+
     return m.SystemSetting.objects.last().IsSystemOpenForPersonnel
 
 
-def check(what_to_check):
+def check(what_to_check: list[Callable]):
+    """
+    This decorator will run several checker functions that lookup
+        for system's current state.
+    If the checker functions pass, the view will get executed successfully.
+    Checker functions are received from args as a list of functions,
+        and will run recursively.
+
+    Examples:
+        ```python
+        @check([is_open_for_admins, is_open_for_personnel])
+        def some_view(request):
+            ...
+        ```
+
+    Args:
+        what_to_check: List of checker functions.
+    """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -31,7 +54,7 @@ def check(what_to_check):
                             "messages": messages.messages(),
                             "errors": "System is down!",
                         },
-                        status.HTTP_500_INTERNAL_SERVER_ERROR
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
 
             return func(request, *args, **kwargs)
