@@ -394,7 +394,7 @@ class ValidateOrder:
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
         else:
-            self.item.delete()
+            self.order_item.delete()
 
 
 class ValidateBreakfast:
