@@ -39,5 +39,6 @@ urlpatterns = [
         views.remove_order_item,
         name="remove_order_item",
     ),
-    path("", views.ui),
+    path("", views.uiadmin),
+    path("personnel/", views.ui),
 ]

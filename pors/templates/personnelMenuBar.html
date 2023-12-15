@@ -1,63 +1,40 @@
 {#            User profile#}
-            <div class="group flex items-center">
-                <img id="personnel-image" class="shrink-0 h-12 w-12 rounded-md"
-                     src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-                     alt=""/>
-                <div class="mr-3">
-                    <p class="text-base font-medium text-slate-900">پشوتن میرمیرانی</p>
-                    <p class="text-base font-medium text-slate-500">پرسنل</p>
-                </div>
-            </div>
-            {#          Left Options  #}
-            <div class="flex flex-row gap-5 justify-end items-center">
-                <div class="cursor-pointer flex items-center gap-1.5">
-                    <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
-                    <div class="gap-2 flex">
-                        <span class="text-base">مبلغ کل ماه:</span>
-                        <span>
+<div class="group flex items-center">
+    <img id="personnel-image" class="shrink-0 h-12 w-12 rounded-md"
+         src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
+         alt=""/>
+    <div class="mr-3">
+        <p class="text-base font-medium text-slate-900">پشوتن میرمیرانی</p>
+        <p class="text-base font-medium text-slate-500">پرسنل</p>
+    </div>
+</div>
+{#          Left Options  #}
+<div class="flex flex-row gap-5 justify-end items-center">
+    <div class=" flex items-center gap-1.5">
+        <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
+        <div class="gap-2 flex">
+            <span class="text-base">مبلغ کل ماه:</span>
+            <span>
                             <span class="text-base">۱۰۰۰۰۰</span>
                             <span class="text-sm text-slate-600 pr-0.5">تومان</span>
                         </span></div>
-                </div>
-                <div class="cursor-pointer flex items-center gap-1.5">
-                    <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
-                    <div class="gap-2 flex">
-                        <span class="text-base">یارانه ماه:</span>
-                        <span>
+    </div>
+    <div class=" flex items-center gap-1.5">
+        <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
+        <div class="gap-2 flex">
+            <span class="text-base">یارانه ماه:</span>
+            <span>
                             <span class="text-base">۱۰۰۰۰۰</span>
                             <span class="text-sm text-slate-600 pr-0.5">تومان</span>
                         </span></div>
-                </div>
-                <div class="cursor-pointer flex items-center gap-1.5">
-                    <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
-                    <div class="gap-2 flex">
-                        <span class="text-base">بدهی ماه:</span>
-                        <span>
+    </div>
+    <div class=" flex items-center gap-1.5">
+        <img class="w-5 h-5" src="https://www.svgrepo.com/show/353355/wallet.svg" alt="">
+        <div class="gap-2 flex">
+            <span class="text-base">بدهی ماه:</span>
+            <span>
                             <span class="text-base">۱۰۰۰۰۰</span>
                             <span class="text-sm text-slate-600 pr-0.5">تومان</span>
                         </span></div>
-                </div>
-
-
-                <div id="tomorrow-order-success" class="order-status-bar cursor-default hidden">
-                    <span class="inline-flex items-center justify-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-700">
-                    {% include 'svgs/success.html' %}
-                  <p class="whitespace-nowrap text-base">سفارش فردا ثبت شده است</p>
-                </span>
-                </div>
-
-
-                <div id="tomorrow-order-warning" class="order-status-bar cursor-default hidden">
-                    <span class="inline-flex items-center justify-center rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-700">
-                {% include 'svgs/warning.html' %}
-                <p class="whitespace-nowrap text-base">سفارش فردا ثبت نشده است</p></span>
-                </div>
-
-
-                <div id="system-failure-status" class="order-status-bar cursor-default ">
-                    <span class="inline-flex items-center justify-center rounded-full bg-red-100 px-2.5 py-0.5 text-red-700">
-                    {% include 'svgs/error.html' %}
-                    <p class="whitespace-nowrap text-base">در حال حاضر سیستم قادر به سفارش گیری نمی باشد</p></span>
-                </div>
-
-            </div>
+    </div>
+</div>

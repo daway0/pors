@@ -41,6 +41,9 @@ message = Message()
 
 
 def ui(request):
+    return render(request, "personnelMainPanel.html")
+
+def uiadmin(request):
     return render(request, "administrativeMainPanel.html")
 
 
@@ -139,7 +142,7 @@ def personnel_calendar(request):
     """
 
     # Past Auth...
-    personnel = "j.pashootan@eit"
+    personnel = "e.rezaee@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         return Response(error_message, status.HTTP_400_BAD_REQUEST)

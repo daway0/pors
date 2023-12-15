@@ -1,69 +1,14 @@
 <div class="flex justify-between">
     <div class="flex items-center gap-3"><img class="w-6 h-6" src="https://www.svgrepo.com/show/327569/today.svg"
-                                              alt=""> <span id="selected-date" data-date="1402/02/08" class="text-lg">چهارشنبه 28 آبان</span></div>
+                                              alt=""> <span id="menu-date-wrapper" data-date="1402/02/08" class="text-lg">چهارشنبه 28 آبان</span>
+    </div>
     <div class="flex items-center gap-3"><img class="w-6 h-6" src="https://www.svgrepo.com/show/327760/fast-food.svg"
-                                              alt=""> <span class="text-lg pt-2">3</span></div>
-
-
+                                              alt=""> <span id="menu-items-counter" class="text-lg pt-2">3</span></div>
 </div>
 <!-- component -->
 <div class="mt-8 flex flex-col space-y-10">
-    <ul class="space-y-2 max-h-[38rem] pb-2 overflow-y-auto">
-        <li class="flex flex-col gap-0 bg-gray-200  rounded p-4 shadow-md hover:bg-gray-300 ">
+    <ul id="menu-items-container" class="space-y-2 max-h-[38rem] pb-2 overflow-y-auto">
 
-            <div class="flex items-center gap-4">
-                <img
-                        src="https://api.snappfood.biz/api/files/food/1608378020.jpeg"
-                        alt=""
-                        class="h-16 w-16 rounded object-cover self-start"
-                />
-
-                <div class="w-8/12 cursor-default">
-                    <div><h3 class="text-base text-gray-900">چلو جوجه کباب ترش</h3>
-
-                        <dl class="mt-1 space-y-px text-sm text-gray-600">
-                            <div>
-                                <dt class="inline"></dt>
-
-                            </div>
-
-                            <div>
-                                <dt class="inline">
-                                    170 گرم جوجه ران مرینیت شده با (سبزی مخصوص، رب انار و گردو)،
-                                    320 گرم برنج درجه یک ایرانی. 30 گرم برنج زعفرانی، کره تک
-                                    نفره، گوجه کبابی، بسته بندی بهداشتی ماکروفری
-                                </dt>
-
-                            </div>
-                        </dl>
-                    </div>
-                </div>
-                <div class="flex justify-end w-3/12">
-
-                    {#                                        <div class="">#}
-                    {#                                            <img class="w-6 h-6"#}
-                    {#                                                 src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">#}
-                    {#                                        </div>#}
-                    {#                                        <div class="">#}
-                    {#                                            <span>2</span>#}
-                    {#                                        </div>#}
-                    <div class="">
-                        <img class="w-6 h-6"
-                             src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-end">
-                <div class="">
-                                            <span class="text-base">۱۵۸,۲۶۸<span
-                                                    class="text-xs text-gray-600">تومان</span></span>
-                    <span class="text-sm"></span>
-
-                </div>
-            </div>
-
-
-        </li>
         <li class="flex flex-col gap-0 bg-gray-200 border  rounded p-4 shadow-md hover:bg-gray-300 ">
 
             <div class="flex items-center gap-4">
@@ -565,6 +510,7 @@
 
 
     </ul>
+
     <div>
         <ul>
             <li class="flex gap-3 justify-between px-2"><span>کل</span><span
@@ -579,16 +525,9 @@
 
         </ul>
     </div>
-
-
 </div>
 
 
-    <div class="text-right self-stretch" >
-            <div class="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                 role="alert">
-                <span class="block sm:inline">پرسنل آیتم مورد نظر را سفارش داده است. امکان حذف این ایتم وجود ندارد</span>
 
-            </div>
-        </div>
+
 
