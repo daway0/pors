@@ -59,6 +59,19 @@ let selectedItems = undefined
 let availableItems = undefined
 let allItems = undefined
 
+function insertCommas(str) {
+  let result = '';
+
+  for (let i = str.length - 1; i >= 0; i--) {
+    result = str[i] + result;
+    if ((str.length - i) % 3 === 0 && i !== 0) {
+      result = ',' + result;
+    }
+  }
+  return result
+}
+
+
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
         '0': '۰',
@@ -690,10 +703,7 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '#menu-items-container li', function () {
-        // قبل از حذف کردن غذا از منو باید بررسی کنیم که ایا ادمین می تونه
-        // اصلا دست بزنه به منو ؟ در صورتی که از تاریخ مجاز گذشته باشیم
-        // ادمین اجازه دستکاری منو رو نخواهد داشت
-        if (!canAdminChangeMenu()) return
+
 
         // علاوه بر اون باید بررسی کنیم که آیا غذایی که داره حدف میشه کسی
         // سفارشش رو داده یا نه؟‌درصورتی که سفارش داشته باشه اجازه حذف ندارد
@@ -755,7 +765,10 @@ $(document).ready(function () {
         }
 
 
-
+        // قبل از حذف کردن غذا از منو باید بررسی کنیم که ایا ادمین می تونه
+        // اصلا دست بزنه به منو ؟ در صورتی که از تاریخ مجاز گذشته باشیم
+        // ادمین اجازه دستکاری منو رو نخواهد داشت
+        if (!canAdminChangeMenu()) return
 
         // حذف کردن یک غذا از منوی روز انتخاب شده
 

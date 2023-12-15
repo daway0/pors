@@ -62,6 +62,20 @@ let orderableBreakFastItemCount = undefined
 let orders = undefined
 let orderSubsidy = undefined
 
+function insertCommas(str) {
+
+    // برای خوانا تر شدن رقم ها
+    // برای مثال عدد 192000 به 192,000 تبدیل می شود
+  let result = '';
+
+  for (let i = str.length - 1; i >= 0; i--) {
+    result = str[i] + result;
+    if ((str.length - i) % 3 === 0 && i !== 0) {
+      result = ',' + result;
+    }
+  }
+  return result
+}
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -270,7 +284,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
             </div>
             <div class="flex justify-end">
                 <div class="">
-                                            <span class="text-base">${convertToPersianNumber(price)}<span
+                                            <span class="text-base">${insertCommas(convertToPersianNumber(price))}<span
                                                     class="text-xs text-gray-600">تومان</span></span>
                     <span class="text-sm"></span>
 
@@ -521,9 +535,9 @@ function updateOrderBill() {
         debt = 0
     }
 
-    $(".total-amount").text(convertToPersianNumber(total))
-    $(".subsidy-amount").text(convertToPersianNumber(fanavaran))
-    $(".debt-amount").text(convertToPersianNumber(debt))
+    $(".total-amount").text(insertCommas(convertToPersianNumber(total)))
+    $(".subsidy-amount").text(insertCommas(convertToPersianNumber(fanavaran)))
+    $(".debt-amount").text(insertCommas(convertToPersianNumber(debt)))
 
 }
 
