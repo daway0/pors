@@ -423,7 +423,7 @@ function loadAvailableItem() {
             })
             availableItems = filterObjectsByAttrValue(allItems, "isActive", true)
             catchResponseMessagesToDisplay(data.messages)
-            console.log(availableItems)
+
         },
         error: function (xhr, status, error) {
             console.error('Available Items cannot be loaded', status, 'and' +
@@ -582,7 +582,7 @@ $(document).ready(function () {
         dataType: 'json',
         async: false,
         success: function (data) {
-            console.log(data)
+
             isSystemOpen = data["isOpenForAdmins"]
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
@@ -602,7 +602,7 @@ $(document).ready(function () {
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
-                    console.log(data)
+
                     firstDayOfWeek = data["firstDayOfWeek"]
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
@@ -663,10 +663,6 @@ $(document).ready(function () {
 
 
         let id = parseInt($(this).attr("data-item-id"))
-        console.log({
-            "id": id,
-            "date": toShamsiFormat(selectedDate)
-        })
         $.ajax({
             url: `/pors/administrative/add-item-to-menu/`,
             method: 'POST',
@@ -799,7 +795,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: `/pors/administrative/calendar/?year=1402&month=${currentDate.month}`,
+                url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
                 method: 'GET',
                 dataType: 'json',
 
@@ -815,7 +811,7 @@ $(document).ready(function () {
                         holidays,
                         daysWithMenu,
                         currentDate.month,
-                        1402
+                        currentDate.year
                     )
                     updateDropdownCalendarMonth()
                     // بعد از اینکه تغییر تقویم صورت میگیرد باید بلاک روز
@@ -848,7 +844,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: `/pors/administrative/calendar/?year=1402&month=${monthNumber}`,
+            url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${monthNumber}`,
             method: 'GET',
             dataType: 'json',
 
@@ -864,7 +860,7 @@ $(document).ready(function () {
                     holidays,
                     daysWithMenu,
                     monthNumber,
-                    1402
+                    currentDate.year
                 )
                 updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
                 catchResponseMessagesToDisplay(data.messages)
