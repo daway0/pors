@@ -76,10 +76,10 @@ class ItemOrderSerializer(serializers.Serializer):
         return True
 
 
-class SelectedItemSerializer(serializers.Serializer):
-    selectedItems = serializers.SerializerMethodField()
+class MenuItemSerializer(serializers.Serializer):
+    menuItems = serializers.SerializerMethodField()
 
-    def get_selectedItems(self, obj):
+    def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
         for object in obj:
@@ -91,6 +91,16 @@ class SelectedItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
+                current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    current_date_obj["date"],
+                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                )
+                current_date_obj["openForBreakfast"] = (
+                    b.is_date_valid_for_action(
+                        current_date_obj["date"],
+                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                    )
+                )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
                 result.append(current_date_obj)
@@ -154,8 +164,8 @@ class FirstPageSerializer(serializers.Serializer):
     isOpenForPersonnel = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
-    firstOrderableLaunchDay = serializers.DictField()
-    firstOrderableBreakfastDay = serializers.DictField()
+    firstOrderableDate = serializers.DictField()
+    totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
 
 
 class DayWithMenuSerializer(serializers.Serializer):
@@ -231,6 +241,16 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.get("AvailableDate")
+                current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    current_date_obj["date"],
+                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                )
+                current_date_obj["openForBreakfast"] = (
+                    b.is_date_valid_for_action(
+                        current_date_obj["date"],
+                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                    )
+                )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
                 result.append(current_date_obj)

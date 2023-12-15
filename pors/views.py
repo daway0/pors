@@ -1,3 +1,4 @@
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.shortcuts import get_list_or_404, render
 from rest_framework import status
@@ -25,9 +26,9 @@ from .serializers import (
     DayMenuSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
+    MenuItemSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
-    SelectedItemSerializer,
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -156,6 +157,7 @@ def personnel_calendar(request):
             AvailableDate__range=[first_day_date, last_day_date]
         )
         .values("AvailableDate")
+        .order_by("AvailableDate")
         .distinct()
     )
     days_with_menu_data = ListedDaysWithMenu(days_with_menu_qs).data
@@ -168,7 +170,7 @@ def personnel_calendar(request):
             AvailableDate__range=[first_day_date, last_day_date],
             IsActive=True,
         )
-        .order_by("-AvailableDate")
+        .order_by("AvailableDate", "Item_id")
         .values("AvailableDate", "Item_id")
     )
     menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
@@ -252,15 +254,15 @@ def edari_calendar(request):
     general_calendar = GeneralCalendar(year, month)
     days_with_menu = b.get_days_with_menu(month, year)
 
-    selected_items = ItemsOrdersPerDay.objects.filter(
+    menu_items = ItemsOrdersPerDay.objects.filter(
         Date__range=[month_first_day_date, month_last_day_date]
     )
-    selected_items_serializer = SelectedItemSerializer(selected_items).data
+    menu_items_serializer = MenuItemSerializer(menu_items).data
 
     final_schema = {
         **general_calendar.get_calendar(),
         "daysWithMenu": days_with_menu,
-        **selected_items_serializer,
+        **menu_items_serializer,
     }
     return Response(
         data=final_schema,
@@ -282,27 +284,25 @@ def first_page(request):
     """
 
     # ... past auth
-    open_for_admins = SystemSetting.objects.last().IsSystemOpenForAdmin
-    open_for_personnel = SystemSetting.objects.last().IsSystemOpenForPersonnel
+    system_settings = SystemSetting.objects.last()
+    open_for_admins = system_settings.IsSystemOpenForAdmin
+    open_for_personnel = system_settings.IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
-    launch_year, launch_month, launch_day = b.get_first_orderable_date(
-        meal_type=Item.MealTypeChoices.LAUNCH
-    )
-    first_orderable_launch_date = {
-        "day": launch_day,
-        "month": launch_month,
-        "year": launch_year,
-    }
 
-    breakfast_year, breakfast_month, breakfast_day = (
-        b.get_first_orderable_date(meal_type=Item.MealTypeChoices.BREAKFAST)
-    )
-    first_orderable_breakfast_date = {
-        "day": breakfast_day,
-        "month": breakfast_month,
-        "year": breakfast_year,
-    }
+    if (
+        system_settings.BreakfastRegistrationWindowHours
+        < system_settings.LaunchRegistrationWindowHours
+    ):
+        year, month, day = b.get_first_orderable_date(
+            Item.MealTypeChoices.BREAKFAST
+        )
+    else:
+        year, month, day = b.get_first_orderable_date(
+            Item.MealTypeChoices.LAUNCH
+        )
+
+    first_orderable_date = {"year": year, "month": month, "day": day}
 
     serializer = FirstPageSerializer(
         data={
@@ -310,8 +310,10 @@ def first_page(request):
             "isOpenForPersonnel": open_for_personnel,
             "fullName": full_name,
             "profile": profile,
-            "firstOrderableLaunchDay": first_orderable_launch_date,
-            "firstOrderableBreakfastDay": first_orderable_breakfast_date,
+            "firstOrderableDate": first_orderable_date,
+            "totalItemsCanOrderedForBreakfastByPersonnel": (
+                system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
+            ),
         }
     ).initial_data
 
