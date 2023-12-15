@@ -2,7 +2,8 @@ import json
 from typing import Optional
 
 import jdatetime
-from django.db.models import Sum
+from django.db.models import Sum, Value
+from django.db.models.functions import Coalesce
 
 from . import models as m
 from . import serializers as s
@@ -483,16 +484,20 @@ class ValidateBreakfast:
 
         """
 
-        total_breakfast_orders = m.OrderItem.objects.filter(
-            Personnel=self.data.get("personnel"),
-            DeliveryDate=self.date,
-            Item=self.item,
+        total_breakfast_orders = (
+            m.OrderItem.objects.filter(
+                Personnel=self.data.get("personnel"),
+                DeliveryDate=self.date,
+                Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
+            )
+            .values("Quantity")
+            .aggregate(total=Coalesce(Sum('Quantity'), Value(0)))['total']
         )
 
         threshold = (
             m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
         )
-        if total_breakfast_orders.count() > threshold:
+        if total_breakfast_orders >= threshold:
             raise ValueError(
                 "Personnel has already submitted a breakfast order on this"
                 " date."
