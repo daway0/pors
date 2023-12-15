@@ -34,20 +34,6 @@ class AllItemSerializer(serializers.ModelSerializer):
         )
 
 
-class DayMenuSerializer(serializers.ModelSerializer):
-    foodIds = serializers.SerializerMethodField(
-        "List of foods based on the given date."
-    )
-
-    class Meta:
-        model = m.DailyMenuItem
-        fields = ("food_ids",)
-
-    def get_foodIds(self, obj: m.DailyMenuItem):
-        food_ids = [price_item.Item.id for price_item in obj.PriceItem.all()]
-        return food_ids
-
-
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = m.Category

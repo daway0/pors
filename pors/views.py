@@ -23,7 +23,6 @@ from .serializers import (
     AddMenuItemSerializer,
     AllItemSerializer,
     CategorySerializer,
-    DayMenuSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
@@ -42,6 +41,7 @@ message = Message()
 
 def ui(request):
     return render(request, "personnelMainPanel.html")
+
 
 def uiadmin(request):
     return render(request, "administrativeMainPanel.html")
@@ -64,15 +64,17 @@ def add_item_to_menu(request):
         serializer.save()
 
         message.add_message(
-            "گود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب مردگود جاب"
-            " مردگود جاب مردگود جاب مردگود جاب مرد",
-            Message.ERROR,
+            "آیتم با موفقیت اضافه شد.",
+            Message.SUCCESS,
         )
 
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
-    message.add_message("ملعون به ارور خوردم", Message.ERROR)
+
+    message.add_message(
+        "مشکلی درهنگام اضافه کردن آیتم رخ داده است.", Message.ERROR
+    )
     return Response(
-        {"erorr": serializer.errors, "messages": message.messages()},
+        {"messages": message.messages(), "errors": serializer.errors},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -95,10 +97,16 @@ def remove_item_from_menu(request):
     validatior = b.ValidateRemove(request.data)
     if validatior.is_valid():
         validatior.remove_item()
-        return Response(
-            "Successsfully deleted the item from menu.", status.HTTP_200_OK
-        )
-    return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
+        message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(
+        "مشکلی حین حذف آیتم از منو رخ داده است.", Message.ERROR
+    )
+    return Response(
+        {"messages": message.messages(), "errors": validatior.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 class AllItems(ListAPIView):
@@ -108,23 +116,6 @@ class AllItems(ListAPIView):
 
     queryset = Item.objects.filter()
     serializer_class = AllItemSerializer
-
-
-@api_view(["GET"])
-@check([is_open_for_personnel])
-def DayMenu(request):
-    """
-    این ویو مسئولیت ارائه منو غذایی مطابق پارامتر `date` را دارا است.
-    """
-    requested_date = request.query_params.get("date")
-    if not requested_date:
-        return Response(
-            "'date' parameter must be specified.",
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    queryset = get_list_or_404(DailyMenuItem, AvailableDate=requested_date)
-    serializer = DayMenuSerializer(data=queryset, many=True)
-    return Response(serializer.data, status.HTTP_200_OK)
 
 
 class Categories(ListAPIView):
@@ -145,7 +136,13 @@ def personnel_calendar(request):
     personnel = "e.rezaee@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        return Response(error_message, status.HTTP_400_BAD_REQUEST)
+        message.add_message(
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": error_message},
+            status.HTTP_400_BAD_REQUEST,
+        )
 
     month = int(request.query_params.get("month"))
     year = int(request.query_params.get("year"))
@@ -246,8 +243,13 @@ def edari_calendar(request):
     # Past Auth...
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        return Response(error_message, status.HTTP_400_BAD_REQUEST)
-
+        message.add_message(
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": error_message},
+            status.HTTP_400_BAD_REQUEST,
+        )
     month = int(request.query_params.get("month"))
     year = int(request.query_params.get("year"))
 
@@ -344,10 +346,24 @@ def create_order_item(request):
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(create=True):
         validator.create_order()
-        return Response(
-            "Order has been created successfully.", status.HTTP_201_CREATED
+        message.add_message(
+            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
         )
-    return Response(validator.error, status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"messages": message.messages()},
+            status.HTTP_201_CREATED,
+        )
+
+    message.add_message(
+        "مشکلی در حین ثبت آیتم مورد نظر رخ داده است.", Message.ERROR
+    )
+    return Response(
+        {
+            "messages": message.messages(),
+            "errors": validator.error,
+        },
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["POST"])
@@ -358,10 +374,18 @@ def remove_order_item(request):
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
         validator.remove_order()
-        return Response(
-            "Order has been removed successfully.", status.HTTP_200_OK
+        message.add_message(
+            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
         )
-    return Response(validator.error, status.HTTP_400_BAD_REQUEST)
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(
+        "مشکلی حین حذف آیتم مورد نظر از سفارش شما رخ داده است.", Message.ERROR
+    )
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["POST"])
@@ -374,12 +398,12 @@ def create_breakfast_order(request):
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
         validator.create_breakfast_order()
-        message.add_message("صبحانه با موفقیت ثبت شد.")
+        message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
         return Response(
             {"messages": message.messages()}, status.HTTP_201_CREATED
         )
 
-    message.add_message("ثبت صحبانه با مشکل مواجه شد.")
+    message.add_message("ثبت صحبانه با مشکل مواجه شد.", Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -403,7 +427,9 @@ def item_ordering_personnel_list_report(request):
     try:
         date, item_id = b.validate_request(request.data)
     except ValueError as err:
-        message.add_message("مشکلی در اعتبارسنجی درخواست شما رخ داده است.")
+        message.add_message(
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        )
         return Response({"messages": message.messages(), "errors": str(err)})
 
     personnel = OrderItem.objects.filter(
