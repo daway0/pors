@@ -286,10 +286,23 @@ def first_page(request):
     open_for_personnel = SystemSetting.objects.last().IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
-    year, month, day = b.get_first_orderable_date(
+    launch_year, launch_month, launch_day = b.get_first_orderable_date(
         meal_type=Item.MealTypeChoices.LAUNCH
     )
-    current_date = {"day": day, "month": month, "year": year}
+    first_orderable_launch_date = {
+        "day": launch_day,
+        "month": launch_month,
+        "year": launch_year,
+    }
+
+    breakfast_year, breakfast_month, breakfast_day = (
+        b.get_first_orderable_date(meal_type=Item.MealTypeChoices.BREAKFAST)
+    )
+    first_orderable_breakfast_date = {
+        "day": breakfast_day,
+        "month": breakfast_month,
+        "year": breakfast_year,
+    }
 
     serializer = FirstPageSerializer(
         data={
@@ -297,7 +310,8 @@ def first_page(request):
             "isOpenForPersonnel": open_for_personnel,
             "fullName": full_name,
             "profile": profile,
-            "currentDate": current_date,
+            "firstOrderableLaunchDay": first_orderable_launch_date,
+            "firstOrderableBreakfastDay": first_orderable_breakfast_date,
         }
     ).initial_data
 

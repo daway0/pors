@@ -154,7 +154,8 @@ class FirstPageSerializer(serializers.Serializer):
     isOpenForPersonnel = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
-    currentDate = serializers.DictField()
+    firstOrderableLaunchDay = serializers.DictField()
+    firstOrderableBreakfastDay = serializers.DictField()
 
 
 class DayWithMenuSerializer(serializers.Serializer):
