@@ -172,37 +172,37 @@ class ListedDaysWithMenu(serializers.Serializer):
 
 
 class AddMenuItemSerializer(serializers.Serializer):
-    id = serializers.IntegerField(source="Item")
-    date = serializers.CharField(max_length=10, source="AvailableDate")
+    id = serializers.IntegerField()
+    date = serializers.CharField(max_length=10)
 
-    def validate(self, data):
-        date = validate_date(data["AvailableDate"])
-        if not date:
-            raise serializers.ValidationError("Date is not valid.")
+    # def validate(self, data):
+    #     date = validate_date(data["AvailableDate"])
+    #     if not date:
+    #         raise serializers.ValidationError("Date is not valid.")
 
-        instance = m.DailyMenuItem.objects.filter(
-            AvailableDate=date,
-            Item=data["Item"],
-            IsActive=True,
-            Item__IsActive=True,
-        )
-        if instance:
-            raise serializers.ValidationError(
-                "Item already exist on provided date."
-            )
-        item = m.Item.objects.filter(pk=data["Item"]).first()
-        data["Item"] = item
+    #     instance = m.DailyMenuItem.objects.filter(
+    #         AvailableDate=date,
+    #         Item=data["Item"],
+    #         IsActive=True,
+    #         Item__IsActive=True,
+    #     )
+    #     if instance:
+    #         raise serializers.ValidationError(
+    #             "Item already exist on provided date."
+    #         )
+    #     item = m.Item.objects.filter(pk=data["Item"]).first()
+    #     data["Item"] = item
 
-        is_date_valid_for_add = b.is_date_valid_for_action(date, item.MealType)
-        if not is_date_valid_for_add:
-            raise serializers.ValidationError(
-                "Deadline for any action on this date is over."
-            )
-        data["IsActive"] = True
-        return data
+    #     is_date_valid_for_add = b.is_date_valid_for_action(date, item.MealType)
+    #     if not is_date_valid_for_add:
+    #         raise serializers.ValidationError(
+    #             "Deadline for any action on this date is over."
+    #         )
+    #     data["IsActive"] = True
+    #     return data
 
-    def create(self, validated_data):
-        return m.DailyMenuItem.objects.create(**validated_data)
+    # def create(self, validated_data):
+    #     return m.DailyMenuItem.objects.create(**validated_data)
 
 
 class PersonnelSchemaSerializer(serializers.Serializer):

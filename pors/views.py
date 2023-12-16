@@ -61,9 +61,9 @@ def add_item_to_menu(request):
         -  'item' (str): The item which you want to add.
     """
 
-    serializer = AddMenuItemSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    validator = b.ValidateAddMenuItem(request.data)
+    if validator.is_valid():
+        validator.add_item()
 
         message.add_message(
             "آیتم با موفقیت اضافه شد.",
@@ -76,7 +76,7 @@ def add_item_to_menu(request):
         "مشکلی درهنگام اضافه کردن آیتم رخ داده است.", Message.ERROR
     )
     return Response(
-        {"messages": message.messages(), "errors": serializer.errors},
+        {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
