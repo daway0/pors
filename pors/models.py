@@ -291,6 +291,7 @@ class OrderItem(models.Model):
     # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
     # افزونگی تکنیکی
     PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
+    # DeliveryLocation = ...
 
     class Meta:
         constraints = [
