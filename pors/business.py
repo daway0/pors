@@ -17,8 +17,8 @@ def validate_request(data: dict) -> tuple[str, int]:
 
     Args:
         data (dict): The request data which must contains:\n
-            - 'date' (str): The date which you want to submit action on.
-            - 'item' (int | str): The item which you want to do action with.
+          - 'date' (str): The date which you want to submit action on.
+          - 'item' (int): The item which you want to do action with.
 
     Raises:
         ValueError: If parameters are not specified, or not valid.
@@ -187,6 +187,7 @@ class ValidateRemove:
 
     def __init__(self, request_data: dict) -> None:
         self.data = request_data
+        self.error = ""
 
     def is_valid(self) -> bool:
         """
@@ -246,6 +247,10 @@ class ValidateRemove:
             )
 
     def remove_item(self):
+        if self.error:
+            raise ValueError(
+                "This method is only available if provided data is valid."
+            )
         m.DailyMenuItem.objects.get(
             AvailableDate=self.date, Item=self.item
         ).delete()
@@ -271,6 +276,7 @@ class ValidateOrder:
 
     def __init__(self, request_data) -> None:
         self.data: dict = request_data
+        self.error = ""
 
     def is_valid(self, create=False, remove=False):
         """
@@ -321,6 +327,7 @@ class ValidateOrder:
             AvailableDate=self.date,
             IsActive=True,
             Item__IsActive=True,
+            Item__MealType=m.Item.MealTypeChoices.LAUNCH,
         ).first()
         if not is_item_available:
             raise ValueError("item is not available in corresponding date.")
@@ -365,6 +372,11 @@ class ValidateOrder:
         will instead increase its quantity by 1.
         """
 
+        if self.error:
+            raise ValueError(
+                "This method is only available if provided data is valid."
+            )
+
         instance = m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
@@ -391,6 +403,11 @@ class ValidateOrder:
             its value by 1,
         otherwise will remove the record.
         """
+
+        if self.error:
+            raise ValueError(
+                "This method is only available if provided data is valid."
+            )
 
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
@@ -420,6 +437,7 @@ class ValidateBreakfast:
 
     def __init__(self, request_data: dict) -> None:
         self.data = request_data
+        self.error = ""
 
     def is_valid(self):
         """
@@ -491,7 +509,7 @@ class ValidateBreakfast:
                 Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
             )
             .values("Quantity")
-            .aggregate(total=Coalesce(Sum('Quantity'), Value(0)))['total']
+            .aggregate(total=Coalesce(Sum("Quantity"), Value(0)))["total"]
         )
 
         threshold = (
@@ -506,9 +524,115 @@ class ValidateBreakfast:
     def create_breakfast_order(self):
         """Creating breakfast order for personnel"""
 
+        if self.error:
+            raise ValueError(
+                "This method is only available if provided data is valid."
+            )
+
         m.OrderItem.objects.create(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
             Item=self.item,
             PricePerOne=self.item.CurrentPrice,
         )
+
+
+class ValidateAddMenuItem:
+    """
+    Validating data that was provided for adding specific
+        item to a date's menu.
+    The data will pass several validation before submission.
+
+    Args:
+        request_data (dict): The request data which must contains:
+        -  'date' (int): The date's menu which you want to add item on.
+        -  'item' (int): The item which you want to add.
+
+    Raises:
+        ValueError: If the data violated any validations.
+    """
+
+    def __init__(self, request_data: dict) -> None:
+        self.data = request_data
+        self.error = ""
+
+    def is_valid(self):
+        """
+        Applying validations to the request data.
+        if the request was not valid, will return false and
+        store error result inside `self.error`.
+
+        Returns:
+            bool: was the request data valid or not.
+        """
+
+        try:
+            self.date, self.item = validate_request(self.data)
+            self._validate_item()
+            self._validate_date()
+        except ValueError as e:
+            self.error = str(e)
+            return False
+
+        return True
+
+    def _validate_item(self):
+        """
+        Checking if the item is exists and valid.
+        Then checking if the item is already exists in provided date's menu.
+
+        Raises:
+            ValueError:
+            -  If the item does not exists in db, or not active.
+            -  If the item currently exists in menu.
+        """
+
+        item_instance = m.Item.objects.filter(
+            pk=self.item, IsActive=True
+        ).first()
+        if not item_instance:
+            raise ValueError("Invalid item.")
+
+        self.item = item_instance
+
+        is_already_exists = m.DailyMenuItem.objects.filter(
+            AvailableDate=self.date, Item=self.item, IsActive=True
+        )
+        if is_already_exists:
+            raise ValueError(
+                f"{self.item.ItemName} already exists in provided date."
+            )
+
+    def _validate_date(self):
+        """
+        Checking if the date is valid for adding item to menu.
+
+        Raises:
+            ValueError:
+            -  If the deadline has passed for adding.
+        """
+
+        is_date_valid_for_add = is_date_valid_for_action(
+            self.date, self.item.MealType
+        )
+        if not is_date_valid_for_add:
+            raise ValueError(
+                "Deadline for"
+                f" {self.item.MealType} related actions"
+                " on this date is over."
+            )
+
+    def add_item(self):
+        """
+        Adding provided item to the provided date's menu.
+
+        Warnings:
+            DO NOT use this method before checking `is_valid` method.
+        """
+
+        if self.error:
+            raise ValueError(
+                "This method is only available if provided data is valid."
+            )
+
+        m.DailyMenuItem.objects.create(AvailableDate=self.date, Item=self.item)
