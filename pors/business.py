@@ -180,6 +180,9 @@ class ValidateRemove:
         date: The corresponding menu date, available AFTER validation.
         error: Catched error message which was caused by validation violations,
             NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
     Request Args:
         id: The item id for removal.
         date: The corresponding menu date.
@@ -188,6 +191,7 @@ class ValidateRemove:
     def __init__(self, request_data: dict) -> None:
         self.data = request_data
         self.error = ""
+        self.message = ""
 
     def is_valid(self) -> bool:
         """
@@ -223,11 +227,17 @@ class ValidateRemove:
             Item__IsActive=True,
         )
         if not instance:
+            self.message = "آیتم مورد نظر در منو موجود نمی‌باشد."
             raise ValueError("Item does not exists in provided date.")
+
         orders = m.OrderItem.objects.filter(
             DeliveryDate=self.date, Item=self.item
         )
         if orders:
+            self.message = (
+                "آیتم مورد نظر در حال حاضر توسط پرسنل سفارش داده شده است و"
+                " قابل حذف نیست."
+            )
             raise ValueError(
                 "This item is not eligable for deleting, an order has already"
                 "owned this item."
@@ -241,16 +251,24 @@ class ValidateRemove:
             self.date, self.item.MealType
         )
         if not is_date_valid_for_removal:
+            self.message = "مهلت حذف کردن آیتم در تاریخ مورد نظر تمام شده است."
             raise ValueError(
-                f"Deadline for {self.item.MealType} related actions on this"
-                " date is over."
+                f"Deadline for {self.item.MealType} related"
+                " actions on this date is over."
             )
 
     def remove_item(self):
+        """Removing the item from menu.
+
+        Warnings:
+            DO NOT use this method before checking `is_valid` method.
+        """
+
         if self.error:
             raise ValueError(
                 "This method is only available if provided data is valid."
             )
+
         m.DailyMenuItem.objects.get(
             AvailableDate=self.date, Item=self.item
         ).delete()
@@ -268,6 +286,9 @@ class ValidateOrder:
         date: The order date, available AFTER validation.
         error: Catched error message which was caused by validation violations,
             NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
 
     Request Args:
         id: The item id for removal.
@@ -277,6 +298,7 @@ class ValidateOrder:
     def __init__(self, request_data) -> None:
         self.data: dict = request_data
         self.error = ""
+        self.message = ""
 
     def is_valid(self, create=False, remove=False):
         """
@@ -306,9 +328,9 @@ class ValidateOrder:
         try:
             self.date, self.item = validate_request(self.data)
             if create:
-                self._validate_item()
+                self._validate_item_submission()
             elif remove:
-                self._validate_removal()
+                self._validate_item_removal()
             self._validate_date()
         except ValueError as e:
             self.error = str(e)
@@ -316,7 +338,7 @@ class ValidateOrder:
 
         return True
 
-    def _validate_item(self):
+    def _validate_item_submission(self):
         """
         Checking if the item is available in the requested date.
         Fetch and storing item in self.item if it was valid.
@@ -330,25 +352,12 @@ class ValidateOrder:
             Item__MealType=m.Item.MealTypeChoices.LAUNCH,
         ).first()
         if not is_item_available:
+            self.message = "آیتم مورد نظر در تاریخ داده شده موجود نمی‌باشد."
             raise ValueError("item is not available in corresponding date.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
 
-    def _validate_date(self):
-        """
-        Checking if the order date is within deadline
-        and valid for submission | removal.
-        """
-
-        is_valid = is_date_valid_for_action(self.date, self.item.MealType)
-        if not is_valid:
-            raise ValueError(
-                "Deadline for"
-                f" {self.item.MealType} related actions"
-                " on this date is over."
-            )
-
-    def _validate_removal(self):
+    def _validate_item_removal(self):
         """
         Checking if the personnel has ordered the specified item
             on provided date.
@@ -360,16 +369,35 @@ class ValidateOrder:
             Item=self.item,
         ).first()
         if not order_item:
+            self.message = "آیتم مورد نظر در این تاریخ سفارش داده نشده است."
             raise ValueError("No order has been created with provided data.")
 
         self.order_item = order_item
         self.item = m.Item.objects.filter(pk=self.item).first()
+
+    def _validate_date(self):
+        """
+        Checking if the order date is within deadline
+        and valid for submission | removal.
+        """
+
+        is_valid = is_date_valid_for_action(self.date, self.item.MealType)
+        if not is_valid:
+            self.message = "مهلت ثبت / لغو سفارش در این تاریخ تمام شده است."
+            raise ValueError(
+                "Deadline for"
+                f" {self.item.MealType} related actions"
+                " on this date is over."
+            )
 
     def create_order(self):
         """
         Submitting order.
         If the personnel has already ordered that item on the requested date,
         will instead increase its quantity by 1.
+
+        Warnings:
+            DO NOT use this method before checking `is_valid` method.
         """
 
         if self.error:
@@ -402,6 +430,9 @@ class ValidateOrder:
         If the order quantity is greater than 1, then will decrease
             its value by 1,
         otherwise will remove the record.
+
+        Warnings:
+            DO NOT use this method before checking `is_valid` method.
         """
 
         if self.error:
@@ -429,6 +460,9 @@ class ValidateBreakfast:
         date: The corresponding menu date, available AFTER validation.
         error: Catched error message which was caused by validation violations,
             NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
 
     Request Args:
         id: The item id for removal.
@@ -438,6 +472,7 @@ class ValidateBreakfast:
     def __init__(self, request_data: dict) -> None:
         self.data = request_data
         self.error = ""
+        self.message = ""
 
     def is_valid(self):
         """
@@ -476,6 +511,7 @@ class ValidateBreakfast:
             Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
         )
         if not is_item_valid:
+            self.message = "آیتم مورد نظر فعال نمی‌باشد."
             raise ValueError("Item is not valid.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
@@ -490,6 +526,9 @@ class ValidateBreakfast:
             self.date, m.Item.MealTypeChoices.BREAKFAST
         )
         if not is_valid_for_submission:
+            self.message = (
+                "مهلت ثبت / لغو سفارش صبحانه در این تاریخ تمام شده است."
+            )
             raise ValueError(
                 "Deadline for submitting breakfast order is over."
             )
@@ -516,13 +555,19 @@ class ValidateBreakfast:
             m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
         )
         if total_breakfast_orders >= threshold:
+            self.message = "آستانه ثبت سفارش صبحانه شما تمام شده است."
             raise ValueError(
                 "Personnel has already submitted a breakfast order on this"
                 " date."
             )
 
     def create_breakfast_order(self):
-        """Creating breakfast order for personnel"""
+        """
+        Creating breakfast order for personnel
+
+        Warnings:
+            DO NOT use this method before checking `is_valid` method.
+        """
 
         if self.error:
             raise ValueError(
@@ -543,10 +588,16 @@ class ValidateAddMenuItem:
         item to a date's menu.
     The data will pass several validation before submission.
 
-    Args:
-        request_data (dict): The request data which must contains:
-        -  'date' (int): The date's menu which you want to add item on.
-        -  'item' (int): The item which you want to add.
+    Attributes:
+        data: Raw data retrieved from request.
+        item: Item id that has been requested to add,
+            available AFTER validation.
+        date: The corresponding menu date, available AFTER validation.
+        error: Catched error message which was caused by validation violations,
+            NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
 
     Raises:
         ValueError: If the data violated any validations.
@@ -555,6 +606,7 @@ class ValidateAddMenuItem:
     def __init__(self, request_data: dict) -> None:
         self.data = request_data
         self.error = ""
+        self.message = ""
 
     def is_valid(self):
         """
@@ -591,6 +643,7 @@ class ValidateAddMenuItem:
             pk=self.item, IsActive=True
         ).first()
         if not item_instance:
+            self.message = "آیتم مورد نظر فعال نمی‌باشد."
             raise ValueError("Invalid item.")
 
         self.item = item_instance
@@ -599,9 +652,8 @@ class ValidateAddMenuItem:
             AvailableDate=self.date, Item=self.item, IsActive=True
         )
         if is_already_exists:
-            raise ValueError(
-                f"{self.item.ItemName} already exists in provided date."
-            )
+            self.message = "آیتم مورد نظر در حال حاضر در منو روز موجود است."
+            raise ValueError("Item already exists in provided date.")
 
     def _validate_date(self):
         """
@@ -616,6 +668,10 @@ class ValidateAddMenuItem:
             self.date, self.item.MealType
         )
         if not is_date_valid_for_add:
+            self.message = (
+                "مهلت اضافه / حذف کردن آیتم مورد نظر در این تاریخ تمام شده"
+                " است."
+            )
             raise ValueError(
                 "Deadline for"
                 f" {self.item.MealType} related actions"

@@ -21,7 +21,6 @@ from .models import (
     SystemSetting,
 )
 from .serializers import (
-    AddMenuItemSerializer,
     AllItemSerializer,
     CategorySerializer,
     FirstPageSerializer,
@@ -73,7 +72,7 @@ def add_item_to_menu(request):
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
     message.add_message(
-        "مشکلی درهنگام اضافه کردن آیتم رخ داده است.", Message.ERROR
+        validator.message, Message.ERROR
     )
     return Response(
         {"messages": message.messages(), "errors": validator.error},
@@ -97,17 +96,17 @@ def remove_item_from_menu(request):
         -  'item' (str): The item which you want to remove.
     """
 
-    validatior = b.ValidateRemove(request.data)
-    if validatior.is_valid():
-        validatior.remove_item()
+    validator = b.ValidateRemove(request.data)
+    if validator.is_valid():
+        validator.remove_item()
         message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
     message.add_message(
-        "مشکلی حین حذف آیتم از منو رخ داده است.", Message.ERROR
+        validator.message, Message.ERROR
     )
     return Response(
-        {"messages": message.messages(), "errors": validatior.error},
+        {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -369,7 +368,7 @@ def create_order_item(request):
         )
 
     message.add_message(
-        "مشکلی در حین ثبت آیتم مورد نظر رخ داده است.", Message.ERROR
+        validator.message, Message.ERROR
     )
     return Response(
         {
@@ -404,7 +403,7 @@ def remove_order_item(request):
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
     message.add_message(
-        "مشکلی حین حذف آیتم مورد نظر از سفارش شما رخ داده است.", Message.ERROR
+        validator.message, Message.ERROR
     )
     return Response(
         {"messages": message.messages(), "errors": validator.error},
@@ -438,7 +437,7 @@ def create_breakfast_order(request):
             {"messages": message.messages()}, status.HTTP_201_CREATED
         )
 
-    message.add_message("ثبت صحبانه با مشکل مواجه شد.", Message.ERROR)
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
