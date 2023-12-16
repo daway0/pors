@@ -12,7 +12,9 @@
             "title": "test",
             "img": "something",
             "category": 1,
-            "description": "testtest"
+            "description": "testtest",
+            "mealType": "صبحانه",
+            "isActive": true,
         }
     },
     {
@@ -20,7 +22,9 @@
             "title": "test",
             "img": "something",
             "category": 1,
-            "description": "testtest"
+            "description": "testtest",
+            "mealType": "ناهار",
+            "isActive": true
         }
     }
 ]

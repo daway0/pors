@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "pors",
-    "debug_toolbar",
+    # "debug_toolbar",
 ]
 
 INTERNAL_IPS = [
@@ -52,7 +52,7 @@ INTERNAL_IPS = [
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -82,35 +82,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "pors",
-#         "USER": "root",
-#         "PASSWORD": "63TXYqWg4qOoM6IkmNjfHf7t",
-#         "HOST": "billy.iran.liara.ir",
-#         "PORT": 33056,
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PersonnelService',
         'USER': 'sa',
-        'PASSWORD': 'BXQejtDIBTfddpwNK8eUfTqO',
-        'HOST': 'finn.iran.liara.ir',
-        'PORT': '30919',
+        'PASSWORD': 'j2lQJM7FtQxLVmQyK8DL6yNe',
+        'HOST': 'billy.iran.liara.ir',
+        'PORT': '31411',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',

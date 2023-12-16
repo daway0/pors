@@ -1,10 +1,13 @@
+import csv
 import json
 import re
+from io import StringIO
+from typing import Optional
 
 import jdatetime
-from persiantools.jdatetime import JalaliDate, timedelta
-
-from .config import ORDER_REGISTRATION_CLOSED_IN
+from django.db import connection
+from django.db.models import QuerySet
+from persiantools.jdatetime import JalaliDate
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -58,30 +61,22 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 
 def get_current_date() -> tuple[int, int, int]:
+    "Returning current date"
     now = jdatetime.datetime.now()
     return now.year, now.month, now.day
 
 
-def get_first_orderable_date() -> tuple[int, int, int]:
-    now = jdatetime.datetime.now()
+def split_dates(dates, mode: str) -> int | list[int]:
+    """
+    Splitting date and returning requested section based on mode.
 
-    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-        now += timedelta(days=2)
-    else:
-        now += timedelta(days=1)
-    return now.year, now.month, now.day
+    Args:
+        dates: List of dates, or a single date to split.
+        mode: The section, choose between `year`, `month` and `day`.
 
-
-def replace_hyphens_from_date(*dates: str):
-    if len(dates) == 1:
-        return dates[0].replace("-", "/")
-    new_date = []
-    for date in dates:
-        new_date.append(date.replace("-", "/"))
-    return new_date
-
-
-def split_dates(dates, mode: str):
+    Returns:
+        List or single integer.
+    """
     new_dates = []
 
     if mode == "day":
@@ -104,14 +99,41 @@ def split_dates(dates, mode: str):
         return new_dates
 
 
-def split_json_dates(dates: str):
+def split_json_dates(dates: str) -> dict[str, str]:
+    """
+    Splitting a json list of dates and generating a dict with day number.
+    This function assumes that you have a `day` key in your json data that
+    contains a VALID date
+
+    Args:
+        dates: serialized (json) data contains a `date` key.
+
+    Returns:
+        Deserialized data, date key will contain the number of day only.
+    """
+
     dates = json.loads(dates)
     for obj in dates:
         obj["day"] = int(obj["day"].split("/")[2])
     return dates
 
 
-def validate_date(date: str):
+def validate_date(date: str) -> Optional[str]:
+    """
+    Validating date value and format.
+    Replacing "-" with "/" if the value is valid.
+
+    Example:
+        "1402/00/01" = valid
+        "1402/0/1" = invalid, month and day section must have 2 integers.
+
+    Args:
+        date: the date for validation.
+
+    Returns:
+        date | None: date value or None if it was invalid.
+    """
+
     pattern = r"^\d{4}\/\d{2}\/\d{2}$"
     if not isinstance(date, str):
         return None
@@ -121,3 +143,55 @@ def validate_date(date: str):
         return date
     else:
         return None
+
+
+def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
+    """
+    Executing raw queries via context manager
+
+    Args:
+        query: the raw query
+        params: parameters used in query, avoiding sql injections
+
+    Returns:
+        result: the data retrieved by query
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(query, params)
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return result
+
+
+def generate_csv(queryset: QuerySet):
+    """
+    This function generates a dynamic csv content based on
+        the queryset data argument.
+
+    Warnings:
+        Please note that you have to customize your queryset via filter, values
+            and other stuffs before using this function.
+        All fields and values on received queryset will use in csv.
+
+    Args:
+        queryset: The queryset that you want to generate csv from it.
+
+    Returns:
+        str: csv content that generated from queryset.
+    """
+
+    csv_component = StringIO()
+    writer = csv.writer(csv_component)
+
+    headers_appended = False
+
+    for obj in queryset:
+        data = obj.values()
+        if not headers_appended:
+            writer.writerow(obj.keys())
+            headers_appended = True
+        writer.writerow(data)
+
+    csv_content = csv_component.getvalue()
+    csv_component.close()
+    return csv_content
