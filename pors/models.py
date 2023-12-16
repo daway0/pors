@@ -61,43 +61,47 @@ class SystemSetting(models.Model):
     # این عدد در دیتابیس به صورت دستی تعیین می شود
     BreakfastRegistrationWindowHours = models.PositiveIntegerField(
         default=0,
-        help_text="فرض کنیم 48 باشه این عدد. یعنی اینکه برای ثبت سفارش "
-                  "صبحانه امروز کاربر  باید 48 ساعت پیش صبحانه اش را "
-                  "ثبت سفارش کرده باشد یا به عبارت دیگر از الان برای پس از "
-                  "48 ساعت اینده می تواند ثبت سفارش صبحانه کند"
-        )
+        help_text=(
+            "فرض کنیم 48 باشه این عدد. یعنی اینکه برای ثبت سفارش "
+            "صبحانه امروز کاربر  باید 48 ساعت پیش صبحانه اش را "
+            "ثبت سفارش کرده باشد یا به عبارت دیگر از الان برای پس از "
+            "48 ساعت اینده می تواند ثبت سفارش صبحانه کند"
+        ),
+    )
 
     # این عدد در دیتابیس به صورت دستی تعیین می شود
     LaunchRegistrationWindowHours = models.PositiveIntegerField(
-        default=0,
-        help_text="مانند فیلد BreakfastRegistrationWindowHours"
+        default=0, help_text="مانند فیلد BreakfastRegistrationWindowHours"
     )
 
     IsSystemOpenForLaunchSubmission = models.BooleanField(
         default=False,
-        help_text="سیستم خدمات مربوط به ناهار را انجام می دهد یا خیر"
+        help_text="سیستم خدمات مربوط به ناهار را انجام می دهد یا خیر",
     )
 
     IsSystemOpenForBreakfastSubmission = models.BooleanField(
         default=True,
-        help_text="سیستم خدمات مربوط به صبحانه را انجام می دهد یا خیر"
+        help_text="سیستم خدمات مربوط به صبحانه را انجام می دهد یا خیر",
     )
 
-    TotalItemsCanOrderedForBreakfastByPersonnel = (
-            models.PositiveSmallIntegerField(
-                null=True,
-                default=1,
-                help_text="در حال حاضر با توجه به قوانین واحد اداری هر فرد "
-                          "از منوی صبحانه فقط یک ایتم می تونه سفارش بده."
-                          "این فیلد جمع ایتم های قابل سفارش برای صبحانه را "
-                          "تعیین می کند"
-                            )
-            )
+    TotalItemsCanOrderedForBreakfastByPersonnel = models.PositiveSmallIntegerField(
+        null=True,
+        default=1,
+        help_text=(
+            "در حال حاضر با توجه به قوانین واحد اداری هر فرد "
+            "از منوی صبحانه فقط یک ایتم می تونه سفارش بده."
+            "این فیلد جمع ایتم های قابل سفارش برای صبحانه را "
+            "تعیین می کند"
+        ),
+    )
 
     @property
     def SuperAdminUsername(self):
-        return self.SuperAdmins.replace(" ", "").split(",") if \
-            self.SuperAdmins else []
+        return (
+            self.SuperAdmins.replace(" ", "").split(",")
+            if self.SuperAdmins
+            else []
+        )
 
 
 class Holiday(models.Model):
@@ -289,9 +293,12 @@ class OrderItem(models.Model):
     PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
 
     class Meta:
-        models.UniqueConstraint(
-            fields=["Item", "Order"], name="unique_item_order"
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=["Personnel", "DeliveryDate", "Item"],
+                name="unique_item_date_personnel",
+            ),
+        ]
         verbose_name = "آیتم سفارشی"
         verbose_name_plural = "آیتم های سفارشی"
 
