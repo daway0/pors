@@ -254,7 +254,7 @@ class Item(models.Model):
 
 class Order(models.Model):
     """
-    *** PersonnelDebt = TotalPrice - SubsidyAmount
+    *** PersonnelDebt = TotalPrice - SubsidyCap
     توجه شود که PersonnelDebt هیچ گاه منفی نخواهد شد
     """
 

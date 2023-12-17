@@ -128,7 +128,7 @@ class OrderSerializer(serializers.Serializer):
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
                 "total": object["TotalPrice"],
-                "fanavaran": object["SubsidyAmount"],
+                "fanavaran": object["SubsidyCap"],
                 "debt": object["PersonnelDebt"],
             }
             result.append(schema)
