@@ -231,14 +231,16 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
 function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, itemCount = 0, editable = true) {
     let minus = `
     <div class="ml-2">
-                        <img class="remove-item w-6 h-6"
+                        <img class="!cursor-pointer remove-item w-6 h-6"
                              src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">
                     </div>`
     let add = `<div class="">
-                        <img class="add-item w-6 h-6"
+                        <img class="!cursor-pointer add-item w-6 h-6"
                              src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
                     </div>
     `
+
+    let breakfastLabel = `<span class="px-1 py-0 text-xs text-white font-bold bg-gray-800 italic rounded-full"> صبحونه </span>`
     return `
     <li data-item-id="${id}" 
     data-item-order-count=${itemCount} 
@@ -256,7 +258,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                 />
 
                 <div class="w-8/12 cursor-default">
-                    <div><h3 class="text-base text-gray-900">${itemName}</h3>
+                    <div><h3 class="text-base text-gray-900">${itemName} ${serveTime==="BRF" ? breakfastLabel : ""}</h3>
 
                         <dl class="mt-1 space-y-px text-sm text-gray-600">
                             <div>
@@ -341,17 +343,8 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
             quantity = itemObj.quantity
         }
 
-        // انتخاب این که قیمت ایتمی که تعدادش قابل تغییر نیست و همچنین
-        // سفارش هم داده نشده است بحث بر انگیز است چرا که اگر به
-        // price=currentPrice باشد شاید زمانی که ایتم قابل تغییر بوده منو
-        // قیمت دیگری داشته است بهترین انتخاب با توجه اینکه قیمت ها در زمان
-        // editable بودن و نبودن ایتم فرق دارد این است که چیزی توی price
-        // نشون ندهم.
 
-        // راه دیگر هم این است که اصلا ایتمی که انتخاب نشده و قابلیت تغییر
-        // هم ندارد اصلا برای چی نمایش داده شود ؟‌ به هر حال من گزینه اول
-        // رو انتخاب کردم
-        if (!editableItem && !ordered) price = 0
+        if (!editableItem && !ordered) return
 
 
         HTML += menuItemBlock(
@@ -528,12 +521,28 @@ function getSubsidy() {
     });
 }
 
+function billDisplay(show) {
+    let thereIsNoOrderForDay = $("#no-order-for-today")
+    let billDetail = $("#day-bill")
+    if (show){
+        thereIsNoOrderForDay.addClass("hidden")
+        billDetail.removeClass("hidden")
+        return
+    }
+    thereIsNoOrderForDay.removeClass("hidden")
+    billDetail.addClass("hidden")
+}
 function updateOrderBill() {
     let orderItems = $(`#menu-items-container li`)
     let total = 0
     let fanavaran = orderSubsidy
     let debt = 0
 
+    if (orderItems.length === 0) {
+        billDisplay(false)
+        return
+    }
+    billDisplay(true)
 
     orderItems.each(function () {
         let itemPrice = parseInt($(this).attr("data-item-price"))
@@ -1059,6 +1068,11 @@ $(document).ready(function () {
         });
     })
 
+
+
+    $(document).on('click', '#location-modal-trigger', function () {
+        $("#place-modal").click()
+    })
 
 });
 

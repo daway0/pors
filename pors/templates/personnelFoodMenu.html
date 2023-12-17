@@ -1,12 +1,13 @@
 <div class="flex justify-between">
-    <div class="flex items-center gap-3"><img class="w-6 h-6" src="https://www.svgrepo.com/show/327569/today.svg"
-                                              alt=""> <span id="menu-date-wrapper" data-date="1402/02/08" class="text-lg">چهارشنبه 28 آبان</span>
+    <div class="flex items-center gap-3">
+        <img class="w-6 h-6" src="https://www.svgrepo.com/show/327569/today.svg" alt="">
+        <span id="menu-date-wrapper" data-date="1402/02/08" class="text-lg">چهارشنبه 28 آبان</span>
     </div>
     <div class="flex items-center gap-3"><img class="w-6 h-6" src="https://www.svgrepo.com/show/327760/fast-food.svg"
                                               alt=""> <span id="menu-items-counter" class="text-lg pt-2">3</span></div>
 </div>
 <!-- component -->
-<div class="mt-8 flex flex-col space-y-10">
+<div class="mt-8 flex flex-col space-y-4">
     <ul id="menu-items-container" class="space-y-2 max-h-[38rem] pb-2 overflow-y-auto">
 
         <li class="flex flex-col gap-0 bg-gray-200 border  rounded p-4 shadow-md hover:bg-gray-300 ">
@@ -511,8 +512,14 @@
 
     </ul>
 
-    <div>
+    <div id="day-bill" class="hidden rounded-md bg-white p-2 shadow-md">
+<h2 class="px-2 font-bold">جزییات سفارش</h2>
+<hr class="h-px mt-2 mb-4 bg-gray-200 border-0">
+
         <ul>
+            <li class="flex gap-3 justify-between px-2 pb-2"><span>محل تحویل سفارش</span><span
+                    class="flex gap-0.5"><span >ساختمان پدیدار</span><a
+                    id="location-modal-trigger" class="text-sm bg-blue-100 hover:bg-blue-300 rounded-full px-2 !cursor-pointer">ویرایش</a></span></li>
             <li class="flex gap-3 justify-between px-2"><span>کل</span><span
                     class="flex gap-0.5"><span class="total-amount">۱۲۵۰۰۰۰</span><span
                     class="text-sm">تومان</span></span></li>
@@ -522,8 +529,11 @@
             <li class="flex gap-3 justify-between px-2 bg-green-200 text-green-950 font-bold rounded-md"><span>قابل پرداخت</span><span
                     class="flex gap-0.5"><span class="debt-amount">۱۲۵۰۰۰۰</span><span
                     class="text-sm">تومان</span></span></li>
-
         </ul>
+    </div>
+    <div id="no-order-for-today" class="flex justify-center text-gray-500">
+    <div class="flex items-center gap-3"><span id="menu-date-wrapper">سفارش برای امروز ثبت نشده است</span>
+    </div>
     </div>
 </div>
 
