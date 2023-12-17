@@ -282,6 +282,8 @@ class Order(models.Model):
     SubsidySpent = models.PositiveIntegerField(
         verbose_name="خرج فناوران"
     )  # TODO help text.
+    openForBreakfast = models.BooleanField()
+    openForLaunch = models.BooleanField()
 
     class Meta:
         managed = False
