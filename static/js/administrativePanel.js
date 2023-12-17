@@ -456,7 +456,7 @@ function updateSelectedItems(month, year) {
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            selectedItems = data["selectedItems"]
+            selectedItems = data["menuItems"]
             daysWithMenu = data["daysWithMenu"]
             catchResponseMessagesToDisplay(data.messages)
 
@@ -682,7 +682,7 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(
                 {
-                    "id": id,
+                    "item": id,
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
