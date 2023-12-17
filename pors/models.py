@@ -252,6 +252,11 @@ class Item(models.Model):
         verbose_name_plural = "اطلاعات ایتم ها"
 
 
+class DeliveryPlaceChoices(models.TextChoices):
+    PADIDAR = "PAD", "ساختمان پدیدار"
+    OTHER = "OTH", "ساختمان دیگر"
+
+
 class Order(models.Model):
     """
     *** PersonnelDebt = TotalPrice - SubsidyCap
@@ -261,6 +266,12 @@ class Order(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    DeliveryPlace = models.CharField(
+        max_length=3,
+        help_text="محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+                  "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
+                  "OrderItem خوانده می شود"
+    )
     SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
     )
@@ -284,6 +295,12 @@ class OrderItem(models.Model):
 
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    DeliveryPlace = models.CharField(
+        max_length=3,
+        choices=DeliveryPlaceChoices.choices,
+        help_text="محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+                  "چیزی که سفارش دهید یک جا تحویل می گیرید"
+    )
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, verbose_name="آیتم"
     )
