@@ -261,13 +261,16 @@ class Order(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    SubsidyAmount = models.PositiveIntegerField(
+    SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
     )
     TotalPrice = models.PositiveIntegerField(
         verbose_name="مبلغ کل سفارش به تومان"
     )
     PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
+    SubsidySpent = models.PositiveIntegerField(
+        verbose_name="خرج فناوران"
+    )  # TODO help text.
 
     class Meta:
         managed = False
