@@ -254,7 +254,7 @@ class Item(models.Model):
 
 class DeliveryPlaceChoices(models.TextChoices):
     PADIDAR = "PAD", "ساختمان پدیدار"
-    OTHER = "OTH", "ساختمان دیگر"
+    GAN = "GAN", "ساختمان گاندی"
 
 
 class Order(models.Model):
