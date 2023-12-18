@@ -171,7 +171,6 @@ class ListedDaysWithMenu(serializers.Serializer):
         return result
 
 
-
 class PersonnelSchemaSerializer(serializers.Serializer):
     orderedDays = serializers.ListField()
     totalDebt = serializers.IntegerField()
@@ -203,6 +202,10 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                         current_date_obj["date"],
                         meal_type=m.Item.MealTypeChoices.BREAKFAST,
                     )
+                )
+                current_date_obj["lockChangeDeliveryPlace"] = (
+                    current_date_obj["openForBreakfast"]
+                    and current_date_obj["openForLaunch"]
                 )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
