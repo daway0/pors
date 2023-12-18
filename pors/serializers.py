@@ -124,6 +124,7 @@ class OrderSerializer(serializers.Serializer):
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
+            schema["deliveryPlace"] = object["DeliveryPlace"]
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
