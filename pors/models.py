@@ -268,9 +268,11 @@ class Order(models.Model):
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     DeliveryPlace = models.CharField(
         max_length=3,
-        help_text="محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-                  "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
-                  "OrderItem خوانده می شود"
+        help_text=(
+            "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+            "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
+            "OrderItem خوانده می شود"
+        ),
     )
     SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
@@ -300,8 +302,10 @@ class OrderItem(models.Model):
     DeliveryPlace = models.CharField(
         max_length=3,
         choices=DeliveryPlaceChoices.choices,
-        help_text="محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-                  "چیزی که سفارش دهید یک جا تحویل می گیرید"
+        help_text=(
+            "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+            "چیزی که سفارش دهید یک جا تحویل می گیرید"
+        ),
     )
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, verbose_name="آیتم"
@@ -495,3 +499,39 @@ class ActionLog(models.Model):
     # AdminActionReason = models.TextField(null=True)  # combo
     # OldData = models.JSONField(...)
     # # NewData = models.JSONField(...)
+
+
+class ItemDailyReport(models.Model):
+    Id = models.PositiveIntegerField(primary_key=True)
+    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    PAD = models.CharField(max_length=3, verbose_name="ساختمان پدیدار")
+    OTH = models.CharField(max_length=3, verbose_name="ساختمان دیگر")
+
+    class Meta:
+        managed = False
+        db_table = "ItemDailyReport"
+        verbose_name = "گزارش سفارش روزانه"
+        verbose_name_plural = "گزارش سفارشات روزانه"
+
+
+class PersonnelFinancialReport(models.Model):
+    Id = models.PositiveIntegerField(primary_key=True)
+    UserName = models.CharField(max_length=250, verbose_name="پرسنل")
+    FirstName = models.CharField(max_length=250, verbose_name="نام")
+    LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
+    TotalOrders = models.PositiveIntegerField(verbose_name="تعداد سفارشات")
+    TotalCost = models.PositiveBigIntegerField(
+        verbose_name="مبلغ کل سفارشات به تومان"
+    )
+    TotalSubsidySpent = models.PositiveBigIntegerField(
+        verbose_name="خرج کامل فناوران"
+    )
+    TotalPersonnelDebt = models.PositiveBigIntegerField(
+        verbose_name="بدهی کامل پرسنل"
+    )
+
+    class Meta:
+        managed = False
+        db_table = "PersonnelFinancialReport"
+        verbose_name = "گزارش مالی پرسنل"
