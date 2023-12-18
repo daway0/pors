@@ -71,9 +71,7 @@ def add_item_to_menu(request):
 
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -102,9 +100,7 @@ def remove_item_from_menu(request):
         message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -367,9 +363,7 @@ def create_order_item(request):
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {
             "messages": message.messages(),
@@ -402,9 +396,7 @@ def remove_order_item(request):
         )
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -493,9 +485,31 @@ def get_subsidy(request):
             {"messages": message.messages(), "errors": "Invalid 'date' value."}
         )
 
-    subsidy = Subsidy.objects.filter(
-        Q(FromDate__lte=date, UntilDate__isnull=True)
-        | Q(FromDate__lte=date, UntilDate__gte=date)
-    ).first().Amount
+    subsidy = (
+        Subsidy.objects.filter(
+            Q(FromDate__lte=date, UntilDate__isnull=True)
+            | Q(FromDate__lte=date, UntilDate__gte=date)
+        )
+        .first()
+        .Amount
+    )
 
     return Response({"data": {"subsidy": subsidy}})
+
+
+@api_view(["PATCH"])
+@check([is_open_for_personnel])
+def change_delivery_place(request):
+    request.data["personnel"] = "e.rezaee@eit"
+    validator = b.ValidateDeliveryPlace(request.data)
+    if validator.is_valid():
+        validator.change_delivary_place()
+        message.add_message(
+                        "ساختمان تحویل سفارش شما با موفقیت عوض شد.", Message.SUCCESS
+        )
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error}
+    )
