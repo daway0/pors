@@ -200,7 +200,7 @@ def personnel_calendar(request):
     SELECT oi.DeliveryDate, oi.Quantity, oi.PricePerOne,
            i.id, i.ItemName, i.Image, i.CurrentPrice,
            i.Category_id, i.ItemDesc, oi.Personnel,
-           o.SubsidyCap, o.PersonnelDebt, o.TotalPrice, o.DeliveryPlace
+           o.SubsidyCap, o.PersonnelDebt, o.TotalPrice
     FROM pors_orderitem AS oi
     INNER JOIN pors_item AS i ON oi.Item_id = i.id
     INNER JOIN "Order" AS o ON o.Personnel = oi.Personnel AND o.DeliveryDate = oi.DeliveryDate
@@ -497,19 +497,19 @@ def get_subsidy(request):
     return Response({"data": {"subsidy": subsidy}})
 
 
-@api_view(["PATCH"])
-@check([is_open_for_personnel])
-def change_delivery_place(request):
-    request.data["personnel"] = "e.rezaee@eit"
-    validator = b.ValidateDeliveryPlace(request.data)
-    if validator.is_valid():
-        validator.change_delivary_place()
-        message.add_message(
-            "ساختمان تحویل سفارش شما با موفقیت عوض شد.", Message.SUCCESS
-        )
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+# @api_view(["PATCH"])
+# @check([is_open_for_personnel])
+# def change_delivery_place(request):
+#     request.data["personnel"] = "e.rezaee@eit"
+#     validator = b.ValidateDeliveryPlace(request.data)
+#     if validator.is_valid():
+#         validator.change_delivary_place()
+#         message.add_message(
+#             "ساختمان تحویل سفارش شما با موفقیت عوض شد.", Message.SUCCESS
+#         )
+#         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
-    return Response(
-        {"messages": message.messages(), "errors": validator.error}
-    )
+#     message.add_message(validator.message, Message.ERROR)
+#     return Response(
+#         {"messages": message.messages(), "errors": validator.error}
+#     )

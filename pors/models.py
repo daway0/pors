@@ -268,14 +268,14 @@ class Order(models.Model):
     FirstName = models.CharField(max_length=250, verbose_name="نام")
     LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    DeliveryPlace = models.CharField(
-        max_length=3,
-        help_text=(
-            "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-            "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
-            "OrderItem خوانده می شود"
-        ),
-    )
+    # DeliveryPlace = models.CharField(
+    #     max_length=3,
+    #     help_text=(
+    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+    #         "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
+    #         "OrderItem خوانده می شود"
+    #     ),
+    # )
     SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
     )
@@ -301,14 +301,14 @@ class OrderItem(models.Model):
 
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    DeliveryPlace = models.CharField(
-        max_length=3,
-        choices=DeliveryPlaceChoices.choices,
-        help_text=(
-            "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-            "چیزی که سفارش دهید یک جا تحویل می گیرید"
-        ),
-    )
+    # DeliveryPlace = models.CharField(
+    #     max_length=3,
+    #     choices=DeliveryPlaceChoices.choices,
+    #     help_text=(
+    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+    #         "چیزی که سفارش دهید یک جا تحویل می گیرید"
+    #     ),
+    # )
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, verbose_name="آیتم"
     )
@@ -319,7 +319,6 @@ class OrderItem(models.Model):
     # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
     # افزونگی تکنیکی
     PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
-    # DeliveryLocation = ...
 
     class Meta:
         constraints = [
@@ -503,15 +502,15 @@ class ActionLog(models.Model):
     # # NewData = models.JSONField(...)
 
 
-class ItemDailyReport(models.Model):
-    Id = models.PositiveIntegerField(primary_key=True)
-    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
-    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    PAD = models.CharField(max_length=3, verbose_name="ساختمان پدیدار")
-    OTH = models.CharField(max_length=3, verbose_name="ساختمان دیگر")
+# class ItemDailyReport(models.Model):
+#     Id = models.PositiveIntegerField(primary_key=True)
+#     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+#     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+#     PAD = models.CharField(max_length=3, verbose_name="ساختمان پدیدار")
+#     OTH = models.CharField(max_length=3, verbose_name="ساختمان دیگر")
 
-    class Meta:
-        managed = False
-        db_table = "ItemDailyReport"
-        verbose_name = "گزارش سفارش روزانه"
-        verbose_name_plural = "گزارش سفارشات روزانه"
+#     class Meta:
+#         managed = False
+#         db_table = "ItemDailyReport"
+#         verbose_name = "گزارش سفارش روزانه"
+#         verbose_name_plural = "گزارش سفارشات روزانه"
