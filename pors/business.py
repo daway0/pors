@@ -344,10 +344,10 @@ class ValidateOrder:
         Fetch and storing item in self.item if it was valid.
         """
 
-        place = self.data.get("deliveryPlace")
-        available_places = m.DeliveryPlaceChoices.values
-        if place not in available_places:
-            raise ValueError("Invalid 'deliveryPlace' value.")
+        # place = self.data.get("deliveryPlace")
+        # available_places = m.DeliveryPlaceChoices.values
+        # if place not in available_places:
+        #     raise ValueError("Invalid 'deliveryPlace' value.")
 
         is_item_available = m.DailyMenuItem.objects.filter(
             Item=self.item,
@@ -360,21 +360,21 @@ class ValidateOrder:
             self.message = "آیتم مورد نظر در تاریخ داده شده موجود نمی‌باشد."
             raise ValueError("item is not available in corresponding date.")
 
-        current_order = m.Order.objects.filter(
-            Personnel=self.data.get("personnel"), DeliveryDate=self.date
-        ).first()
-        if current_order and current_order.DeliveryPlace != place:
-            self.message = (
-                "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
-                " کنونی متفاوت است."
-            )
-            raise ValueError(
-                "Your current order's delivery place if different from the"
-                " provided one."
-            )
+        # current_order = m.Order.objects.filter(
+        #     Personnel=self.data.get("personnel"), DeliveryDate=self.date
+        # ).first()
+        # if current_order and current_order.DeliveryPlace != place:
+        #     self.message = (
+        #         "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
+        #         " کنونی متفاوت است."
+        #     )
+        #     raise ValueError(
+        #         "Your current order's delivery place if different from the"
+        #         " provided one."
+        #     )
 
         self.item = m.Item.objects.filter(pk=self.item).first()
-        self.place = place
+        # self.place = place
 
     def _validate_item_removal(self):
         """
@@ -427,7 +427,7 @@ class ValidateOrder:
         instance = m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            DeliveryPlace=self.place,
+            # DeliveryPlace=self.place,
             Item=self.item,
         ).first()
         if instance:
@@ -438,7 +438,7 @@ class ValidateOrder:
         m.OrderItem.objects.create(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            DeliveryPlace=self.place,
+            # DeliveryPlace=self.place,
             Item=self.item,
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
@@ -535,26 +535,26 @@ class ValidateBreakfast:
             self.message = "آیتم مورد نظر فعال نمی‌باشد."
             raise ValueError("Item is not valid.")
 
-        place = self.data.get("deliveryPlace")
-        available_places = m.DeliveryPlaceChoices.values
-        if place not in available_places:
-            raise ValueError("Invalid 'deliveryPlace' value.")
+        # place = self.data.get("deliveryPlace")
+        # available_places = m.DeliveryPlaceChoices.values
+        # if place not in available_places:
+        #     raise ValueError("Invalid 'deliveryPlace' value.")
 
-        current_order = m.Order.objects.filter(
-            Personnel=self.data.get("personnel"), DeliveryDate=self.date
-        ).first()
-        if current_order and current_order.DeliveryPlace != place:
-            self.message = (
-                "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
-                " کنونی متفاوت است."
-            )
-            raise ValueError(
-                "Your current order's delivery place if different from the"
-                " provided one."
-            )
+        # current_order = m.Order.objects.filter(
+        #     Personnel=self.data.get("personnel"), DeliveryDate=self.date
+        # ).first()
+        # if current_order and current_order.DeliveryPlace != place:
+        #     self.message = (
+        #         "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
+        #         " کنونی متفاوت است."
+        #     )
+        #     raise ValueError(
+        #         "Your current order's delivery place if different from the"
+        #         " provided one."
+        #     )
 
         self.item = m.Item.objects.filter(pk=self.item).first()
-        self.place = place
+        # self.place = place
 
     def _validate_date(self):
         """
@@ -617,7 +617,7 @@ class ValidateBreakfast:
         m.OrderItem.objects.create(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            DeliveryPlace=self.place,
+            # DeliveryPlace=self.place,
             Item=self.item,
             PricePerOne=self.item.CurrentPrice,
         )
@@ -735,74 +735,74 @@ class ValidateAddMenuItem:
         m.DailyMenuItem.objects.create(AvailableDate=self.date, Item=self.item)
 
 
-class ValidateDeliveryPlace:
-    def __init__(self, request_data) -> None:
-        self.data: dict = request_data
-        self.error: str = ""
-        self.message: str = ""
+# class ValidateDeliveryPlace:
+#     def __init__(self, request_data) -> None:
+#         self.data: dict = request_data
+#         self.error: str = ""
+#         self.message: str = ""
 
-    def is_valid(self):
-        try:
-            self._validate_request()
-            self._validate_place()
-            self._validate_order_items()
-            self._validate_date()
-        except ValueError as e:
-            self.error = str(e)
-            return False
+#     def is_valid(self):
+#         try:
+#             self._validate_request()
+#             self._validate_place()
+#             self._validate_order_items()
+#             self._validate_date()
+#         except ValueError as e:
+#             self.error = str(e)
+#             return False
 
-        return True
+#         return True
 
-    def _validate_request(self):
-        date = self.data.get("date")
-        new_delivery_place = self.data.get("newDeliveryPlace")
-        if not (date and new_delivery_place):
-            raise ValueError(
-                "'date' and 'newDeliveryPlace' parameters must specified."
-            )
+#     def _validate_request(self):
+#         date = self.data.get("date")
+#         new_delivery_place = self.data.get("newDeliveryPlace")
+#         if not (date and new_delivery_place):
+#             raise ValueError(
+#                 "'date' and 'newDeliveryPlace' parameters must specified."
+#             )
 
-        self.new_delivery_place = self.data.get("newDeliveryPlace")
+#         self.new_delivery_place = self.data.get("newDeliveryPlace")
 
-        self.date = validate_date(date)
-        if not self.date:
-            raise ValueError("Invalid 'date' value.")
+#         self.date = validate_date(date)
+#         if not self.date:
+#             raise ValueError("Invalid 'date' value.")
 
-    def _validate_place(self):
-        available_choices = m.DeliveryPlaceChoices.values
-        if self.new_delivery_place not in available_choices:
-            self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
-            raise ValueError(
-                "'newDeliveryPlace' value does not exists in available"
-                " choices."
-            )
+#     def _validate_place(self):
+#         available_choices = m.DeliveryPlaceChoices.values
+#         if self.new_delivery_place not in available_choices:
+#             self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
+#             raise ValueError(
+#                 "'newDeliveryPlace' value does not exists in available"
+#                 " choices."
+#             )
 
-    def _validate_order_items(self):
-        current_order = m.Order.objects.filter(
-            Personnel=self.data.get("personnel"),
-            DeliveryDate=self.date,
-        ).first()
-        if not current_order:
-            self.message = "در تاریخ داده شده سفارشی ثبث نشده است."
-            raise ValueError("No items have been ordered on this date.")
+#     def _validate_order_items(self):
+#         current_order = m.Order.objects.filter(
+#             Personnel=self.data.get("personnel"),
+#             DeliveryDate=self.date,
+#         ).first()
+#         if not current_order:
+#             self.message = "در تاریخ داده شده سفارشی ثبث نشده است."
+#             raise ValueError("No items have been ordered on this date.")
 
-        if current_order.DeliveryDate == self.new_delivery_place:
-            self.message = (
-                "سفارش روز مورد نظر با ساختمان داده شده یکسان است و نیازی به"
-                " تغییر نیست."
-            )
-            raise ValueError(
-                "Your order is already submitted with provided place."
-            )
+#         if current_order.DeliveryDate == self.new_delivery_place:
+#             self.message = (
+#                 "سفارش روز مورد نظر با ساختمان داده شده یکسان است و نیازی به"
+#                 " تغییر نیست."
+#             )
+#             raise ValueError(
+#                 "Your order is already submitted with provided place."
+#             )
 
-        self.order = current_order
+#         self.order = current_order
 
-    def _validate_date(self):
-        if not (self.order.openForLaunch and self.order.openForBreakfast):
-            self.message = "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
-            raise ValueError("Deadline for changing delivery place is over.")
+#     def _validate_date(self):
+#         if not (self.order.openForLaunch and self.order.openForBreakfast):
+#             self.message = "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
+#             raise ValueError("Deadline for changing delivery place is over.")
 
-    def change_delivary_place(self):
-        m.OrderItem.objects.filter(
-            Personnel=self.data.get("personnel"),
-            DeliveryDate=self.date,
-        ).update(DeliveryPlace=self.new_delivery_place)
+#     def change_delivary_place(self):
+#         m.OrderItem.objects.filter(
+#             Personnel=self.data.get("personnel"),
+#             DeliveryDate=self.date,
+#         ).update(DeliveryPlace=self.new_delivery_place)

@@ -40,11 +40,11 @@ urlpatterns = [
         name="remove_order_item",
     ),
     path("get-subsidy/", views.get_subsidy, name="get_subsidy"),
-    path(
-        "change-delivery-place/",
-        views.change_delivery_place,
-        name="change_delivery_place",
-    ),
+    # path(
+    #     "change-delivery-place/",
+    #     views.change_delivery_place,
+    #     name="change_delivery_place",
+    # ),
     path(
         "items-daily-report/",
         report_views.items_daily_report,

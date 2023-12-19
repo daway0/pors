@@ -25,9 +25,10 @@ def items_daily_report(request):
     first_date = u.validate_date(request.data.get("firstDate"))
     last_date = u.validate_date(request.data.get("lastDate"))
 
-    qs = m.ItemDailyReport.objects.filter(
-        DeliveryDate__range=[first_date, last_date]
-    )
+    # qs = m.ItemDailyReport.objects.filter(
+    #     DeliveryDate__range=[first_date, last_date]
+    # )
+    qs = ...
     if not qs:
         message.add_message(
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
