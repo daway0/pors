@@ -1,12 +1,13 @@
+import codecs
 import csv
 import json
 import re
-from io import StringIO
 from typing import Optional
 
 import jdatetime
 from django.db import connection
 from django.db.models import QuerySet
+from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 
 
@@ -179,19 +180,59 @@ def generate_csv(queryset: QuerySet):
     Returns:
         str: csv content that generated from queryset.
     """
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="somefilename.csv"'
+    response.write(codecs.BOM_UTF8)
 
-    csv_component = StringIO()
-    writer = csv.writer(csv_component)
+    writer = csv.writer(response)
 
     headers_appended = False
 
     for obj in queryset:
-        data = obj.values()
-        if not headers_appended:
-            writer.writerow(obj.keys())
-            headers_appended = True
-        writer.writerow(data)
+        if isinstance(obj, dict):
+            data = obj.values()
+            if not headers_appended:
+                writer.writerow(obj.keys())
+                headers_appended = True
+            writer.writerow(data)
+        else:
+            keys = []
+            values = []
+            for field in obj._meta.fields:
+                keys.append(field.name)
+                value = getattr(obj, field.name)
+                if isinstance(value, str):
+                    value = value.encode("utf-8")
+                values.append(value)
 
-    csv_content = csv_component.getvalue()
-    csv_component.close()
-    return csv_content
+            if not headers_appended:
+                writer.writerow(keys)
+                headers_appended = True
+            writer.writerow(values)
+
+    return response
+
+
+def validate_request(schema: dict, data: dict) -> tuple[str, int]:
+    """
+    This function is responsible for validating request data based on the
+        provided schema.
+    Validation is checked by both checking parameter names
+        as well as their types.
+
+    Args:
+        schema (dict): Your prefered schema which you want
+            to receive from requets
+        data (dict): The request data.
+
+    """
+
+    schema_params = set(schema.keys())
+    data_params = set(data.keys())
+    diffs = schema_params.difference(data_params)
+    if diffs:
+        raise ValueError(f"{diffs} parameter(s) must specified.")
+
+    for param in schema_params:
+        if not isinstance(data.get(param), type(schema.get(param))):
+            raise ValueError(f"Invalid {param} value.")

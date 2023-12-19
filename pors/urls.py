@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import report_views, views
 
 app_name = "pors"
 
@@ -44,6 +44,11 @@ urlpatterns = [
         "change-delivery-place/",
         views.change_delivery_place,
         name="change_delivery_place",
+    ),
+    path(
+        "items-daily-report/",
+        report_views.items_daily_report,
+        name="items_daily_report",
     ),
     path("", views.uiadmin),
     path("personnel/", views.ui),

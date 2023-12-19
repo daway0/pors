@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from . import business as b
 from . import models as m
-from .utils import validate_date
 
 
 class AllItemSerializer(serializers.ModelSerializer):
