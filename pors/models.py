@@ -265,6 +265,8 @@ class Order(models.Model):
 
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
+    FirstName = models.CharField(max_length=250, verbose_name="نام")
+    LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     DeliveryPlace = models.CharField(
         max_length=3,
@@ -513,25 +515,3 @@ class ItemDailyReport(models.Model):
         db_table = "ItemDailyReport"
         verbose_name = "گزارش سفارش روزانه"
         verbose_name_plural = "گزارش سفارشات روزانه"
-
-
-class PersonnelFinancialReport(models.Model):
-    Id = models.PositiveIntegerField(primary_key=True)
-    UserName = models.CharField(max_length=250, verbose_name="پرسنل")
-    FirstName = models.CharField(max_length=250, verbose_name="نام")
-    LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
-    TotalOrders = models.PositiveIntegerField(verbose_name="تعداد سفارشات")
-    TotalCost = models.PositiveBigIntegerField(
-        verbose_name="مبلغ کل سفارشات به تومان"
-    )
-    TotalSubsidySpent = models.PositiveBigIntegerField(
-        verbose_name="خرج کامل فناوران"
-    )
-    TotalPersonnelDebt = models.PositiveBigIntegerField(
-        verbose_name="بدهی کامل پرسنل"
-    )
-
-    class Meta:
-        managed = False
-        db_table = "PersonnelFinancialReport"
-        verbose_name = "گزارش مالی پرسنل"
