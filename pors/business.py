@@ -10,7 +10,7 @@ from . import serializers as s
 from .utils import first_and_last_day_date, split_json_dates, validate_date
 
 
-def validate_request(data: dict, check_place: bool = False) -> tuple[str, int]:
+def validate_request(data: dict) -> tuple[str, int]:
     """
     This function is responsible for validating request data for
         validator classes which are defined in this module.
@@ -363,7 +363,7 @@ class ValidateOrder:
         current_order = m.Order.objects.filter(
             Personnel=self.data.get("personnel"), DeliveryDate=self.date
         ).first()
-        if current_order and current_order.DeliveryPlace != self.place:
+        if current_order and current_order.DeliveryPlace != place:
             self.message = (
                 "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
                 " کنونی متفاوت است."
