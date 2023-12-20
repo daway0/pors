@@ -135,9 +135,12 @@ def is_date_valid_for_action(
     return False
 
 
+
+
 def get_first_orderable_date(
     meal_type: m.Item.MealTypeChoices,
 ) -> tuple[int, int, int]:
+    #NEEDTEST
     """
     Returning the first valid date for order submission.
     Deadline for submission is different based on the meal type, and
@@ -151,6 +154,9 @@ def get_first_orderable_date(
     """
 
     now = jdatetime.datetime.now()
+    tomorrow = jdatetime.datetime.today() + jdatetime.timedelta(days=1)
+    tomorrow = jdatetime.datetime.combine(
+        tomorrow, jdatetime.time(0,0,0))
 
     match meal_type:
         case m.Item.MealTypeChoices.LAUNCH:
@@ -163,8 +169,10 @@ def get_first_orderable_date(
             )
 
     now += jdatetime.timedelta(hours=deadline)
+    if now > tomorrow:
+        tomorrow = tomorrow + jdatetime.timedelta(days=1)
 
-    return now.year, now.month, now.day
+    return tomorrow.year, tomorrow.month, tomorrow.day
 
 
 class ValidateRemove:

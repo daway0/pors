@@ -30,6 +30,7 @@ class SystemSetting(models.Model):
     کلا همه متغیر های زیر از طریق دیتابیس باید دستخوش تغییر قرار گیرند
 
     همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
+    توجه شود که فقط یک رکورد از این جدول باید ساخته شود
     """
 
     IsSystemOpenForPersonnel = models.BooleanField(
