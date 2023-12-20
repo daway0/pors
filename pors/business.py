@@ -144,9 +144,7 @@ def get_first_orderable_date(
 
     now = jdatetime.datetime.now()
     first_order_can_apply_in = now + jdatetime.timedelta(hours=deadline)
-    first_order_can_apply_in += first_order_can_apply_in + jdatetime.timedelta(
-        days=1
-    )
+    first_order_can_apply_in += jdatetime.timedelta(days=1)
 
     return (
         first_order_can_apply_in.year,
