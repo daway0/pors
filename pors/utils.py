@@ -10,6 +10,8 @@ from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 
+from . import models as m
+
 
 def get_str(date: jdatetime.date) -> str:
     """تبدیل کردن آبجکت دیت جلالی به رشته
@@ -181,7 +183,6 @@ def generate_csv(queryset: QuerySet):
         str: csv content that generated from queryset.
     """
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="somefilename.csv"'
     response.write(codecs.BOM_UTF8)
 
     writer = csv.writer(response)
@@ -200,10 +201,7 @@ def generate_csv(queryset: QuerySet):
             values = []
             for field in obj._meta.fields:
                 keys.append(field.name)
-                value = getattr(obj, field.name)
-                if isinstance(value, str):
-                    value = value.encode("utf-8")
-                values.append(value)
+                values.append(getattr(obj, field.name))
 
             if not headers_appended:
                 writer.writerow(keys)
@@ -236,3 +234,37 @@ def validate_request(schema: dict, data: dict) -> tuple[str, int]:
     for param in schema_params:
         if not isinstance(data.get(param), type(schema.get(param))):
             raise ValueError(f"Invalid {param} value.")
+
+
+def get_submission_deadline(
+    meal_type: m.Item.MealTypeChoices = False,
+) -> tuple[int, int] | int:
+    """
+    Returning the submission's deadline based on the mealtype it has.
+    The deadline is fetched from SystemSetting table.
+
+    If meal_type parameter is not specified, will return both deadlines
+        from database.
+
+    Args:
+        meal_type: The submission's deadline.
+
+    Returns:
+        The deadline value.
+    """
+
+    if not meal_type:
+        return (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
+
+    if meal_type == m.Item.MealTypeChoices.LAUNCH:
+        deadline = m.SystemSetting.objects.last().LaunchRegistrationWindowHours
+
+    elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
+        deadline = (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
+        )
+
+    return deadline

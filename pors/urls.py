@@ -50,6 +50,11 @@ urlpatterns = [
         report_views.items_daily_report,
         name="items_daily_report",
     ),
+    path(
+        "personnel-financial-report/",
+        report_views.personnel_financial_report,
+        name="personnel_financial_report",
+    ),
     path("", views.uiadmin),
     path("personnel/", views.ui),
 ]

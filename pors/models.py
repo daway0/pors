@@ -515,3 +515,22 @@ class ActionLog(models.Model):
 #         db_table = "ItemDailyReport"
 #         verbose_name = "گزارش سفارش روزانه"
 #         verbose_name_plural = "گزارش سفارشات روزانه"
+
+
+class PersonnelDailyReport(models.Model):
+    Id = models.PositiveIntegerField(primary_key=True)
+    Personnel = models.CharField(max_length=250)
+    FirstName = models.CharField(max_length=250)
+    LastName = models.CharField(max_length=250)
+    TeamName = models.CharField(max_length=250)
+    RoleName = models.CharField(max_length=250)
+    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+    Quantity = models.PositiveSmallIntegerField()
+    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+
+    class Meta:
+        managed = False
+        db_table = "PersonnelDailyReport"
+
+    def __str__(self) -> str:
+        return self.Personnel

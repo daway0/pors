@@ -16,20 +16,16 @@ message = Message()
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 def items_daily_report(request):
-    schema = {"firstDate": "", "lastDate": ""}
+    schema = {"date": ""}
     try:
         u.validate_request(schema, request.data)
     except ValueError as err:
-        return Response({"error": str(err)})
+        return Response({"errors": str(err)})
 
-    first_date = u.validate_date(request.data.get("firstDate"))
-    last_date = u.validate_date(request.data.get("lastDate"))
+    date = u.validate_date(request.data.get("date"))
 
-    # qs = m.ItemDailyReport.objects.filter(
-    #     DeliveryDate__range=[first_date, last_date]
-    # )
-    qs = ...
-    if not qs:
+    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date)
+    if not queryset:
         message.add_message(
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
@@ -37,21 +33,19 @@ def items_daily_report(request):
             {"messages": message.messages(), "errors": "Queryset is empty!"}
         )
 
-    response = HttpResponse(
-        content_type="text/csv",
-    )
-    content = u.generate_csv(qs)
+    response = u.generate_csv(queryset)
 
-    return content
+    return response
 
 
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 def personnel_financial_report(request):
+    schema = {"firstDate": "", "lastDate": ""}
     try:
-        u.validate_request(request.data)
+        u.validate_request(schema, request.data)
     except ValueError as err:
-        return Response({"error": str(err)})
+        return Response({"errors": str(err)})
 
     first_date = u.validate_date(request.data.get("firstDate"))
     last_date = u.validate_date(request.data.get("lastDate"))
@@ -61,8 +55,8 @@ def personnel_financial_report(request):
     )
 
     result = orders.values("Personnel", "FirstName", "LastName").annotate(
-        rows=Window(expression=RowNumber(), order_by=F("Personnel").asc()),
-        TotalOrders=Count("id"),
+        row=Count("*"),
+        TotalOrders=Count("Id"),
         TotalPrice=Sum("TotalPrice"),
         TotalSubsidySpent=Sum("SubsidySpent"),
         TotalPersonnelDebt=Sum("PersonnelDebt"),

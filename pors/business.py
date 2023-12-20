@@ -7,7 +7,12 @@ from django.db.models.functions import Coalesce
 
 from . import models as m
 from . import serializers as s
-from .utils import first_and_last_day_date, split_json_dates, validate_date
+from .utils import (
+    first_and_last_day_date,
+    get_submission_deadline,
+    split_json_dates,
+    validate_date,
+)
 
 
 def validate_request(data: dict) -> tuple[str, int]:
@@ -100,34 +105,21 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
     return splited_days_with_menu
 
 
-def is_date_valid_for_action(
-    date: str, meal_type: m.Item.MealTypeChoices
-) -> bool:
+def is_date_valid_for_action(date: str, deadline: int) -> bool:
     """
     This function is responsible for checking if the date
-    is valid for any action (submission | removal) for different meal types.
-    Deadline is fetched from config.
+    is valid for any action (submission | removal) based on the deadline.
 
     Args:
         date: the corresponding date
-        meal_type: The meal type of the item ( breakfast | launch ).
+        deadline: The deadline of the submission.
 
     Returns:
         bool: is the date valid or not.
     """
     now = jdatetime.datetime.now()
-
-    match meal_type:
-        case m.Item.MealTypeChoices.LAUNCH:
-            deadline = (
-                m.SystemSetting.objects.last().LaunchRegistrationWindowHours
-            )
-        case m.Item.MealTypeChoices.BREAKFAST:
-            deadline = (
-                m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
-            )
-
     now += jdatetime.timedelta(hours=deadline)
+
     eligable_date = now.strftime("%Y/%m/%d")
 
     if date > eligable_date:
@@ -135,19 +127,16 @@ def is_date_valid_for_action(
     return False
 
 
-
-
 def get_first_orderable_date(
-    meal_type: m.Item.MealTypeChoices,
+    deadline: int,
 ) -> tuple[int, int, int]:
-    #NEEDTEST
+    # NEEDTEST
     """
-    Returning the first valid date for order submission.
-    Deadline for submission is different based on the meal type, and
-        its fetched from the SystemSetting db table.
+    Returning the first valid date for order submission based on deadline.
 
     Args:
         meal_type: The type of the item.
+        deadline: The deadline of the submissions.
 
     Returns:
         Tuple of `year`, `month` and `day` values, don't forget the order :).
@@ -155,18 +144,7 @@ def get_first_orderable_date(
 
     now = jdatetime.datetime.now()
     tomorrow = jdatetime.datetime.today() + jdatetime.timedelta(days=1)
-    tomorrow = jdatetime.datetime.combine(
-        tomorrow, jdatetime.time(0,0,0))
-
-    match meal_type:
-        case m.Item.MealTypeChoices.LAUNCH:
-            deadline = (
-                m.SystemSetting.objects.last().LaunchRegistrationWindowHours
-            )
-        case m.Item.MealTypeChoices.BREAKFAST:
-            deadline = (
-                m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
-            )
+    tomorrow = jdatetime.datetime.combine(tomorrow, jdatetime.time(0, 0, 0))
 
     now += jdatetime.timedelta(hours=deadline)
     if now > tomorrow:
@@ -255,8 +233,10 @@ class ValidateRemove:
     def _validate_date(self):
         """Validating date based on `is_date_valid_for_action` logic."""
 
+        deadline = get_submission_deadline(self.item.MealType)
+
         is_date_valid_for_removal = is_date_valid_for_action(
-            self.date, self.item.MealType
+            self.date, deadline
         )
         if not is_date_valid_for_removal:
             self.message = "مهلت حذف کردن آیتم در تاریخ مورد نظر تمام شده است."
@@ -408,7 +388,9 @@ class ValidateOrder:
         and valid for submission | removal.
         """
 
-        is_valid = is_date_valid_for_action(self.date, self.item.MealType)
+        deadline = get_submission_deadline(self.item.MealType)
+
+        is_valid = is_date_valid_for_action(self.date, deadline)
         if not is_valid:
             self.message = "مهلت ثبت / لغو سفارش در این تاریخ تمام شده است."
             raise ValueError(
@@ -570,8 +552,9 @@ class ValidateBreakfast:
         Personnel must submit breakfast orders 1 week sooner.
         """
 
+        deadline = get_submission_deadline(self.item.MealType)
         is_valid_for_submission = is_date_valid_for_action(
-            self.date, m.Item.MealTypeChoices.BREAKFAST
+            self.date, deadline
         )
         if not is_valid_for_submission:
             self.message = (
@@ -713,8 +696,9 @@ class ValidateAddMenuItem:
             -  If the deadline has passed for adding.
         """
 
+        deadline = get_submission_deadline(self.item.MealType)
         is_date_valid_for_add = is_date_valid_for_action(
-            self.date, self.item.MealType
+            self.date, deadline
         )
         if not is_date_valid_for_add:
             self.message = (

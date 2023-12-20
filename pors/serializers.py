@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from . import business as b
 from . import models as m
+from . import utils as u
 
 
 class AllItemSerializer(serializers.ModelSerializer):
@@ -67,6 +68,7 @@ class MenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
+        breakfast_deadline, launch_deadline = u.get_submission_deadline()
         for object in obj:
             serializer = ItemOrderSerializer(
                 data={"id": object.Item, "orderedBy": object.TotalOrders},
@@ -78,12 +80,12 @@ class MenuItemSerializer(serializers.Serializer):
                 current_date_obj["date"] = object.Date
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
                     current_date_obj["date"],
-                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                    launch_deadline,
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         current_date_obj["date"],
-                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                        breakfast_deadline,
                     )
                 )
                 current_date_obj["items"] = []
@@ -186,6 +188,7 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
+        breakfast_deadline, launch_deadline = u.get_submission_deadline()
         for object in obj:
             serializer = MenuItems(object).data
             if current_date_obj.get("date") == object.get("AvailableDate"):
@@ -195,12 +198,12 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                 current_date_obj["date"] = object.get("AvailableDate")
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
                     current_date_obj["date"],
-                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                    launch_deadline,
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         current_date_obj["date"],
-                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                        breakfast_deadline,
                     )
                 )
                 # current_date_obj["lockChangeDeliveryPlace"] = (
