@@ -1,11 +1,11 @@
 import codecs
 import csv
 import json
-import pytz
 import re
 from typing import Optional
 
 import jdatetime
+import pytz
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -16,7 +16,7 @@ from . import models as m
 
 def localnow() -> jdatetime.datetime:
     utc_now = jdatetime.datetime.now(tz=pytz.utc)
-    local_timezone = pytz.timezone('Asia/Tehran')
+    local_timezone = pytz.timezone("Asia/Tehran")
     return utc_now.astimezone(local_timezone)
 
 
@@ -245,7 +245,7 @@ def validate_request(schema: dict, data: dict) -> tuple[str, int]:
 
 def get_submission_deadline(
     meal_type: m.Item.MealTypeChoices = False,
-) -> tuple[int, int] | int:
+) -> tuple[int, int, int, int] | tuple[int, int]:
     """
     Returning the submission's deadline based on the mealtype it has.
     The deadline is fetched from SystemSetting table.
@@ -262,16 +262,22 @@ def get_submission_deadline(
 
     if not meal_type:
         return (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
             m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
             m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
         )
 
     if meal_type == m.Item.MealTypeChoices.LAUNCH:
-        deadline = m.SystemSetting.objects.last().LaunchRegistrationWindowHours
+        deadline = (
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
 
     elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
         deadline = (
-            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
         )
 
     return deadline

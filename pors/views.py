@@ -33,8 +33,9 @@ from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_csv,
+    get_submission_deadline,
+    localnow,
     split_dates,
-    get_submission_deadline
 )
 
 message = Message()
@@ -303,18 +304,24 @@ def first_page(request):
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
-    breakfast_deadline, launch_deadline = get_submission_deadline()
+    (
+        days_breakfast_deadline,
+        hours_breakfast_deadline,
+        days_launch_deadline,
+        hours_launch_deadline,
+    ) = get_submission_deadline()
+    now = localnow()
 
     if (
         system_settings.BreakfastRegistrationWindowHours
         < system_settings.LaunchRegistrationWindowHours
     ):
         year, month, day = b.get_first_orderable_date(
-            breakfast_deadline
+            now, days_breakfast_deadline, hours_breakfast_deadline
         )
     else:
         year, month, day = b.get_first_orderable_date(
-            launch_deadline
+            now, days_launch_deadline, hours_launch_deadline
         )
 
     first_orderable_date = {"year": year, "month": month, "day": day}

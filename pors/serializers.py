@@ -68,7 +68,14 @@ class MenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        breakfast_deadline, launch_deadline = u.get_submission_deadline()
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
+        now = u.localnow()
+
         for object in obj:
             serializer = ItemOrderSerializer(
                 data={"id": object.Item, "orderedBy": object.TotalOrders},
@@ -79,13 +86,17 @@ class MenuItemSerializer(serializers.Serializer):
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    now,
                     current_date_obj["date"],
-                    launch_deadline,
+                    days_launch_deadline,
+                    hours_launch_deadline,
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
+                        now,
                         current_date_obj["date"],
-                        breakfast_deadline,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline,
                     )
                 )
                 current_date_obj["items"] = []
@@ -188,7 +199,14 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        breakfast_deadline, launch_deadline = u.get_submission_deadline()
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
+        now = u.localnow()
+
         for object in obj:
             serializer = MenuItems(object).data
             if current_date_obj.get("date") == object.get("AvailableDate"):
@@ -197,13 +215,17 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                 current_date_obj = {}
                 current_date_obj["date"] = object.get("AvailableDate")
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    now,
                     current_date_obj["date"],
-                    launch_deadline,
+                    days_launch_deadline,
+                    hours_launch_deadline
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
+                        now,
                         current_date_obj["date"],
-                        breakfast_deadline,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline
                     )
                 )
                 # current_date_obj["lockChangeDeliveryPlace"] = (
