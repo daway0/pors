@@ -532,7 +532,7 @@ function billDisplay(show) {
     thereIsNoOrderForDay.removeClass("hidden")
     billDetail.addClass("hidden")
 }
-function updateOrderBill() {
+function updateOrderBillDetail() {
     let orderItems = $(`#menu-items-container li`)
     let total = 0
     let fanavaran = orderSubsidy
@@ -611,15 +611,6 @@ function canAddNewItem(itemId) {
 }
 
 function addNewItemToMenu(id) {
-    let can = canAddNewItem(id)
-    if (!can.res) {
-        displayDismiss(
-            DISMISSLEVELS.ERROR,
-            can.msg,
-            DISMISSDURATIONS.DISPLAY_TIME_SHORT
-        )
-        return
-    }
     let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
     let itemQuantity = parseInt(changedItem.attr("data-item-order-count"))
     itemQuantity++
@@ -755,7 +746,7 @@ function selectDayOnCalendar(e) {
     updateItemsCounter()
     updateHasOrderedCalendarDayBlock()
     getSubsidy()
-    updateOrderBill()
+    updateOrderBillDetail()
 }
 
 function preItemsImageLoader() {
@@ -928,7 +919,7 @@ $(document).ready(function () {
                 updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasOrderedCalendarDayBlock()
-                updateOrderBill()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
 
             },
@@ -964,7 +955,7 @@ $(document).ready(function () {
                 updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasOrderedCalendarDayBlock()
-                updateOrderBill()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
             },
             error: function (xhr, status, error) {
@@ -1067,12 +1058,4 @@ $(document).ready(function () {
             }
         });
     })
-
-
-
-    $(document).on('click', '#location-modal-trigger', function () {
-        $("#place-modal").click()
-    })
-
 });
-
