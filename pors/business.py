@@ -146,7 +146,7 @@ def get_first_orderable_date(
 
     now = localnow()
     first_order_can_apply_in = now + jdatetime.timedelta(hours=deadline)
-    if deadline < 0:
+    if deadline < 0 and now.date() > first_order_can_apply_in.date():
         first_order_can_apply_in = now.date()
     else:
         first_order_can_apply_in += jdatetime.timedelta(days=1)
