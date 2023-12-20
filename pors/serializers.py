@@ -157,7 +157,7 @@ class FirstPageSerializer(serializers.Serializer):
 
 
 class DayWithMenuSerializer(serializers.Serializer):
-    day = serializers.CharField(source="Date")
+    day = serializers.CharField(source="DeliveryDate")
     ordersNumber = serializers.IntegerField(source="TotalOrders")
 
 

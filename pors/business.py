@@ -2,7 +2,7 @@ import json
 from typing import Optional
 
 import jdatetime
-from django.db.models import Sum, Value
+from django.db.models import Sum, Value, Count
 from django.db.models.functions import Coalesce
 
 from . import models as m
@@ -90,10 +90,10 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
     first_day, last_day = first_and_last_day_date(month, year)
 
     days_with_menu = (
-        m.ItemsOrdersPerDay.objects.filter(Date__range=[first_day, last_day])
-        .values("Date")
-        .order_by("Date")
-        .annotate(TotalOrders=Sum("TotalOrders"))
+        m.Order.objects.filter(DeliveryDate__range=[first_day, last_day])
+        .values("DeliveryDate")
+        .order_by("DeliveryDate")
+        .annotate(TotalOrders=Count("DeliveryDate"))
     )
     days_with_menu_serializer = s.DayWithMenuSerializer(
         days_with_menu, many=True
