@@ -1,6 +1,7 @@
 import codecs
 import csv
 import json
+import pytz
 import re
 from typing import Optional
 
@@ -11,6 +12,12 @@ from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 
 from . import models as m
+
+
+def localnow() -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc)
+    local_timezone = pytz.timezone('Asia/Tehran')
+    return utc_now.astimezone(local_timezone)
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -65,7 +72,7 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 def get_current_date() -> tuple[int, int, int]:
     "Returning current date"
-    now = jdatetime.datetime.now()
+    now = localnow()
     return now.year, now.month, now.day
 
 

@@ -1,6 +1,5 @@
 import json
 from typing import Optional
-
 import jdatetime
 from django.db.models import Sum, Value, Count
 from django.db.models.functions import Coalesce
@@ -8,11 +7,14 @@ from django.db.models.functions import Coalesce
 from . import models as m
 from . import serializers as s
 from .utils import (
+    localnow,
     first_and_last_day_date,
     get_submission_deadline,
     split_json_dates,
     validate_date,
 )
+
+
 
 
 def validate_request(data: dict) -> tuple[str, int]:
@@ -118,7 +120,7 @@ def is_date_valid_for_action(date: str, deadline: int) -> bool:
         bool: is the date valid or not.
     """
 
-    now = jdatetime.datetime.now()
+    now = localnow()
     now += jdatetime.timedelta(hours=deadline)
 
     eligable_date = now.strftime("%Y/%m/%d")
@@ -142,9 +144,12 @@ def get_first_orderable_date(
         Tuple of `year`, `month` and `day` values, don't forget the order :).
     """
 
-    now = jdatetime.datetime.now()
+    now = localnow()
     first_order_can_apply_in = now + jdatetime.timedelta(hours=deadline)
-    first_order_can_apply_in += jdatetime.timedelta(days=1)
+    if deadline < 0:
+        first_order_can_apply_in = now.date()
+    else:
+        first_order_can_apply_in += jdatetime.timedelta(days=1)
 
     return (
         first_order_can_apply_in.year,
