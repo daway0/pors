@@ -117,6 +117,7 @@ def is_date_valid_for_action(date: str, deadline: int) -> bool:
     Returns:
         bool: is the date valid or not.
     """
+
     now = jdatetime.datetime.now()
     now += jdatetime.timedelta(hours=deadline)
 
@@ -128,14 +129,13 @@ def is_date_valid_for_action(date: str, deadline: int) -> bool:
 
 
 def get_first_orderable_date(
-        deadline: int,
+    deadline: int,
 ) -> tuple[int, int, int]:
     # NEEDTEST
     """
     Returning the first valid date for order submission based on deadline.
 
     Args:
-        meal_type: The type of the item.
         deadline: The deadline of the submissions.
 
     Returns:
@@ -144,12 +144,15 @@ def get_first_orderable_date(
 
     now = jdatetime.datetime.now()
     first_order_can_apply_in = now + jdatetime.timedelta(hours=deadline)
-    first_order_can_apply_in += (first_order_can_apply_in +
-                                 jdatetime.timedelta(days=1))
+    first_order_can_apply_in += first_order_can_apply_in + jdatetime.timedelta(
+        days=1
+    )
 
-    return (first_order_can_apply_in.year,
-            first_order_can_apply_in.month,
-            first_order_can_apply_in.day)
+    return (
+        first_order_can_apply_in.year,
+        first_order_can_apply_in.month,
+        first_order_can_apply_in.day,
+    )
 
 
 class ValidateRemove:
@@ -552,9 +555,7 @@ class ValidateBreakfast:
         """
 
         deadline = get_submission_deadline(self.item.MealType)
-        is_valid_for_submission = is_date_valid_for_action(
-            self.date, deadline
-        )
+        is_valid_for_submission = is_date_valid_for_action(self.date, deadline)
         if not is_valid_for_submission:
             self.message = (
                 "مهلت ثبت / لغو سفارش صبحانه در این تاریخ تمام شده است."
@@ -696,9 +697,7 @@ class ValidateAddMenuItem:
         """
 
         deadline = get_submission_deadline(self.item.MealType)
-        is_date_valid_for_add = is_date_valid_for_action(
-            self.date, deadline
-        )
+        is_date_valid_for_add = is_date_valid_for_action(self.date, deadline)
         if not is_date_valid_for_add:
             self.message = (
                 "مهلت اضافه / حذف کردن آیتم مورد نظر در این تاریخ تمام شده"

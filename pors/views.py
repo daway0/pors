@@ -34,6 +34,7 @@ from .utils import (
     first_and_last_day_date,
     generate_csv,
     split_dates,
+    get_submission_deadline
 )
 
 message = Message()
@@ -302,17 +303,18 @@ def first_page(request):
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
+    breakfast_deadline, launch_deadline = get_submission_deadline()
 
     if (
         system_settings.BreakfastRegistrationWindowHours
         < system_settings.LaunchRegistrationWindowHours
     ):
         year, month, day = b.get_first_orderable_date(
-            Item.MealTypeChoices.BREAKFAST
+            breakfast_deadline
         )
     else:
         year, month, day = b.get_first_orderable_date(
-            Item.MealTypeChoices.LAUNCH
+            launch_deadline
         )
 
     first_orderable_date = {"year": year, "month": month, "day": day}

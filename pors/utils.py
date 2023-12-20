@@ -244,7 +244,7 @@ def get_submission_deadline(
     The deadline is fetched from SystemSetting table.
 
     If meal_type parameter is not specified, will return both deadlines
-        from database.
+        from database, first is breakfast, second is launch.
 
     Args:
         meal_type: The submission's deadline.
