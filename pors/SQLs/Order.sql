@@ -24,18 +24,16 @@ SELECT Row_number()
        CASE
            WHEN s.amount - Sum(dbo.pors_orderitem.quantity * dbo.pors_orderitem.priceperone) < 0 THEN s.Amount
            ELSE Sum(dbo.pors_orderitem.quantity * dbo.pors_orderitem.priceperone)
-           END                                                           AS SubsidySpent,
-       dbo.pors_orderitem.DeliveryPlace
+           END                                                           AS SubsidySpent
 
 FROM dbo.pors_orderitem
          INNER JOIN dbo.pors_subsidy AS s
                     ON dbo.pors_orderitem.deliverydate BETWEEN s.fromdate AND
                         COALESCE(s.untildate,
                                  N'1499/12/12')
-         INNER JOIN HR.dbo.Users on HR.dbo.Users.UserName = dbo.pors_orderitem.Personnel
+         LEFT JOIN HR.dbo.Users on HR.dbo.Users.UserName = dbo.pors_orderitem.Personnel
 GROUP BY dbo.pors_orderitem.personnel,
          dbo.pors_orderitem.deliverydate,
          s.amount,
-         dbo.pors_orderitem.DeliveryPlace,
          hr.dbo.Users.FirstName,
          hr.dbo.Users.LastName
