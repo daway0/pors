@@ -59,38 +59,17 @@ class SystemSetting(models.Model):
     # "heshmat@eit,kabud@eit,abud@eit"
     SuperAdmins = models.CharField(max_length=250, null=True)
 
-    # نکته مهم درباره فیلد های BreakfastRegistrationWindowHours و
-    # LaunchRegistrationWindowHour.
-    # برای محاسبه این اعداد بهتره که مثال زیر رو بزنم
-    # فرض کنیم که اداری می گه برای ثبت سفارش ناهار شما مستلزم هستی که حداکثر
-    # تا ساعت 14 روز قبل انتخاب کرده باشی. خب برای محاسبه مقداری که توی فیلد
-    # میشیه باید ساعت 0:0 روزی که قراره سفارش در اون تحویل شه رو در نظر
-    # بگیریم و حرکت کنیم به عقب تا به ساعت 14 روز قبل برسیم. میزان ساعت طی
-    # شده برای رسیدن 10 ساعته و این عدد رو در فیلد مذکور قرار میدیم
-
-    # نکته ای که وجود داره اینه که این عدد می تونه منفی هم بشه مثال:
-    # فرض کنیم مانند سیستم ناهار تایم تا ساعت 9 می توانیم برای روز جاری ثبت
-    # سفارش انجام بدیم. بازم مانند مثال قبل از ساعت  صفر روز تحویل سفارش (
-    # روز جاری) حرکت می کنیم به ساعت محدودیت ولی این بار حرکت به سمت جلو
-    # برای رسیدن از ساعت صفر به ساعت 9 صبح 9 ساعت طی می کنیم
-    # اما چون حرکت رو به جلو است مقدار منفی آن را در فیلد سیو می کنیم
-
-    # بدیهی است که این مکانیزم قابلیت این رو داره که محدودیت های بیشتر از یک
-    # روز رو هم قبول کنه مثلا ساعت 14 دوهفته پیش هم می تونیم از این فرمول
-    # بدست بیاریم
-
-    # بدیهی است که عددی کوچکتر از -12 منطقی نیست که وارد فیلد شود مگر اداری
-    # بخواهد امکان ثبت سفارش تا ساعت 12 همان روز را برای افراد باز کند
-
-    # بدیهی است که اعدادی کوچکتر از -24 امکان ندارد وارد دیتابیس شود چرا که
-    # شما نمی توانید برای دیروز ثبت سفارش انجام دهید مگر اینکه واقعا بدونید
-    # دارید چیکار می کنید که این عدد رو قرار دادید
-
     BreakfastRegistrationWindowHours = models.IntegerField(
+        default=0,
+    )
+    BreakfastRegistrationWindowDays = models.IntegerField(
         default=0,
     )
 
     LaunchRegistrationWindowHours = models.IntegerField(
+        default=0,
+    )
+    LaunchRegistrationWindowDays = models.IntegerField(
         default=0,
     )
 
@@ -210,7 +189,11 @@ class Subsidy(models.Model):
     def __str__(self): ...
 
     class Meta:
-        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["UntilDate"], name="untildate_unique"
+            )
+        ]
         verbose_name = "یارانه"
         verbose_name_plural = "یارانه ها"
 
@@ -392,7 +375,6 @@ class ItemPriceHistory(models.Model):
     UntilDate = models.CharField(
         max_length=10,
         null=True,
-        unique=True,
         verbose_name="تاریخ پایان",
         help_text=(
             "توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب"
@@ -404,7 +386,6 @@ class ItemPriceHistory(models.Model):
         return f"{self.Item.ItemName} {self.Price}"
 
     class Meta:
-        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
         verbose_name = "تاریخچه قیمت آیتم"
         verbose_name_plural = "تاریخچه قیمت آیتم ها"
 
