@@ -128,7 +128,7 @@ def is_date_valid_for_action(date: str, deadline: int) -> bool:
 
 
 def get_first_orderable_date(
-    deadline: int,
+        deadline: int,
 ) -> tuple[int, int, int]:
     # NEEDTEST
     """
@@ -143,14 +143,13 @@ def get_first_orderable_date(
     """
 
     now = jdatetime.datetime.now()
-    tomorrow = jdatetime.datetime.today() + jdatetime.timedelta(days=1)
-    tomorrow = jdatetime.datetime.combine(tomorrow, jdatetime.time(0, 0, 0))
+    first_order_can_apply_in = now + jdatetime.timedelta(hours=deadline)
+    first_order_can_apply_in += (first_order_can_apply_in +
+                                 jdatetime.timedelta(days=1))
 
-    now += jdatetime.timedelta(hours=deadline)
-    if now > tomorrow:
-        tomorrow = tomorrow + jdatetime.timedelta(days=1)
-
-    return tomorrow.year, tomorrow.month, tomorrow.day
+    return (first_order_can_apply_in.year,
+            first_order_can_apply_in.month,
+            first_order_can_apply_in.day)
 
 
 class ValidateRemove:
