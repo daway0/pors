@@ -22,7 +22,7 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-const DEFAULTITEMIMAGE = "https://snappfood.ir/static/images/placeholder.png"
+const DEFAULTITEMIMAGE = "/static/images/placeholder.png"
 
 
 const DISMISSDURATIONS = {
@@ -202,7 +202,7 @@ function canAdminChangeMenu() {
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, orderedByCounter) {
     let opacity = ""
     let orderedBy = ""
-    let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+    let MenuIcon = "/static/images/food-dish.svg"
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
         menuIconHTML = `<img class="w-8 h-8" src="${MenuIcon}" alt="">`
@@ -243,13 +243,13 @@ function menuItemBlock(id, itemName, pic, orderedByCount) {
     let trashcanIcon = `
     <div class="ml-2">
                 <img class="w-6 h-6"
-                     src="https://www.svgrepo.com/show/472000/trash-04.svg" alt="">
+                     src="/static/images/trash.svg" alt="">
             </div>`
 
     let userIcon = `
     <div class="ml-2">
                 <img class="w-6 h-6"
-                     src="https://www.svgrepo.com/show/491094/users.svg" alt="">
+                     src="/static/images/users.svg" alt="">
             </div>
     `
     return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
@@ -606,6 +606,11 @@ $(document).ready(function () {
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
             if (isSystemOpen === false) {
+                displayDismiss(
+                    DISMISSLEVELS.INFO,
+                    "در حال حاضر سیستم در دسترس نمی باشد",
+                    DISMISSDURATIONS.DISPLAY_TIME_LONG
+                )
                 catchResponseMessagesToDisplay(data.messages)
                 return
             }
@@ -656,16 +661,18 @@ $(document).ready(function () {
 
                 },
                 error: function (xhr, status, error) {
-                    console.error('Default calendar load failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    let em = "EXECUTION ERROR: Default calendar load failed!"
+                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
             catchResponseMessagesToDisplay(data.messages)
 
+
         },
         error: function (xhr, status, error) {
-            console.error('Administrative is Unreachable', status, 'and' +
-                ' error:', error);
+            let em = "EXECUTION ERROR: Administrative is Unreachable"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });

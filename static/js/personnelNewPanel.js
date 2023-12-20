@@ -22,7 +22,7 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-const DEFAULTITEMIMAGE = "https://snappfood.ir/static/images/placeholder.png"
+const DEFAULTITEMIMAGE = "/static/images/placeholder.png"
 
 
 const DISMISSDURATIONS = {
@@ -197,7 +197,7 @@ function canPersonnelChangeMenuItem(serveTime, openForLaunch, openForBreakfast) 
 
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, hasOrder) {
     let opacity = ""
-    let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+    let MenuIcon = "/static/images/food-dish.svg"
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     let hasOrderCheckIcon = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12.6111L8.92308 17.5L20 6.5" stroke="#26a269" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`
     let hasOrderHTML = `<div class="${hasOrder ? "" : "hidden"} check-logo w-4 h-4">${hasOrderCheckIcon}</div>`
@@ -232,11 +232,11 @@ function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, 
     let minus = `
     <div class="ml-2">
                         <img class="!cursor-pointer remove-item w-6 h-6"
-                             src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">
+                             src="/static/images/minus-cirlce.svg" alt="">
                     </div>`
     let add = `<div class="">
                         <img class="!cursor-pointer add-item w-6 h-6"
-                             src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                             src="/static/images/add-circle.svg" alt="">
                     </div>
     `
 
@@ -810,6 +810,11 @@ $(document).ready(function () {
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
             if (isSystemOpen === false) {
+                displayDismiss(
+                    DISMISSLEVELS.INFO,
+                    "در حال حاضر سیستم در دسترس نمی باشد",
+                    DISMISSDURATIONS.DISPLAY_TIME_LONG
+                )
                 catchResponseMessagesToDisplay(data.messages)
                 return
             }
@@ -867,7 +872,8 @@ $(document).ready(function () {
 
                 },
                 error: function (xhr, status, error) {
-                    console.error('Default calendar load failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    let em = "EXECUTION ERROR: Default calendar load failed!"
+                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
@@ -875,8 +881,8 @@ $(document).ready(function () {
 
         },
         error: function (xhr, status, error) {
-            console.error('Administrative is Unreachable', status, 'and' +
-                ' error:', error);
+            let em = "EXECUTION ERROR: Personnel panel is Unreachable"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
