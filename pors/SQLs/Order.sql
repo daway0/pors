@@ -1,17 +1,10 @@
 SELECT Row_number()
                OVER (
-                   ORDER BY dbo.pors_orderitem.deliverydate)             AS Id,
+                   ORDER BY PersonnelService.dbo.pors_orderitem.deliverydate)             AS Id,
        hr.dbo.Users.FirstName,
        hr.dbo.Users.LastName,
-       dbo.pors_orderitem.Personnel                                      as Personnel,
-       dbo.pors_orderitem.DeliveryDate                                   as DeliveryDate,
-       dbo.PersianToMiladi(dbo.pors_orderitem.deliverydate)              AS MiladiDeliverydate,
-       dbo.CheckEligibilityFunction(
-               dbo.PersianToMiladi(dbo.pors_orderitem.deliverydate), 'BRF'
-       )                                                                 AS openForBreakfast,
-       dbo.CheckEligibilityFunction(
-               dbo.PersianToMiladi(dbo.pors_orderitem.deliverydate), 'LNC'
-       )                                                                 AS openForLaunch,
+       PersonnelService.dbo.pors_orderitem.Personnel                                      as Personnel,
+       PersonnelService.dbo.pors_orderitem.DeliveryDate                                   as DeliveryDate,
        Sum(dbo.pors_orderitem.quantity * dbo.pors_orderitem.priceperone) AS
                                                                             TotalPrice,
        s.amount                                                          AS
@@ -22,18 +15,18 @@ SELECT Row_number()
            END                                                           AS
                                                                             PersonnelDebt,
        CASE
-           WHEN s.amount - Sum(dbo.pors_orderitem.quantity * dbo.pors_orderitem.priceperone) < 0 THEN s.Amount
-           ELSE Sum(dbo.pors_orderitem.quantity * dbo.pors_orderitem.priceperone)
+           WHEN s.amount - Sum(PersonnelService.dbo.pors_orderitem.quantity * PersonnelService.dbo.pors_orderitem.priceperone) < 0 THEN s.Amount
+           ELSE Sum(PersonnelService.dbo.pors_orderitem.quantity * PersonnelService.dbo.pors_orderitem.priceperone)
            END                                                           AS SubsidySpent
 
-FROM dbo.pors_orderitem
-         INNER JOIN dbo.pors_subsidy AS s
-                    ON dbo.pors_orderitem.deliverydate BETWEEN s.fromdate AND
+FROM PersonnelService.dbo.pors_orderitem
+         INNER JOIN PersonnelService.dbo.pors_subsidy AS s
+                    ON PersonnelService.dbo.pors_orderitem.deliverydate BETWEEN s.fromdate AND
                         COALESCE(s.untildate,
                                  N'1499/12/12')
-         LEFT JOIN HR.dbo.Users on HR.dbo.Users.UserName = dbo.pors_orderitem.Personnel
-GROUP BY dbo.pors_orderitem.personnel,
-         dbo.pors_orderitem.deliverydate,
+         LEFT JOIN HR.dbo.Users on HR.dbo.Users.UserName = PersonnelService.dbo.pors_orderitem.Personnel
+GROUP BY PersonnelService.dbo.pors_orderitem.personnel,
+         PersonnelService.dbo.pors_orderitem.deliverydate,
          s.amount,
          hr.dbo.Users.FirstName,
          hr.dbo.Users.LastName

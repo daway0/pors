@@ -1,10 +1,10 @@
 {% load static %}
 <div class="flex justify-between">
     <div class="flex items-center gap-3">
-        <img class="w-6 h-6" src="/static/images/today.svg" alt="">
+        <img class="w-6 h-6" src="{% static 'Pors/images/today.svg' %}" alt="">
         <span id="menu-date-wrapper" data-date="1402/02/08" class="text-lg"></span>
     </div>
-    <div class="flex items-center gap-3"><img class="w-6 h-6" src="/static/images/fast-food.svg"
+    <div class="flex items-center gap-3"><img class="w-6 h-6" src="{% static 'Pors/images/fast-food.svg' %}"
                                               alt=""> <span id="menu-items-counter" class="text-lg pt-2"></span></div>
 </div>
 <!-- component -->
@@ -31,7 +31,7 @@
         </ul>
     </div>
     <div id="no-order-for-today" class="flex flex-col w-full items-center gap-3 text-gray-500">
-        <img src="{% static 'images/cart-svgrepo-com.svg' %}" class="w-10 h-10" alt="">
+        <img src="{% static 'Pors/images/cart-svgrepo-com.svg' %}" class="w-10 h-10" alt="">
         <div class="flex items-center gap-3">
             <span id="menu-date-wrapper">سفارشی برای امروز ثبت نشده است</span>
     </div>

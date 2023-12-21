@@ -1,3 +1,15 @@
+const URL_PREFIX = "/PersonnelService/Pors/"
+const STATIC_PREFIX = "/static/Pors/"
+
+function addPrefixTo(str) {
+    return URL_PREFIX+str
+}
+
+function addStaticFilePrefixTo(str) {
+    return STATIC_PREFIX+str
+}
+
+
 const WEEK_DAYS = {
     1: "شنبه",
     2: "یک‌شنبه",
@@ -22,7 +34,7 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-const DEFAULTITEMIMAGE = "/static/images/placeholder.png"
+const DEFAULTITEMIMAGE = addStaticFilePrefixTo("images/placeholder.png")
 
 
 const DISMISSDURATIONS = {
@@ -55,11 +67,17 @@ let lastDayOfMonth = undefined
 let holidays = undefined
 let daysWithMenu = undefined
 let orderedDays = undefined
-let selectedItems = undefined
+let menuItems = undefined
 let availableItems = undefined
 let allItems = undefined
+let orderableBreakFastItemCount = undefined
+let orders = undefined
+let orderSubsidy = undefined
 
 function insertCommas(str) {
+
+    // برای خوانا تر شدن رقم ها
+    // برای مثال عدد 192000 به 192,000 تبدیل می شود
   let result = '';
 
   for (let i = str.length - 1; i >= 0; i--) {
@@ -70,7 +88,6 @@ function insertCommas(str) {
   }
   return result
 }
-
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -107,6 +124,7 @@ function toShamsiFormat(dateobj) {
 }
 
 function extractIds(items) {
+
     return items.map(function (item) {
         return item.id;
     });
@@ -139,7 +157,7 @@ function toObjectFormat(shamsiDate) {
 
 function changeVisibilityAddMenuItemDropDown(hidden) {
     let addItemContainer = $("#dropdown-menu-container")
-    if (hidden){
+    if (hidden) {
         addItemContainer.addClass("hidden")
     } else {
         addItemContainer.removeClass("hidden")
@@ -155,11 +173,12 @@ function zfill(number, width) {
 }
 
 function catchResponseMessagesToDisplay(messages) {
-    if (messages===undefined) return
-    messages.forEach(function (msg){
+    if (messages === undefined) return
+    messages.forEach(function (msg) {
         displayDismiss(DISMISSLEVELS[msg.level], msg.message, DISMISSDURATIONS[msg.displayDuration])
     })
 }
+
 function displayDismiss(color, content, duration) {
 
     let HTML = `
@@ -172,38 +191,28 @@ function displayDismiss(color, content, duration) {
     </div>
 </div>
 `
-        $("#dismiss").append(HTML)
+    $("#dismiss").append(HTML)
 
     let fadingElement = $(".dismiss")
-    setTimeout(function() {
-                fadingElement.fadeOut(500, function() {
-                    fadingElement.remove();
-                });
-            }, duration);
+    setTimeout(function () {
+        fadingElement.fadeOut(500, function () {
+            fadingElement.remove();
+        });
+    }, duration);
 
 }
 
-function canAdminChangeMenu() {
-    // این تابع کاری به این نداره که ایتمی که ملت سفارش دادن حذف بشه یا
-    // نشه؟‌اون در جای دیگری چک میشه
-    let can = true
-    let currentDateMomentObj = moment(toShamsiFormat(currentDate),'YYYY-MM-DD')
-    let selectedDateMomentObj = moment(toShamsiFormat(selectedDate),'YYYY-MM-DD')
-
-    // با تفریق این دو از هم یک عدد بهمون میده اگه که عدد منفی بود یعنی
-    // اولی از دومی کوچک تره و برعکس
-    if (currentDateMomentObj-selectedDateMomentObj > 0){
-            can = false
-        }
-    return can
-
+function canPersonnelChangeMenuItem(serveTime, openForLaunch, openForBreakfast) {
+    if (serveTime === "LNC") return openForLaunch
+    return openForBreakfast
 }
 
-function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, orderedByCounter) {
+function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, hasOrder) {
     let opacity = ""
-    let orderedBy = ""
-    let MenuIcon = "/static/images/food-dish.svg"
+    let MenuIcon = addStaticFilePrefixTo("images/food-dish.svg")
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
+    let hasOrderCheckIcon = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12.6111L8.92308 17.5L20 6.5" stroke="#26a269" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`
+    let hasOrderHTML = `<div class="${hasOrder ? "" : "hidden"} check-logo w-4 h-4">${hasOrderCheckIcon}</div>`
     if (hasMenu === true) {
         menuIconHTML = `<img class="w-8 h-8" src="${MenuIcon}" alt="">`
     }
@@ -217,10 +226,6 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
         opacity = "opacity-50"
     }
 
-    if (orderedByCounter > 0 && hasMenu){
-        orderedBy = `<span class="text-sm text-slate-500 self-center">${convertToPersianNumber(orderedByCounter)}</span>`
-    }
-
 
     let dayTitle = `${WEEK_DAYS[dayOfWeek]} ${convertToPersianNumber(dayNumber)} ${YEAR_MONTHS[monthNumber]}`
 
@@ -228,52 +233,84 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
                                 <div> 
                                     <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
-                                <div class="w-8 h-8 flex flex-col">
+                                <div class="w-8 h-8 flex flex-col items-center">
                                     ${menuIconHTML}
-                                    ${orderedBy}
+                                    ${hasOrderHTML}
                                 </div>
                             </div>`
 }
 
-function menuItemBlock(id, itemName, pic, orderedByCount) {
-    // چون موقع اضافه کردن یک ایتم به منو هم داریم از این تابع استفاده می
-    // کنیم و هنگام اضافه کردن تعداد سفارش داده شده ها اضلا مطرح نیست پس
-    // باید undefined  رو مدیریت کنیم
-    if (orderedByCount ===undefined) orderedByCount = 0
-    let trashcanIcon = `
+function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, itemCount = 0, editable = true) {
+    let minus = `
     <div class="ml-2">
-                <img class="w-6 h-6"
-                     src="/static/images/trash.svg" alt="">
-            </div>`
-
-    let userIcon = `
-    <div class="ml-2">
-                <img class="w-6 h-6"
-                     src="/static/images/users.svg" alt="">
-            </div>
+                        <img class="!cursor-pointer remove-item w-6 h-6"
+                             src="${addStaticFilePrefixTo('images/minus-cirlce.svg')}" alt="">
+                    </div>`
+    let add = `<div class="">
+                        <img class="!cursor-pointer add-item w-6 h-6"
+                             src="${addStaticFilePrefixTo('images/add-circle.svg')}" alt="">
+                    </div>
     `
-    return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
-    <div class="flex items-center gap-4">
-        <img
-                src="${pic}"
-                alt=""
-                class="h-16 w-16 rounded object-cover self-start"
-        />
-        <div class="w-8/12">
-            <div><h3 class="text-sm text-gray-900">${itemName}</h3>
+
+    let breakfastLabel = `<span class="px-1 py-0 text-xs text-white font-bold bg-gray-800 italic rounded-full"> صبحونه </span>`
+    return `
+    <li data-item-id="${id}" 
+    data-item-order-count=${itemCount} 
+    data-item-serve-time="${serveTime}"
+    data-item-price="${price}"
+class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
+     border ${selected ? "border-blue-500" : ""} rounded p-4 shadow-md 
+      ${selected ? "hover:bg-blue-200" : "hover:bg-gray-300"}">
+
+            <div class="flex items-center gap-4">
+                <img
+                        src="${pic}"
+                        alt=""
+                        class="h-16 w-16 rounded object-cover self-start"
+                />
+
+                <div class="w-8/12 cursor-default">
+                    <div><h3 class="text-base text-gray-900">${itemName} ${serveTime==="BRF" ? breakfastLabel : ""}</h3>
+
+                        <dl class="mt-1 space-y-px text-sm text-gray-600">
+                            <div>
+                                <dt class="inline"></dt>
+
+                            </div>
+
+                            <div>
+                                <dt class="inline">${itemDesc}
+                                </dt>
+
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+                <div class="flex justify-end w-3/12">
+
+                    ${editable ? minus : ""}
+                    <div class="ml-2">
+                        <span class="item-quantity">${!editable ? "x" : ""} ${convertToPersianNumber(itemCount)}</span>
+                    </div>
+                    ${editable ? add : ""}
+                    
+                </div>
             </div>
-        </div>
-        <div class="flex justify-end w-3/12 gap-2">
-        <span>${orderedByCount !==0 ? convertToPersianNumber(orderedByCount) : ''}</span>         
-        ${orderedByCount !==0 ? userIcon : ''}
-        ${canAdminChangeMenu() && orderedByCount ===0 ? trashcanIcon : ''}
-         
-        </div>
-    </div>
-</li>`
+            <div class="flex justify-end">
+                <div class="">
+                                            <span class="text-base">${insertCommas(convertToPersianNumber(price))}<span
+                                                    class="text-xs text-gray-600">تومان</span></span>
+                    <span class="text-sm"></span>
+
+                </div>
+            </div>
+
+
+        </li>`
+
 }
 
-function dropDownItemBlock(id, title, category,mealType) {
+function dropDownItemBlock(id, title, category, mealType) {
     return `<a data-item-id="${id}" class="flex flex-row justify-between px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md">
     <span>${title}</span>
 
@@ -297,13 +334,67 @@ function makeDropDownChoices(items) {
     return HTML
 }
 
-function makeSelectedMenu(items) {
+function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
     let HTML = ""
     items.forEach(function (itemObj) {
+        let price = 0
         let selectedMenuItem = allItems.find(item => item.id === itemObj.id);
-        HTML += menuItemBlock(selectedMenuItem.id, selectedMenuItem.itemName, selectedMenuItem.image, itemObj.orderedBy)
+        let quantity = 0
+        let editableItem = canPersonnelChangeMenuItem(
+            selectedMenuItem.serveTime,
+            openForLaunch,
+            openForBreakfast)
+
+        if (editableItem && ordered) {
+            price = selectedMenuItem.currentPrice
+            quantity = itemObj.quantity
+        }
+        if (editableItem && !ordered) price = selectedMenuItem.currentPrice
+        if (!editableItem && ordered) {
+            price = itemObj.pricePerItem
+            quantity = itemObj.quantity
+        }
+
+
+        if (!editableItem && !ordered) return
+
+
+        HTML += menuItemBlock(
+            ordered,
+            selectedMenuItem.id,
+            selectedMenuItem.serveTime,
+            selectedMenuItem.itemName,
+            selectedMenuItem.image,
+            selectedMenuItem.itemDesc,
+            price,
+            quantity,
+            editableItem,
+        )
     })
     return HTML
+}
+
+
+function loadOrder(day, month, year) {
+    let requestedDate = toShamsiFormat({year: year, month: month, day: day})
+    let selectedMenu = menuItems.find(function (entry) {
+        return entry.date === requestedDate;
+    });
+    let order = orders.find(function (orderObj) {
+        return orderObj.orderDate === requestedDate
+    })
+    if (order === undefined) return
+
+    let orderHTML = makeSelectedMenu(
+        order.orderItems,
+        selectedMenu.openForLaunch,
+        selectedMenu.openForBreakfast,
+        true
+    )
+    orderHTML += "</hr>"
+    $("#menu-items-container").prepend(orderHTML)
+
+
 }
 
 function loadMenu(day, month, year) {
@@ -314,30 +405,52 @@ function loadMenu(day, month, year) {
     // منوی قبلی را پاک می کنیم
     $("#menu-items-container li").remove()
 
-    if (selectedItems === undefined) return
+    if (menuItems === undefined) return
 
     let requestedDate = toShamsiFormat({year: year, month: month, day: day})
-    let selectedMenu = selectedItems.find(function (entry) {
+    let selectedMenu = menuItems.find(function (entry) {
         return entry.date === requestedDate;
     });
 
     // حالا باید آیتم هارو بگیریم
     if (selectedMenu !== undefined) {
+        // let menuItemsId = extractIds(selectedMenu.items)
 
+        let order = orders.find(function (orderObj) {
+            return orderObj.orderDate === requestedDate
+        })
+        let orderItemsId = []
+        if (!(order === undefined)) {
+            orderItemsId = extractIds(order.orderItems)
+
+        }
+
+        let justMenu = selectedMenu.items.filter(function (item) {
+            return !orderItemsId.includes(item.id);
+        });
+
+        // در صورتی که وقتش جفتشون گذشته باشه خب هیچی  منویی لازم نیست که
+        // لود بشه
+        if (!selectedMenu.openForLaunch && !selectedMenu.openForBreakfast) return
         // تعداد سفارش ها به ازای هر آیتم در آیتم های selectedMenu هم
         // فرستاده می شود که به صورت زیر است
         // {
         //  1: 12,
         //  5 :26
         // }
-        let menuHTML = makeSelectedMenu(selectedMenu.items)
+        let menuHTML = makeSelectedMenu(
+            justMenu,
+            selectedMenu.openForLaunch,
+            selectedMenu.openForBreakfast,
+            false
+        )
         $("#menu-items-container").append(menuHTML)
     }
 
 
 }
 
-function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber) {
+function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber, orderedDays) {
 
 // ابتدا باید تقویم قبلی را پاگ کنیم
     $('#dayBlocksWrapper [class^="cd-"]').remove()
@@ -356,9 +469,9 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 //     اداری را در آن روز به نمایش بگذاریم
     for (let dayNumber = 1; dayNumber <= endDayOfMonth; dayNumber++) {
 
-        let orderedBy = 0
         let dayNumberStyle = ""
         let dayMenuIcon = false
+        let hasOrder = false
 
         // در صورتی که روز تعطیل بود اون رو قرمز می کنیم
         if (holidays.includes(dayNumber)) {
@@ -369,19 +482,22 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
         // تغییر می دهیم
 
 
-        let daysWithMenuDaysNumber = daysWithMenu.map(function (item) {
-        return item.day;
-    });
-
-
-
-        if (daysWithMenuDaysNumber.includes(dayNumber)) {
+        if (daysWithMenu.includes(dayNumber)) {
             dayMenuIcon = true
-            orderedBy = getOrdersNumberForDay(dayNumber, daysWithMenu)
+        }
+        if (orderedDays.includes(dayNumber)) {
+            hasOrder = true
         }
 
 
-        newCalendarHTML += calendarDayBlock(dayNumberStyle, dayNumber, startDayOfWeek % 8, monthNumber, yearNumber, dayMenuIcon,orderedBy)
+        newCalendarHTML += calendarDayBlock(
+            dayNumberStyle,
+            dayNumber,
+            startDayOfWeek % 8,
+            monthNumber,
+            yearNumber,
+            dayMenuIcon,
+            hasOrder)
 
 
         startDayOfWeek++
@@ -396,13 +512,122 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 
 }
 
+function getSubsidy() {
+//     میره و با توجه به تاریخ سوبسید مورد نظر رو میگیره
+    // و برای محاسبات مالی ازش استفاده می شه
+
+    $.ajax({
+        url: addPrefixTo(`get-subsidy/?date=${encodeURIComponent(toShamsiFormat(selectedDate))}`),
+        method: 'GET',
+        dataType: 'json',
+        async: false,
+        success: function (data) {
+            orderSubsidy = data["data"]["subsidy"]
+            catchResponseMessagesToDisplay(data.messages)
+        },
+        error: function (xhr, status, error) {
+            console.error('Available Items cannot be loaded', status, 'and' +
+                ' error:', error, 'detail:', xhr.responseJSON);
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+        }
+    });
+}
+
+function billDisplay(show) {
+    let thereIsNoOrderForDay = $("#no-order-for-today")
+    let billDetail = $("#day-bill")
+    if (show){
+        thereIsNoOrderForDay.addClass("hidden")
+        billDetail.removeClass("hidden")
+        return
+    }
+    thereIsNoOrderForDay.removeClass("hidden")
+    billDetail.addClass("hidden")
+}
+function updateOrderBillDetail() {
+    let orderItems = $(`#menu-items-container li`)
+    let total = 0
+    let fanavaran = orderSubsidy
+    let debt = 0
+
+    if (orderItems.length === 0) {
+        billDisplay(false)
+        return
+    }
+    billDisplay(true)
+
+    orderItems.each(function () {
+        let itemPrice = parseInt($(this).attr("data-item-price"))
+        let itemQuantity = parseInt($(this).attr("data-item-order-count"))
+        total += itemPrice * itemQuantity
+    })
+
+    debt = total - fanavaran
+    if (debt < 0) {
+        debt = 0
+    }
+
+    $(".total-amount").text(insertCommas(convertToPersianNumber(total)))
+    $(".subsidy-amount").text(insertCommas(convertToPersianNumber(fanavaran)))
+    $(".debt-amount").text(insertCommas(convertToPersianNumber(debt)))
+
+}
+
+function updateItemMenuDetails(id, quantity) {
+    let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
+    if (quantity !== 0) {
+        changedItem.removeClass("hover:bg-gray-300")
+        changedItem.removeClass("bg-gray-200")
+
+        changedItem.addClass("hover:bg-blue-200")
+        changedItem.addClass("border-blue-500")
+        changedItem.addClass("bg-blue-100")
+
+    } else {
+        changedItem.removeClass("hover:bg-blue-200")
+        changedItem.removeClass("border-blue-500")
+        changedItem.removeClass("bg-blue-100")
+
+        changedItem.addClass("hover:bg-gray-300")
+        changedItem.addClass("bg-gray-200")
+    }
+    changedItem.find(".item-quantity").text(convertToPersianNumber(quantity))
+}
+
+function canAddNewItem(itemId) {
+    /*     چک های مرتبط با محدودیت و باقی مانده طرفیت اینجا صورت می گیرد
+        برای مثال با توجه به متغیر orderableBreakFastItemCount که از بکند
+         دریافت می شود و به صورت پیشفرض 1 بوده است یعنی اینکه مجموع ایتم های
+          قابل سفارش صبحانه 1 است
+
+          نکته توالی شروط در اینجا باید رعایت شود چرا که فقط یک ارور مسیج باز
+           خواهد گشت
+     */
+
+    let item = allItems.find(function (obj) {
+        return obj.id === itemId
+    })
+    let sumBreakfastItems = orderTotalItemsQuantity(["BRF"])
+    if (item.serveTime === "BRF" && sumBreakfastItems >= orderableBreakFastItemCount) {
+        let x = convertToPersianNumber(orderableBreakFastItemCount)
+        return {
+            "res": false,
+            "msg": `امکان اضافه کردن حداکثر ${x} آیتم به منوی صبحانه روز وجود دارد`
+        }
+    }
+    return {
+        "res": true
+    }
+
+
+}
 
 function addNewItemToMenu(id) {
-    let selectedItem = availableItems.find(item => item.id === id);
-    $("#menu-items-container").append(
-        menuItemBlock(selectedItem.id, selectedItem.itemName, selectedItem.image)
-    )
-    updateAvailableItemForThisDay()
+    let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
+    let itemQuantity = parseInt(changedItem.attr("data-item-order-count"))
+    itemQuantity++
+    changedItem.attr("data-item-order-count", itemQuantity)
+    updateItemMenuDetails(id, itemQuantity)
 }
 
 function finishLoadingDisplay() {
@@ -410,33 +635,32 @@ function finishLoadingDisplay() {
     $("#main-panel-wrapper").removeClass("hidden")
 
 }
-function removeItemFromMenu(id) {
-    $(`#menu-items-container li[data-item-id='${id}']`).remove();
 
-    updateAvailableItemForThisDay()
+function removeItemFromMenu(id) {
+    let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
+    let itemQuantity = parseInt(changedItem.attr("data-item-order-count"))
+    if (itemQuantity !== 0) itemQuantity--
+
+    changedItem.attr("data-item-order-count", itemQuantity)
+    updateItemMenuDetails(id, itemQuantity)
 }
 
 function loadAvailableItem() {
-    // آیتم های قبل را پاک می کنیم
-    $("#dropdown-menu a").remove();
-
     // ایتم های قابل انتخاب جدید رو دریافت می کند
     $.ajax({
-        url: `/pors/all-items/`,
+        url: addPrefixTo(`all-items/`),
         method: 'GET',
         dataType: 'json',
         async: false,
         success: function (data) {
-            $("#dropdown-menu").append(makeDropDownChoices(data))
             allItems = data
-             // همین جا بررسی می کنیم اگه که ایتم عکس نداشت عکس پیشفرض رو
+            // همین جا بررسی می کنیم اگه که ایتم عکس نداشت عکس پیشفرض رو
             // قرار می دهیم
             allItems.forEach(function (item) {
-                if (item.image==="") item.image = DEFAULTITEMIMAGE
+                if (item.image === "") item.image = DEFAULTITEMIMAGE
             })
             availableItems = filterObjectsByAttrValue(allItems, "isActive", true)
             catchResponseMessagesToDisplay(data.messages)
-
         },
         error: function (xhr, status, error) {
             console.error('Available Items cannot be loaded', status, 'and' +
@@ -450,14 +674,15 @@ function updateSelectedDate(shamsiDate) {
     selectedDate = toObjectFormat(shamsiDate)
 }
 
-function updateSelectedItems(month, year) {
+function updateOrders(month, year) {
     $.ajax({
-        url: `/pors/administrative/calendar/?year=${year}&month=${month}`,
+        url: addPrefixTo(`calendar/?year=${year}&month=${month}`),
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            selectedItems = data["menuItems"]
+            menuItems = data["menuItems"]
             daysWithMenu = data["daysWithMenu"]
+            orders = data["orders"]
             catchResponseMessagesToDisplay(data.messages)
 
         },
@@ -473,20 +698,37 @@ function changeMenuDate(dateTitle) {
 }
 
 function updateItemsCounter() {
-    let len = $("#menu-items-container li").length
-    $("#menu-items-counter").text(convertToPersianNumber(len))
+    $("#menu-items-counter").text(
+        convertToPersianNumber(
+            orderTotalItemsQuantity(["BRF", "LNC"])
+        ))
 }
 
-function updateHasMenuCalendarDayBlock() {
+function orderTotalItemsQuantity(serveTime) {
+    // serveTime یا BRF یا LNC
+    if (serveTime === undefined) serveTime = ["LNC", "BRF"]
+
+    let items = $("#menu-items-container li");
+    let sumOrderedItem = 0;
+
+    items.each(function () {
+        if (serveTime.includes($(this).attr("data-item-serve-time"))) {
+            sumOrderedItem += parseInt($(this).attr("data-item-order-count"));
+        }
+    });
+    return sumOrderedItem
+}
+
+function updateHasOrderedCalendarDayBlock() {
     let currentShamsi = toShamsiFormat(selectedDate)
-    let len = $("#menu-items-container li").length
-    let dishLogo = $(`.cd-[data-date="${currentShamsi}"] img`)
-    if (parseInt(len) === 0) {
-        dishLogo.addClass("hidden")
+    let sumOrderedItem = orderTotalItemsQuantity()
+
+    let checkLogo = $(`.cd-[data-date="${currentShamsi}"] .check-logo`)
+    if (sumOrderedItem === 0) {
+        checkLogo.addClass("hidden")
         return
     }
-    dishLogo.removeClass("hidden")
-
+    checkLogo.removeClass("hidden")
 }
 
 function updateSelectedDayOnCalendar(shamsiFormatDate) {
@@ -504,26 +746,6 @@ function updateSelectedDayOnCalendar(shamsiFormatDate) {
 
 }
 
-function updateAvailableItemForThisDay() {
-    // اول قبلی ها رو پاک می کنیم
-    $("#dropdown-menu a").remove();
-
-    //     ابتدا می بینیم که چه چیز هایی در منوی روز انتخاب شده وجود دارد
-    let thisDaySelectedItemIds = []
-    $("#menu-items-container li").each(function (index, element) {
-        thisDaySelectedItemIds.push(parseInt($(this).attr("data-item-id")))
-    })
-
-//     خب حالا هر چیزی که انتخاب نشده باشه رو قابل انتخاب می گذاریم
-    let allAvailableItemsIds = extractIds(availableItems)
-    let remainingItemsIds = allAvailableItemsIds.filter(function (element) {
-        return !thisDaySelectedItemIds.includes(element);
-    });
-
-    let data = filterObjectsById(availableItems, remainingItemsIds)
-    $("#dropdown-menu").append(makeDropDownChoices(data))
-
-}
 
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
@@ -532,17 +754,11 @@ function selectDayOnCalendar(e) {
     updateSelectedDayOnCalendar(selectedShamsiDate)
     changeMenuDate(selectedShamsiDateTitle)
     loadMenu(selectedDate.day, selectedDate.month, selectedDate.year)
+    loadOrder(selectedDate.day, selectedDate.month, selectedDate.year)
     updateItemsCounter()
-    updateHasMenuCalendarDayBlock()
-
-    if (canAdminChangeMenu()){
-        changeVisibilityAddMenuItemDropDown(false)
-        updateAvailableItemForThisDay()
-    } else {
-        changeVisibilityAddMenuItemDropDown(true)
-
-    }
-
+    updateHasOrderedCalendarDayBlock()
+    getSubsidy()
+    updateOrderBillDetail()
 }
 
 function preItemsImageLoader() {
@@ -569,7 +785,7 @@ function updateDropdownCalendarMonth() {
 
     let currentMonth = $("#dayBlocksWrapper").attr("data-month")
 
-    $(`#calSelectedMonth option[value="${currentMonth}"]`).prop("selected",true)
+    $(`#calSelectedMonth option[value="${currentMonth}"]`).prop("selected", true)
 
 
 }
@@ -590,13 +806,13 @@ $(document).ready(function () {
 
 
     $.ajax({
-        url: `/pors/panel/`,
+        url: addPrefixTo(`panel/`),
         method: 'GET',
         dataType: 'json',
         async: false,
         success: function (data) {
-
-            isSystemOpen = data["isOpenForAdmins"]
+            isSystemOpen = data["isOpenForPersonnel"]
+            orderableBreakFastItemCount = data["totalItemsCanOrderedForBreakfastByPersonnel"]
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
             currentDate.year = data["firstOrderableDate"]["year"]
@@ -616,16 +832,17 @@ $(document).ready(function () {
             }
 
             $.ajax({
-                url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
-
                     firstDayOfWeek = data["firstDayOfWeek"]
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
                     daysWithMenu = data["daysWithMenu"]
-                    selectedItems = data["menuItems"]
+                    menuItems = data["menuItems"]
+                    orderedDays = data["orderedDays"]
+                    orders = data["orders"]
 
                     let requestedYear = data["year"]
                     let requestedMonth = data["month"]
@@ -640,7 +857,8 @@ $(document).ready(function () {
                         holidays,
                         daysWithMenu,
                         parseInt(requestedMonth),
-                        parseInt(requestedYear)
+                        parseInt(requestedYear),
+                        orderedDays
                     )
                     updateDropdownCalendarMonth()
                     updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
@@ -651,6 +869,11 @@ $(document).ready(function () {
 
                     // منوی غذا امروز نیز نمایش داده میشود
                     loadMenu(
+                        currentDate.day,
+                        currentDate.month,
+                        currentDate.year
+                    )
+                    loadOrder(
                         currentDate.day,
                         currentDate.month,
                         currentDate.year
@@ -668,25 +891,41 @@ $(document).ready(function () {
             });
             catchResponseMessagesToDisplay(data.messages)
 
-
         },
         error: function (xhr, status, error) {
-            let em = "EXECUTION ERROR: Administrative is Unreachable"
+            let em = "EXECUTION ERROR: Personnel panel is Unreachable"
             displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
     if (isSystemOpen === false) return
 
-    $(document).on('click', '#dropdown-menu a', function () {
-        // اضافه کردن یک غذا از منوی دراپ دان به منوی روز انتخاب شده
+    $(document).on('click', '#menu-items-container li .add-item', function () {
+        // اضافه کردن غذا به منو
 
 
-        let id = parseInt($(this).attr("data-item-id"))
+
+        let url = undefined
+        if ($(this).parent().parent().parent().parent().attr("data-item-serve-time")==="BRF"){
+            url = addPrefixTo("create-breakfast-order/")
+        }else {
+            url = addPrefixTo("create-order/")
+        }
+        let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
+        let can = canAddNewItem(id)
+        if (!can.res) {
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                can.msg,
+                DISMISSDURATIONS.DISPLAY_TIME_SHORT
+            )
+            return
+        }
         $.ajax({
-            url: `/pors/administrative/add-item-to-menu/`,
+            url: url,
             method: 'POST',
             contentType: 'application/json',
+            async: false,
             data: JSON.stringify(
                 {
                     "item": id,
@@ -695,9 +934,10 @@ $(document).ready(function () {
             ),
             success: function (data) {
                 addNewItemToMenu(id)
-                updateSelectedItems(selectedDate.month, selectedDate.year)
+                updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
-                updateHasMenuCalendarDayBlock()
+                updateHasOrderedCalendarDayBlock()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
 
             },
@@ -709,81 +949,19 @@ $(document).ready(function () {
 
     });
 
-    $(document).on('click', '#menu-items-container li', function () {
-
-
-        // علاوه بر اون باید بررسی کنیم که آیا غذایی که داره حدف میشه کسی
-        // سفارشش رو داده یا نه؟‌درصورتی که سفارش داشته باشه اجازه حذف ندارد
-        // برای همین با کلیک روی ایتم می تونه لیست افرادی که این ایتم رو
-        // سفارش دادند به صورت قایل csv دریافت کنه
-        let orderedBy = parseInt($(this).attr("data-ordered-by"))
-        let id = parseInt($(this).attr("data-item-id"))
-        if (orderedBy!==0) {
-        //     دانلود فایل افراد سفارش دهنده
-
-            $.ajax({
-            url: `/pors/administrative/reports/item-ordering-personnel-list/`,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(
-                {
-                    "item": id,
-                    "date": toShamsiFormat(selectedDate)
-                }
-            ),
-            success: function (data) {
-                // Create a Blob object from the CSV data
-                var blob = new Blob([data], {type: 'text/csv;charset=utf-8;'});
-
-                // Create a temporary link element
-                var link = document.createElement('a');
-
-                // Set the link's href to a data URL representing the Blob
-                link.href = window.URL.createObjectURL(blob);
-
-                // Set the link's download attribute to specify the filename
-                let cd = toShamsiFormat(selectedDate)
-                let item = allItems.find(function (obj) {
-                    return obj.id===id
-                })
-                let farsiPrefix = "لیست سفارش دهنده های ایتم"
-                link.download = `${farsiPrefix}-${cd}-${item.itemName}.csv`;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Programmatically click the link to trigger the download
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                let dm = `دانلود گزارش روز ${item.itemName} شروع شد `
-                displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
-
-            },
-            error: function (xhr, status, error) {
-                console.error('the report didnt downloaded', status, 'and' +
-                    ' error:', error, 'detail:', xhr.responseJSON );
-                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
-            }
-        });
-            return
-        }
-
-
-        // قبل از حذف کردن غذا از منو باید بررسی کنیم که ایا ادمین می تونه
-        // اصلا دست بزنه به منو ؟ در صورتی که از تاریخ مجاز گذشته باشیم
-        // ادمین اجازه دستکاری منو رو نخواهد داشت
-        if (!canAdminChangeMenu()) return
-
+    $(document).on('click', '#menu-items-container li .remove-item', function () {
         // حذف کردن یک غذا از منوی روز انتخاب شده
+        let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
+        let itemCount = parseInt($(this).parent().parent().parent().parent().attr("data-item-order-count"))
+
+        if (itemCount === 0) return
 
 
         $.ajax({
-            url: `/pors/administrative/remove-item-from-menu/`,
+            url: addPrefixTo(`remove-item-from-order/`),
             method: 'POST',
             contentType: 'application/json',
+            async: false,
             data: JSON.stringify(
                 {
                     "item": id,
@@ -792,13 +970,14 @@ $(document).ready(function () {
             ),
             success: function (data) {
                 removeItemFromMenu(id)
-                updateSelectedItems(selectedDate.month, selectedDate.year)
+                updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
-                updateHasMenuCalendarDayBlock()
+                updateHasOrderedCalendarDayBlock()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
             },
             error: function (xhr, status, error) {
-                console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON );
+                console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
@@ -815,7 +994,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
 
@@ -824,14 +1003,17 @@ $(document).ready(function () {
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
                     daysWithMenu = data["daysWithMenu"]
-                    selectedItems = data["menuItems"]
+                    menuItems = data["menuItems"]
+                    orderedDays = data["orderedDays"]
+                    orders = data["orders"]
                     makeCalendar(
                         parseInt(firstDayOfWeek),
                         parseInt(lastDayOfMonth),
                         holidays,
                         daysWithMenu,
                         currentDate.month,
-                        currentDate.year
+                        currentDate.year,
+                        orderedDays
                     )
                     updateDropdownCalendarMonth()
                     // بعد از اینکه تغییر تقویم صورت میگیرد باید بلاک روز
@@ -864,7 +1046,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${monthNumber}`,
+            url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${monthNumber}`),
             method: 'GET',
             dataType: 'json',
 
@@ -873,14 +1055,17 @@ $(document).ready(function () {
                 lastDayOfMonth = data["lastDayOfMonth"]
                 holidays = data["holidays"]
                 daysWithMenu = data["daysWithMenu"]
-                selectedItems = data["menuItems"]
+                menuItems = data["menuItems"]
+                orderedDays = data["orderedDays"]
+                orders = data["orders"]
                 makeCalendar(
                     parseInt(firstDayOfWeek),
                     parseInt(lastDayOfMonth),
                     holidays,
                     daysWithMenu,
                     monthNumber,
-                    currentDate.year
+                    currentDate.year,
+                    orderedDays
                 )
                 updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
                 catchResponseMessagesToDisplay(data.messages)
@@ -891,7 +1076,4 @@ $(document).ready(function () {
             }
         });
     })
-
-
 });
-
