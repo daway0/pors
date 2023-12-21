@@ -76,7 +76,7 @@ def get_current_date() -> tuple[int, int, int]:
     return now.year, now.month, now.day
 
 
-def split_dates(dates, mode: str) -> int | list[int]:
+def split_dates(dates, mode: str):
     """
     Splitting date and returning requested section based on mode.
 
@@ -86,6 +86,7 @@ def split_dates(dates, mode: str) -> int | list[int]:
 
     Returns:
         List or single integer.
+        int | list[int]
     """
     new_dates = []
 
@@ -245,7 +246,7 @@ def validate_request(schema: dict, data: dict) -> tuple[str, int]:
 
 def get_submission_deadline(
     meal_type: m.Item.MealTypeChoices = False,
-) -> tuple[int, int, int, int] | tuple[int, int]:
+):
     """
     Returning the submission's deadline based on the mealtype it has.
     The deadline is fetched from SystemSetting table.
@@ -258,6 +259,7 @@ def get_submission_deadline(
 
     Returns:
         The deadline value.
+        tuple[int, int, int, int] | tuple[int, int]
     """
 
     if not meal_type:
