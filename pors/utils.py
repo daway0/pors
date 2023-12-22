@@ -219,7 +219,7 @@ def generate_csv(queryset: QuerySet):
     return response
 
 
-def validate_request(schema: dict, data: dict) -> tuple[str, int]:
+def validate_request_based_on_schema(schema: dict, data: dict) -> tuple[str, int]:
     """
     This function is responsible for validating request data based on the
         provided schema.

@@ -18,7 +18,7 @@ message = Message()
 def items_daily_report(request):
     schema = {"date": ""}
     try:
-        u.validate_request(schema, request.data)
+        u.validate_request_based_on_schema(schema, request.data)
     except ValueError as err:
         return Response({"errors": str(err)})
 
@@ -43,7 +43,7 @@ def items_daily_report(request):
 def personnel_financial_report(request):
     schema = {"year": 0, "month": 0}
     try:
-        u.validate_request(schema, request.data)
+        u.validate_request_based_on_schema(schema, request.data)
     except ValueError as err:
         return Response({"errors": str(err)})
 
