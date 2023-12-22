@@ -17,9 +17,9 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
+    PersonnelDailyReport,
     Subsidy,
     SystemSetting,
-    PersonnelDailyReport
 )
 from .serializers import (
     AllItemSerializer,
@@ -436,50 +436,6 @@ def create_breakfast_order(request):
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
-
-
-@api_view(["POST"])
-@check([is_open_for_admins])
-def item_ordering_personnel_list_report(request):
-    """
-    This view is responsible for generating a csv file that contains
-        personnel who have ordered a specific item on specific date.
-
-    Args:
-        request (dict): Request data which must contains:
-        -  'date' (str): The date which you want to look for.
-        -  'item' (str): The item which you want to look for.
-    """
-
-    # past auth ...
-    try:
-        date, item_id = b.validate_request(request.data)
-    except ValueError as err:
-        message.add_message(
-            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
-        )
-        return Response({"messages": message.messages(), "errors": str(err)})
-
-    # query sets that are in report must have .values for specifying columns
-    personnel = PersonnelDailyReport.objects.filter(
-        DeliveryDate=date, ItemId=item_id
-    ).values(
-        "Personnel",
-        "FirstName",
-        "LastName",
-        "TeamName",
-        "RoleName",
-        "ItemName",
-        "Quantity",
-        "DeliveryDate"
-    )
-    csv_content = generate_csv(personnel)
-
-    response = HttpResponse(
-        content=csv_content,
-        content_type="text/csv",
-    )
-    return response
 
 
 @api_view(["GET"])

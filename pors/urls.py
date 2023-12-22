@@ -14,7 +14,7 @@ urlpatterns = [
     ),
     path(
         "administrative/reports/item-ordering-personnel-list/",
-        views.item_ordering_personnel_list_report,
+        report_views.item_ordering_personnel_list_report,
         name="item_ordering_personnel_list_report",
     ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
@@ -47,8 +47,8 @@ urlpatterns = [
     # ),
     path(
         "administrative/reports/items-daily-report/",
-        report_views.items_daily_report,
-        name="items_daily_report",
+        report_views.personnel_daily_report,
+        name="personnel_daily_report",
     ),
     path(
         "administrative/reports/personnel-financial-report/",
