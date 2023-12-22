@@ -41,20 +41,27 @@ def items_daily_report(request):
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 def personnel_financial_report(request):
-    schema = {"firstDate": "", "lastDate": ""}
+    schema = {"year": 0, "month": 0}
     try:
         u.validate_request(schema, request.data)
     except ValueError as err:
         return Response({"errors": str(err)})
 
-    first_date = u.validate_date(request.data.get("firstDate"))
-    last_date = u.validate_date(request.data.get("lastDate"))
+    month = request.data.get("month")
+    year = request.data.get("year")
+
+    if 12 < month < 0:
+        return Response({"errors": "Invalid month value."})
+
+    first_date, last_date = u.first_and_last_day_date(month, year)
 
     orders = m.Order.objects.filter(
         DeliveryDate__range=[first_date, last_date]
     )
 
-    result = orders.values("Personnel", "FirstName", "LastName", "TeamName", "RoleName").annotate(
+    result = orders.values(
+        "Personnel", "FirstName", "LastName", "TeamName", "RoleName"
+    ).annotate(
         TotalOrders=Count("Id"),
         TotalPrice=Sum("TotalPrice"),
         TotalSubsidySpent=Sum("SubsidySpent"),
