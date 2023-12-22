@@ -46,12 +46,12 @@ urlpatterns = [
     #     name="change_delivery_place",
     # ),
     path(
-        "items-daily-report/",
+        "administrative/reports/items-daily-report/",
         report_views.items_daily_report,
         name="items_daily_report",
     ),
     path(
-        "personnel-financial-report/",
+        "administrative/reports/personnel-financial-report/",
         report_views.personnel_financial_report,
         name="personnel_financial_report",
     ),

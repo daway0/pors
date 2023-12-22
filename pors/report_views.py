@@ -54,8 +54,7 @@ def personnel_financial_report(request):
         DeliveryDate__range=[first_date, last_date]
     )
 
-    result = orders.values("Personnel", "FirstName", "LastName").annotate(
-        row=Count("*"),
+    result = orders.values("Personnel", "FirstName", "LastName", "TeamName", "RoleName").annotate(
         TotalOrders=Count("Id"),
         TotalPrice=Sum("TotalPrice"),
         TotalSubsidySpent=Sum("SubsidySpent"),

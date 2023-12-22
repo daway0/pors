@@ -270,6 +270,8 @@ class Order(models.Model):
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     FirstName = models.CharField(max_length=250, verbose_name="نام")
     LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
+    TeamName = models.CharField(max_length=250, verbose_name="تیم")
+    RoleName = models.CharField(max_length=250, verbose_name="سمت")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     # DeliveryPlace = models.CharField(
     #     max_length=3,
@@ -523,6 +525,7 @@ class PersonnelDailyReport(models.Model):
     TeamName = models.CharField(max_length=250)
     RoleName = models.CharField(max_length=250)
     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+    ItemId = models.IntegerField()
     Quantity = models.PositiveSmallIntegerField()
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
 

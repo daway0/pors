@@ -19,6 +19,7 @@ from .models import (
     OrderItem,
     Subsidy,
     SystemSetting,
+    PersonnelDailyReport
 )
 from .serializers import (
     AllItemSerializer,
@@ -145,7 +146,7 @@ def personnel_calendar(request):
     """
 
     # Past Auth...
-    personnel = "e.rezaee@eit"
+    personnel = "m.zoley@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         message.add_message(
@@ -198,17 +199,9 @@ def personnel_calendar(request):
 
     # Couldn't use django orm because "Order" doesn't have
     # relation with orderitem table.
-    query = """
-    SELECT oi.DeliveryDate, oi.Quantity, oi.PricePerOne,
-           i.id, i.ItemName, i.Image, i.CurrentPrice,
-           i.Category_id, i.ItemDesc, oi.Personnel,
-           o.SubsidyCap, o.PersonnelDebt, o.TotalPrice
-    FROM pors_orderitem AS oi
-    INNER JOIN pors_item AS i ON oi.Item_id = i.id
-    INNER JOIN "Order" AS o ON o.Personnel = oi.Personnel AND o.DeliveryDate = oi.DeliveryDate
-    WHERE oi.DeliveryDate between %s AND %s and oi.Personnel = %s
-    ORDER BY oi.DeliveryDate
-    """
+    with open("./pors/SQLs/PersonnelOrderWithBill.sql", mode="r") as f:
+        query = f.read()
+
     params = (first_day_date, last_day_date, personnel)
     order_items = execute_raw_sql_with_params(query, params)
 
@@ -358,7 +351,7 @@ def create_order_item(request):
 
     # past auth ...
     # past check is app open for creating order.
-    personnel = "e.rezaee@eit"
+    personnel = "m.zoley@eit"
     request.data["personnel"] = personnel
 
     validator = b.ValidateOrder(request.data)
@@ -395,7 +388,7 @@ def remove_order_item(request):
         -  'item' (str): The item which you want to remove.
     """
 
-    personnel = "e.rezaee@eit"
+    personnel = "m.zoley@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
@@ -428,7 +421,7 @@ def create_breakfast_order(request):
 
     # past auth ...
 
-    personnel = "e.rezaee@eit"
+    personnel = "m.zoley@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
@@ -467,11 +460,18 @@ def item_ordering_personnel_list_report(request):
         )
         return Response({"messages": message.messages(), "errors": str(err)})
 
-    personnel = OrderItem.objects.filter(
-        DeliveryDate=date, Item=item_id
+    # query sets that are in report must have .values for specifying columns
+    personnel = PersonnelDailyReport.objects.filter(
+        DeliveryDate=date, ItemId=item_id
     ).values(
         "Personnel",
+        "FirstName",
+        "LastName",
+        "TeamName",
+        "RoleName",
+        "ItemName",
         "Quantity",
+        "DeliveryDate"
     )
     csv_content = generate_csv(personnel)
 
