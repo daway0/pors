@@ -9,6 +9,8 @@ function addStaticFilePrefixTo(str) {
     return STATIC_PREFIX+str
 }
 
+
+
 const WEEK_DAYS = {
     1: "شنبه",
     2: "یک‌شنبه",
@@ -70,6 +72,26 @@ let selectedItems = undefined
 let availableItems = undefined
 let allItems = undefined
 
+
+
+const REPORTS = [
+    {
+        "id":1,
+        "title": "گزارش سفارش های امروز",
+        "fileNameFunction":dailyOrdersReportFileName,
+        "api": addPrefixTo("administrative/reports/daily-orders/"),
+        "data": dailyOrdersReportRequestBody
+    },
+    {
+        "id":2,
+        "title": "گزارش مالی این ماه",
+        "fileNameFunction":monthlyFinancialReportFileName,
+        "api": addPrefixTo("administrative/reports/monthly-financial/"),
+        "data": monthlyFinancialReportRequestBody,
+    }
+]
+
+
 function insertCommas(str) {
   let result = '';
 
@@ -81,7 +103,6 @@ function insertCommas(str) {
   }
   return result
 }
-
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -114,6 +135,7 @@ function getOrdersNumberForDay(day, ordersList) {
 
 function toShamsiFormat(dateobj) {
     // 1402/08/09
+    if (dateobj===undefined) return undefined
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
 }
 
@@ -346,6 +368,18 @@ function loadMenu(day, month, year) {
     }
 
 
+}
+
+function makeReportSectionMenu() {
+    REPORTS.forEach(function (obj) {
+        $("#report-wrapper").append(
+            `
+             <li>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 system-report" data-report-id="${obj.id}">${obj.title}</a>
+             </li>
+            `
+        )
+    })
 }
 
 function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber) {
@@ -584,6 +618,63 @@ function updateDropdownCalendarMonth() {
 
 
 }
+function oneItemOrderedByPersonnelReportFileName(dataNeededForFileName) {
+        // گزارش موردی غذا ها به صورت روزانه
+        let cd = toShamsiFormat(selectedDate)
+        let item = allItems.find(function (obj) {
+            return obj.id===dataNeededForFileName.item
+        })
+        let farsiPrefix = "لیست سفارش دهنده های ایتم"
+        return `${farsiPrefix}-${cd}-${item.itemName}.csv`;
+}
+
+function dailyOrdersReportFileName(dataNeededForFileName) {
+    return `گزارش سفارش های امروز ${toShamsiFormat(selectedDate)}`
+}
+
+function dailyOrdersReportRequestBody() {
+    return {
+        "date" : toShamsiFormat(selectedDate)
+    }
+}
+
+function monthlyFinancialReportFileName(dataNeededForFileName) {
+        return `گزارش مالی ماه ${selectedDate.month} از سال ${selectedDate.year}`
+}
+
+function monthlyFinancialReportRequestBody() {
+        return {
+            "year": selectedDate.year,
+            "month": selectedDate.month
+        }
+}
+
+function startDownloadReport(fileName, csvData) {
+    // Create a Blob object from the CSV data
+        let blob = new Blob([csvData], {type: 'text/csv;charset=utf-8;'});
+
+        // Create a temporary link element
+        let link = document.createElement('a');
+
+        // Set the link's href to a data URL representing the Blob
+        link.href = window.URL.createObjectURL(blob);
+
+        // Set the link's download attribute to specify the filename
+        link.download = fileName;
+
+
+        // Append the link to the document
+        document.body.appendChild(link);
+
+        // Programmatically click the link to trigger the download
+        link.click();
+
+        // Remove the link from the document
+        document.body.removeChild(link);
+
+        let dm = `دانلود ${link.download} شروع شد `
+        displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_TEN)
+}
 
 function getCurrentCalendarMonth() {
     return $("#dayBlocksWrapper").attr("data-month")
@@ -666,6 +757,7 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    makeReportSectionMenu()
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 
@@ -733,7 +825,7 @@ $(document).ready(function () {
         //     دانلود فایل افراد سفارش دهنده
 
             $.ajax({
-            url: addPrefixTo(`administrative/reports/item-ordering-personnel-list/`),
+            url: addPrefixTo(`administrative/reports/specific-item/`),
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
@@ -743,35 +835,14 @@ $(document).ready(function () {
                 }
             ),
             success: function (data) {
-                // Create a Blob object from the CSV data
-                var blob = new Blob([data], {type: 'text/csv;charset=utf-8;'});
-
-                // Create a temporary link element
-                var link = document.createElement('a');
-
-                // Set the link's href to a data URL representing the Blob
-                link.href = window.URL.createObjectURL(blob);
-
-                // Set the link's download attribute to specify the filename
-                let cd = toShamsiFormat(selectedDate)
-                let item = allItems.find(function (obj) {
-                    return obj.id===id
-                })
-                let farsiPrefix = "لیست سفارش دهنده های ایتم"
-                link.download = `${farsiPrefix}-${cd}-${item.itemName}.csv`;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Programmatically click the link to trigger the download
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                let dm = `دانلود گزارش روز ${item.itemName} شروع شد `
-                displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
-
+                startDownloadReport(
+                    oneItemOrderedByPersonnelReportFileName(
+                        {
+                            "item": id,
+                            "date": toShamsiFormat(selectedDate)
+                        }
+                    ),data
+                )
             },
             error: function (xhr, status, error) {
                 console.error('the report didnt downloaded', status, 'and' +
@@ -815,6 +886,34 @@ $(document).ready(function () {
         });
 
     });
+
+
+    $(document).on('click', '.system-report', function () {
+        let report = REPORTS.find(obj => obj.id === parseInt($(this).attr("data-report-id")))
+        let fileNameGen = report.fileNameFunction
+        $.ajax({
+        url: report.api,
+        method: 'POST',
+        contentType: 'application/json',
+        data: report.data(),
+        success: function (data) {
+            startDownloadReport(
+                fileNameGen(
+                    {
+                        "date": toShamsiFormat(selectedDate)
+                    }
+                ),data
+            )
+        },
+        error: function (xhr, status, error) {
+            console.error('the report didnt downloaded', status, 'and' +
+                ' error:', error, 'detail:', xhr.responseJSON );
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+        }
+    });
+    });
+
+
 
     $(document).on('click', '#dayBlocksWrapper div[data-date]', function () {
         selectDayOnCalendar($(this))

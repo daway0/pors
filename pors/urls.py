@@ -13,7 +13,7 @@ urlpatterns = [
         name="breakfast_order",
     ),
     path(
-        "administrative/reports/item-ordering-personnel-list/",
+        "administrative/reports/specific-item/",
         report_views.item_ordering_personnel_list_report,
         name="item_ordering_personnel_list_report",
     ),
@@ -46,12 +46,12 @@ urlpatterns = [
     #     name="change_delivery_place",
     # ),
     path(
-        "administrative/reports/items-daily-report/",
+        "administrative/reports/daily-orders/",
         report_views.personnel_daily_report,
         name="personnel_daily_report",
     ),
     path(
-        "administrative/reports/personnel-financial-report/",
+        "administrative/reports/monthly-financial/",
         report_views.personnel_financial_report,
         name="personnel_financial_report",
     ),
