@@ -570,6 +570,10 @@ function updateAvailableItemForThisDay() {
 
 }
 
+function getFirstDayOfCalendar() {
+    return $(`#dayBlocksWrapper div[data-date]`).filter(":first")
+}
+
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
     let selectedShamsiDateTitle = e.attr("data-day-title")
@@ -891,11 +895,12 @@ $(document).ready(function () {
     $(document).on('click', '.system-report', function () {
         let report = REPORTS.find(obj => obj.id === parseInt($(this).attr("data-report-id")))
         let fileNameGen = report.fileNameFunction
+
         $.ajax({
         url: report.api,
         method: 'POST',
         contentType: 'application/json',
-        data: report.data(),
+        data: JSON.stringify(report.data()),
         success: function (data) {
             startDownloadReport(
                 fileNameGen(
@@ -992,6 +997,7 @@ $(document).ready(function () {
                     monthNumber,
                     currentDate.year
                 )
+                selectDayOnCalendar(getFirstDayOfCalendar())
                 updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
                 catchResponseMessagesToDisplay(data.messages)
             },
