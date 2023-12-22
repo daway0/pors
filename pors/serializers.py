@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from . import business as b
 from . import models as m
-from .utils import validate_date
+from . import utils as u
 
 
 class AllItemSerializer(serializers.ModelSerializer):
@@ -68,6 +68,14 @@ class MenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
+        now = u.localnow()
+
         for object in obj:
             serializer = ItemOrderSerializer(
                 data={"id": object.Item, "orderedBy": object.TotalOrders},
@@ -78,13 +86,17 @@ class MenuItemSerializer(serializers.Serializer):
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    now,
                     current_date_obj["date"],
-                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                    days_launch_deadline,
+                    hours_launch_deadline,
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
+                        now,
                         current_date_obj["date"],
-                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline,
                     )
                 )
                 current_date_obj["items"] = []
@@ -124,11 +136,12 @@ class OrderSerializer(serializers.Serializer):
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
+            # schema["deliveryPlace"] = object["DeliveryPlace"]
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
                 "total": object["TotalPrice"],
-                "fanavaran": object["SubsidyAmount"],
+                "fanavaran": object["SubsidyCap"],
                 "debt": object["PersonnelDebt"],
             }
             result.append(schema)
@@ -155,8 +168,8 @@ class FirstPageSerializer(serializers.Serializer):
 
 
 class DayWithMenuSerializer(serializers.Serializer):
-    day = serializers.CharField(source="Date")
-    ordersNumber = serializers.IntegerField(source="TotalOrders")
+    day = serializers.CharField(source="AvailableDate")
+    ordersNumber = serializers.IntegerField(source="OrderCount")
 
 
 class ListedDaysWithMenu(serializers.Serializer):
@@ -169,7 +182,6 @@ class ListedDaysWithMenu(serializers.Serializer):
                 result.append(date["AvailableDate"])
 
         return result
-
 
 
 class PersonnelSchemaSerializer(serializers.Serializer):
@@ -187,6 +199,14 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
+        now = u.localnow()
+
         for object in obj:
             serializer = MenuItems(object).data
             if current_date_obj.get("date") == object.get("AvailableDate"):
@@ -195,15 +215,23 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                 current_date_obj = {}
                 current_date_obj["date"] = object.get("AvailableDate")
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    now,
                     current_date_obj["date"],
-                    meal_type=m.Item.MealTypeChoices.LAUNCH,
+                    days_launch_deadline,
+                    hours_launch_deadline
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
+                        now,
                         current_date_obj["date"],
-                        meal_type=m.Item.MealTypeChoices.BREAKFAST,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline
                     )
                 )
+                # current_date_obj["lockChangeDeliveryPlace"] = (
+                #     current_date_obj["openForBreakfast"]
+                #     and current_date_obj["openForLaunch"]
+                # )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
                 result.append(current_date_obj)

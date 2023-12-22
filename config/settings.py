@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    # "pors",
+    "pors",
     # "debug_toolbar",
-    "HR"
+    # "HR"
 ]
 
 INTERNAL_IPS = [
@@ -86,7 +86,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'HR',
+        'NAME': 'PersonnelService',
         'USER': 'sa',
         'PASSWORD': 'j2lQJM7FtQxLVmQyK8DL6yNe',
         'HOST': 'billy.iran.liara.ir',

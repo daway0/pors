@@ -1,6 +1,7 @@
+{% load static %}
 <div class="group flex items-center">
     <img class="shrink-0 h-12 w-12 rounded-md"
-         src="https://cdn.snappfood.ir/200x201/cdn/26/72/95/vendor/6321c5d8c1abb.jpeg" alt=""/>
+         src="" alt=""/>
     <div class="mr-3">
         <p class="text-base font-medium text-slate-900">شهرزاد وطن دوست</p>
         <p class="text-base font-medium text-slate-500">ادمین اداری</p>
@@ -20,17 +21,7 @@
         <!-- Dropdown menu -->
         <div id="dropdown"
              class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-64" >
-            <ul class="py-2 text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 ">سفارش  های ماه جاری به تفکیک روز</a>
-                </li>
-                <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 ">سفارش های هفته جاری</a>
-                </li>
-                <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 ">سفارش امروز</a>
-                </li>
-
+            <ul id="report-wrapper" class="py-2 text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
             </ul>
         </div>
     <div class="cursor-pointer hidden">

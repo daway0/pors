@@ -1,3 +1,16 @@
+const URL_PREFIX = "/PersonnelService/Pors/"
+const STATIC_PREFIX = "/static/Pors/"
+
+function addPrefixTo(str) {
+    return URL_PREFIX+str
+}
+
+function addStaticFilePrefixTo(str) {
+    return STATIC_PREFIX+str
+}
+
+
+
 const WEEK_DAYS = {
     1: "شنبه",
     2: "یک‌شنبه",
@@ -22,7 +35,7 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-const DEFAULTITEMIMAGE = "https://snappfood.ir/static/images/placeholder.png"
+const DEFAULTITEMIMAGE = addStaticFilePrefixTo("images/placeholder.png")
 
 
 const DISMISSDURATIONS = {
@@ -59,6 +72,26 @@ let selectedItems = undefined
 let availableItems = undefined
 let allItems = undefined
 
+
+
+const REPORTS = [
+    {
+        "id":1,
+        "title": "گزارش سفارش های امروز",
+        "fileNameFunction":dailyOrdersReportFileName,
+        "api": addPrefixTo("administrative/reports/daily-orders/"),
+        "data": dailyOrdersReportRequestBody
+    },
+    {
+        "id":2,
+        "title": "گزارش مالی این ماه",
+        "fileNameFunction":monthlyFinancialReportFileName,
+        "api": addPrefixTo("administrative/reports/monthly-financial/"),
+        "data": monthlyFinancialReportRequestBody,
+    }
+]
+
+
 function insertCommas(str) {
   let result = '';
 
@@ -70,7 +103,6 @@ function insertCommas(str) {
   }
   return result
 }
-
 
 function convertToPersianNumber(englishNumber) {
     const persianNumbers = {
@@ -103,6 +135,7 @@ function getOrdersNumberForDay(day, ordersList) {
 
 function toShamsiFormat(dateobj) {
     // 1402/08/09
+    if (dateobj===undefined) return undefined
     return `${dateobj.year}/${zfill(dateobj.month, 2)}/${zfill(dateobj.day, 2)}`
 }
 
@@ -202,7 +235,7 @@ function canAdminChangeMenu() {
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, orderedByCounter) {
     let opacity = ""
     let orderedBy = ""
-    let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+    let MenuIcon = addStaticFilePrefixTo("images/food-dish.svg")
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
         menuIconHTML = `<img class="w-8 h-8" src="${MenuIcon}" alt="">`
@@ -243,13 +276,13 @@ function menuItemBlock(id, itemName, pic, orderedByCount) {
     let trashcanIcon = `
     <div class="ml-2">
                 <img class="w-6 h-6"
-                     src="https://www.svgrepo.com/show/472000/trash-04.svg" alt="">
+                     src="${addStaticFilePrefixTo('images/trash.svg')}" alt="">
             </div>`
 
     let userIcon = `
     <div class="ml-2">
                 <img class="w-6 h-6"
-                     src="https://www.svgrepo.com/show/491094/users.svg" alt="">
+                     src="${addStaticFilePrefixTo('images/users.svg')}" alt="">
             </div>
     `
     return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
@@ -337,6 +370,18 @@ function loadMenu(day, month, year) {
 
 }
 
+function makeReportSectionMenu() {
+    REPORTS.forEach(function (obj) {
+        $("#report-wrapper").append(
+            `
+             <li>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 system-report" data-report-id="${obj.id}">${obj.title}</a>
+             </li>
+            `
+        )
+    })
+}
+
 function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber) {
 
 // ابتدا باید تقویم قبلی را پاگ کنیم
@@ -422,7 +467,7 @@ function loadAvailableItem() {
 
     // ایتم های قابل انتخاب جدید رو دریافت می کند
     $.ajax({
-        url: `/pors/all-items/`,
+        url: addPrefixTo(`all-items/`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -452,11 +497,11 @@ function updateSelectedDate(shamsiDate) {
 
 function updateSelectedItems(month, year) {
     $.ajax({
-        url: `/pors/administrative/calendar/?year=${year}&month=${month}`,
+        url: addPrefixTo(`administrative/calendar/?year=${year}&month=${month}`),
         method: 'GET',
         dataType: 'json',
         success: function (data) {
-            selectedItems = data["selectedItems"]
+            selectedItems = data["menuItems"]
             daysWithMenu = data["daysWithMenu"]
             catchResponseMessagesToDisplay(data.messages)
 
@@ -525,6 +570,10 @@ function updateAvailableItemForThisDay() {
 
 }
 
+function getFirstDayOfCalendar() {
+    return $(`#dayBlocksWrapper div[data-date]`).filter(":first")
+}
+
 function selectDayOnCalendar(e) {
     let selectedShamsiDate = e.attr("data-date")
     let selectedShamsiDateTitle = e.attr("data-day-title")
@@ -573,6 +622,63 @@ function updateDropdownCalendarMonth() {
 
 
 }
+function oneItemOrderedByPersonnelReportFileName(dataNeededForFileName) {
+        // گزارش موردی غذا ها به صورت روزانه
+        let cd = toShamsiFormat(selectedDate)
+        let item = allItems.find(function (obj) {
+            return obj.id===dataNeededForFileName.item
+        })
+        let farsiPrefix = "لیست سفارش دهنده های ایتم"
+        return `${farsiPrefix}-${cd}-${item.itemName}.csv`;
+}
+
+function dailyOrdersReportFileName(dataNeededForFileName) {
+    return `گزارش سفارش های امروز ${toShamsiFormat(selectedDate)}`
+}
+
+function dailyOrdersReportRequestBody() {
+    return {
+        "date" : toShamsiFormat(selectedDate)
+    }
+}
+
+function monthlyFinancialReportFileName(dataNeededForFileName) {
+        return `گزارش مالی ماه ${selectedDate.month} از سال ${selectedDate.year}`
+}
+
+function monthlyFinancialReportRequestBody() {
+        return {
+            "year": selectedDate.year,
+            "month": selectedDate.month
+        }
+}
+
+function startDownloadReport(fileName, csvData) {
+    // Create a Blob object from the CSV data
+        let blob = new Blob([csvData], {type: 'text/csv;charset=utf-8;'});
+
+        // Create a temporary link element
+        let link = document.createElement('a');
+
+        // Set the link's href to a data URL representing the Blob
+        link.href = window.URL.createObjectURL(blob);
+
+        // Set the link's download attribute to specify the filename
+        link.download = fileName;
+
+
+        // Append the link to the document
+        document.body.appendChild(link);
+
+        // Programmatically click the link to trigger the download
+        link.click();
+
+        // Remove the link from the document
+        document.body.removeChild(link);
+
+        let dm = `دانلود ${link.download} شروع شد `
+        displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_TEN)
+}
 
 function getCurrentCalendarMonth() {
     return $("#dayBlocksWrapper").attr("data-month")
@@ -590,7 +696,7 @@ $(document).ready(function () {
 
 
     $.ajax({
-        url: `/pors/panel/`,
+        url: addPrefixTo(`panel/`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -606,12 +712,17 @@ $(document).ready(function () {
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
             if (isSystemOpen === false) {
+                displayDismiss(
+                    DISMISSLEVELS.INFO,
+                    "در حال حاضر سیستم در دسترس نمی باشد",
+                    DISMISSDURATIONS.DISPLAY_TIME_LONG
+                )
                 catchResponseMessagesToDisplay(data.messages)
                 return
             }
 
             $.ajax({
-                url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
@@ -650,22 +761,25 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    makeReportSectionMenu()
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 
 
                 },
                 error: function (xhr, status, error) {
-                    console.error('Default calendar load failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    let em = "EXECUTION ERROR: Default calendar load failed!"
+                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
             catchResponseMessagesToDisplay(data.messages)
 
+
         },
         error: function (xhr, status, error) {
-            console.error('Administrative is Unreachable', status, 'and' +
-                ' error:', error);
+            let em = "EXECUTION ERROR: Administrative is Unreachable"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
@@ -677,12 +791,12 @@ $(document).ready(function () {
 
         let id = parseInt($(this).attr("data-item-id"))
         $.ajax({
-            url: `/pors/administrative/add-item-to-menu/`,
+            url: addPrefixTo(`administrative/add-item-to-menu/`),
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
                 {
-                    "id": id,
+                    "item": id,
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
@@ -715,7 +829,7 @@ $(document).ready(function () {
         //     دانلود فایل افراد سفارش دهنده
 
             $.ajax({
-            url: `/pors/administrative/reports/item-ordering-personnel-list/`,
+            url: addPrefixTo(`administrative/reports/specific-item/`),
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
@@ -725,35 +839,14 @@ $(document).ready(function () {
                 }
             ),
             success: function (data) {
-                // Create a Blob object from the CSV data
-                var blob = new Blob([data], {type: 'text/csv;charset=utf-8;'});
-
-                // Create a temporary link element
-                var link = document.createElement('a');
-
-                // Set the link's href to a data URL representing the Blob
-                link.href = window.URL.createObjectURL(blob);
-
-                // Set the link's download attribute to specify the filename
-                let cd = toShamsiFormat(selectedDate)
-                let item = allItems.find(function (obj) {
-                    return obj.id===id
-                })
-                let farsiPrefix = "لیست سفارش دهنده های ایتم"
-                link.download = `${farsiPrefix}-${cd}-${item.itemName}.csv`;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Programmatically click the link to trigger the download
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                let dm = `دانلود گزارش روز ${item.itemName} شروع شد `
-                displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
-
+                startDownloadReport(
+                    oneItemOrderedByPersonnelReportFileName(
+                        {
+                            "item": id,
+                            "date": toShamsiFormat(selectedDate)
+                        }
+                    ),data
+                )
             },
             error: function (xhr, status, error) {
                 console.error('the report didnt downloaded', status, 'and' +
@@ -774,7 +867,7 @@ $(document).ready(function () {
 
 
         $.ajax({
-            url: `/pors/administrative/remove-item-from-menu/`,
+            url: addPrefixTo(`administrative/remove-item-from-menu/`),
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
@@ -798,6 +891,35 @@ $(document).ready(function () {
 
     });
 
+
+    $(document).on('click', '.system-report', function () {
+        let report = REPORTS.find(obj => obj.id === parseInt($(this).attr("data-report-id")))
+        let fileNameGen = report.fileNameFunction
+
+        $.ajax({
+        url: report.api,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(report.data()),
+        success: function (data) {
+            startDownloadReport(
+                fileNameGen(
+                    {
+                        "date": toShamsiFormat(selectedDate)
+                    }
+                ),data
+            )
+        },
+        error: function (xhr, status, error) {
+            console.error('the report didnt downloaded', status, 'and' +
+                ' error:', error, 'detail:', xhr.responseJSON );
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+        }
+    });
+    });
+
+
+
     $(document).on('click', '#dayBlocksWrapper div[data-date]', function () {
         selectDayOnCalendar($(this))
     })
@@ -808,7 +930,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
 
@@ -857,7 +979,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: `/pors/administrative/calendar/?year=${currentDate.year}&month=${monthNumber}`,
+            url: addPrefixTo(`administrative/calendar/?year=${currentDate.year}&month=${monthNumber}`),
             method: 'GET',
             dataType: 'json',
 
@@ -875,6 +997,7 @@ $(document).ready(function () {
                     monthNumber,
                     currentDate.year
                 )
+                selectDayOnCalendar(getFirstDayOfCalendar())
                 updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
                 catchResponseMessagesToDisplay(data.messages)
             },

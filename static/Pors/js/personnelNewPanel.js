@@ -1,3 +1,15 @@
+const URL_PREFIX = "/PersonnelService/Pors/"
+const STATIC_PREFIX = "/static/Pors/"
+
+function addPrefixTo(str) {
+    return URL_PREFIX+str
+}
+
+function addStaticFilePrefixTo(str) {
+    return STATIC_PREFIX+str
+}
+
+
 const WEEK_DAYS = {
     1: "شنبه",
     2: "یک‌شنبه",
@@ -22,7 +34,7 @@ const YEAR_MONTHS = {
     12: "اسفند",
 }
 
-const DEFAULTITEMIMAGE = "https://snappfood.ir/static/images/placeholder.png"
+const DEFAULTITEMIMAGE = addStaticFilePrefixTo("images/placeholder.png")
 
 
 const DISMISSDURATIONS = {
@@ -197,7 +209,7 @@ function canPersonnelChangeMenuItem(serveTime, openForLaunch, openForBreakfast) 
 
 function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yearNumber, hasMenu, hasOrder) {
     let opacity = ""
-    let MenuIcon = "https://www.svgrepo.com/show/383690/food-dish.svg"
+    let MenuIcon = addStaticFilePrefixTo("images/food-dish.svg")
     let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
     let hasOrderCheckIcon = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12.6111L8.92308 17.5L20 6.5" stroke="#26a269" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`
     let hasOrderHTML = `<div class="${hasOrder ? "" : "hidden"} check-logo w-4 h-4">${hasOrderCheckIcon}</div>`
@@ -231,14 +243,16 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
 function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, itemCount = 0, editable = true) {
     let minus = `
     <div class="ml-2">
-                        <img class="remove-item w-6 h-6"
-                             src="https://www.svgrepo.com/show/497308/minus-cirlce.svg" alt="">
+                        <img class="!cursor-pointer remove-item w-6 h-6"
+                             src="${addStaticFilePrefixTo('images/minus-cirlce.svg')}" alt="">
                     </div>`
     let add = `<div class="">
-                        <img class="add-item w-6 h-6"
-                             src="https://www.svgrepo.com/show/496764/add-circle.svg" alt="">
+                        <img class="!cursor-pointer add-item w-6 h-6"
+                             src="${addStaticFilePrefixTo('images/add-circle.svg')}" alt="">
                     </div>
     `
+
+    let breakfastLabel = `<span class="px-1 py-0 text-xs text-white font-bold bg-gray-800 italic rounded-full"> صبحونه </span>`
     return `
     <li data-item-id="${id}" 
     data-item-order-count=${itemCount} 
@@ -256,7 +270,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                 />
 
                 <div class="w-8/12 cursor-default">
-                    <div><h3 class="text-base text-gray-900">${itemName}</h3>
+                    <div><h3 class="text-base text-gray-900">${itemName} ${serveTime==="BRF" ? breakfastLabel : ""}</h3>
 
                         <dl class="mt-1 space-y-px text-sm text-gray-600">
                             <div>
@@ -340,7 +354,9 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
             price = itemObj.pricePerItem
             quantity = itemObj.quantity
         }
-        if (!editableItem && !ordered) price = 0
+
+
+        if (!editableItem && !ordered) return
 
 
         HTML += menuItemBlock(
@@ -501,7 +517,7 @@ function getSubsidy() {
     // و برای محاسبات مالی ازش استفاده می شه
 
     $.ajax({
-        url: `/pors/get-subsidy/?date=${encodeURIComponent(toShamsiFormat(selectedDate))}`,
+        url: addPrefixTo(`get-subsidy/?date=${encodeURIComponent(toShamsiFormat(selectedDate))}`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -517,12 +533,28 @@ function getSubsidy() {
     });
 }
 
-function updateOrderBill() {
+function billDisplay(show) {
+    let thereIsNoOrderForDay = $("#no-order-for-today")
+    let billDetail = $("#day-bill")
+    if (show){
+        thereIsNoOrderForDay.addClass("hidden")
+        billDetail.removeClass("hidden")
+        return
+    }
+    thereIsNoOrderForDay.removeClass("hidden")
+    billDetail.addClass("hidden")
+}
+function updateOrderBillDetail() {
     let orderItems = $(`#menu-items-container li`)
     let total = 0
     let fanavaran = orderSubsidy
     let debt = 0
 
+    if (orderItems.length === 0) {
+        billDisplay(false)
+        return
+    }
+    billDisplay(true)
 
     orderItems.each(function () {
         let itemPrice = parseInt($(this).attr("data-item-price"))
@@ -591,15 +623,6 @@ function canAddNewItem(itemId) {
 }
 
 function addNewItemToMenu(id) {
-    let can = canAddNewItem(id)
-    if (!can.res) {
-        displayDismiss(
-            DISMISSLEVELS.ERROR,
-            can.msg,
-            DISMISSDURATIONS.DISPLAY_TIME_SHORT
-        )
-        return
-    }
     let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
     let itemQuantity = parseInt(changedItem.attr("data-item-order-count"))
     itemQuantity++
@@ -625,7 +648,7 @@ function removeItemFromMenu(id) {
 function loadAvailableItem() {
     // ایتم های قابل انتخاب جدید رو دریافت می کند
     $.ajax({
-        url: `/pors/all-items/`,
+        url: addPrefixTo(`all-items/`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -653,7 +676,7 @@ function updateSelectedDate(shamsiDate) {
 
 function updateOrders(month, year) {
     $.ajax({
-        url: `/pors/calendar/?year=${year}&month=${month}`,
+        url: addPrefixTo(`calendar/?year=${year}&month=${month}`),
         method: 'GET',
         dataType: 'json',
         success: function (data) {
@@ -735,7 +758,7 @@ function selectDayOnCalendar(e) {
     updateItemsCounter()
     updateHasOrderedCalendarDayBlock()
     getSubsidy()
-    updateOrderBill()
+    updateOrderBillDetail()
 }
 
 function preItemsImageLoader() {
@@ -783,7 +806,7 @@ $(document).ready(function () {
 
 
     $.ajax({
-        url: `/pors/panel/`,
+        url: addPrefixTo(`panel/`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -799,12 +822,17 @@ $(document).ready(function () {
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
             if (isSystemOpen === false) {
+                displayDismiss(
+                    DISMISSLEVELS.INFO,
+                    "در حال حاضر سیستم در دسترس نمی باشد",
+                    DISMISSDURATIONS.DISPLAY_TIME_LONG
+                )
                 catchResponseMessagesToDisplay(data.messages)
                 return
             }
 
             $.ajax({
-                url: `/pors/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
@@ -856,7 +884,8 @@ $(document).ready(function () {
 
                 },
                 error: function (xhr, status, error) {
-                    console.error('Default calendar load failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                    let em = "EXECUTION ERROR: Default calendar load failed!"
+                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
@@ -864,8 +893,8 @@ $(document).ready(function () {
 
         },
         error: function (xhr, status, error) {
-            console.error('Administrative is Unreachable', status, 'and' +
-                ' error:', error);
+            let em = "EXECUTION ERROR: Personnel panel is Unreachable"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
@@ -878,9 +907,9 @@ $(document).ready(function () {
 
         let url = undefined
         if ($(this).parent().parent().parent().parent().attr("data-item-serve-time")==="BRF"){
-            url = "/pors/create-breakfast-order/"
+            url = addPrefixTo("create-breakfast-order/")
         }else {
-            url = "/pors/create-order/"
+            url = addPrefixTo("create-order/")
         }
         let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
         let can = canAddNewItem(id)
@@ -908,7 +937,7 @@ $(document).ready(function () {
                 updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasOrderedCalendarDayBlock()
-                updateOrderBill()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
 
             },
@@ -929,7 +958,7 @@ $(document).ready(function () {
 
 
         $.ajax({
-            url: `/pors/remove-item-from-order/`,
+            url: addPrefixTo(`remove-item-from-order/`),
             method: 'POST',
             contentType: 'application/json',
             async: false,
@@ -944,7 +973,7 @@ $(document).ready(function () {
                 updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
                 updateHasOrderedCalendarDayBlock()
-                updateOrderBill()
+                updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
             },
             error: function (xhr, status, error) {
@@ -965,7 +994,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: `/pors/calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
                 method: 'GET',
                 dataType: 'json',
 
@@ -1017,7 +1046,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: `/pors/calendar/?year=${currentDate.year}&month=${monthNumber}`,
+            url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${monthNumber}`),
             method: 'GET',
             dataType: 'json',
 
@@ -1047,7 +1076,4 @@ $(document).ready(function () {
             }
         });
     })
-
-
 });
-

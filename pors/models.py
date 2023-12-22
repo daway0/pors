@@ -30,6 +30,7 @@ class SystemSetting(models.Model):
     کلا همه متغیر های زیر از طریق دیتابیس باید دستخوش تغییر قرار گیرند
 
     همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
+    توجه شود که فقط یک رکورد از این جدول باید ساخته شود
     """
 
     IsSystemOpenForPersonnel = models.BooleanField(
@@ -58,20 +59,18 @@ class SystemSetting(models.Model):
     # "heshmat@eit,kabud@eit,abud@eit"
     SuperAdmins = models.CharField(max_length=250, null=True)
 
-    # این عدد در دیتابیس به صورت دستی تعیین می شود
-    BreakfastRegistrationWindowHours = models.PositiveIntegerField(
+    BreakfastRegistrationWindowHours = models.IntegerField(
         default=0,
-        help_text=(
-            "فرض کنیم 48 باشه این عدد. یعنی اینکه برای ثبت سفارش "
-            "صبحانه امروز کاربر  باید 48 ساعت پیش صبحانه اش را "
-            "ثبت سفارش کرده باشد یا به عبارت دیگر از الان برای پس از "
-            "48 ساعت اینده می تواند ثبت سفارش صبحانه کند"
-        ),
+    )
+    BreakfastRegistrationWindowDays = models.IntegerField(
+        default=0,
     )
 
-    # این عدد در دیتابیس به صورت دستی تعیین می شود
-    LaunchRegistrationWindowHours = models.PositiveIntegerField(
-        default=0, help_text="مانند فیلد BreakfastRegistrationWindowHours"
+    LaunchRegistrationWindowHours = models.IntegerField(
+        default=0,
+    )
+    LaunchRegistrationWindowDays = models.IntegerField(
+        default=0,
     )
 
     IsSystemOpenForLaunchSubmission = models.BooleanField(
@@ -190,7 +189,11 @@ class Subsidy(models.Model):
     def __str__(self): ...
 
     class Meta:
-        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["UntilDate"], name="untildate_unique"
+            )
+        ]
         verbose_name = "یارانه"
         verbose_name_plural = "یارانه ها"
 
@@ -252,22 +255,42 @@ class Item(models.Model):
         verbose_name_plural = "اطلاعات ایتم ها"
 
 
+class DeliveryPlaceChoices(models.TextChoices):
+    PADIDAR = "PAD", "ساختمان پدیدار"
+    GAN = "GAN", "ساختمان گاندی"
+
+
 class Order(models.Model):
     """
-    *** PersonnelDebt = TotalPrice - SubsidyAmount
+    *** PersonnelDebt = TotalPrice - SubsidyCap
     توجه شود که PersonnelDebt هیچ گاه منفی نخواهد شد
     """
 
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
+    FirstName = models.CharField(max_length=250, verbose_name="نام")
+    LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
+    TeamName = models.CharField(max_length=250, verbose_name="تیم")
+    RoleName = models.CharField(max_length=250, verbose_name="سمت")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    SubsidyAmount = models.PositiveIntegerField(
+    # DeliveryPlace = models.CharField(
+    #     max_length=3,
+    #     help_text=(
+    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+    #         "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
+    #         "OrderItem خوانده می شود"
+    #     ),
+    # )
+    SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
     )
     TotalPrice = models.PositiveIntegerField(
         verbose_name="مبلغ کل سفارش به تومان"
     )
     PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
+    SubsidySpent = models.PositiveIntegerField(
+        verbose_name="خرج فناوران"
+    )  # TODO help text.
 
     class Meta:
         managed = False
@@ -281,6 +304,14 @@ class OrderItem(models.Model):
 
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    # DeliveryPlace = models.CharField(
+    #     max_length=3,
+    #     choices=DeliveryPlaceChoices.choices,
+    #     help_text=(
+    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
+    #         "چیزی که سفارش دهید یک جا تحویل می گیرید"
+    #     ),
+    # )
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, verbose_name="آیتم"
     )
@@ -291,7 +322,6 @@ class OrderItem(models.Model):
     # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
     # افزونگی تکنیکی
     PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
-    # DeliveryLocation = ...
 
     class Meta:
         constraints = [
@@ -345,7 +375,6 @@ class ItemPriceHistory(models.Model):
     UntilDate = models.CharField(
         max_length=10,
         null=True,
-        unique=True,
         verbose_name="تاریخ پایان",
         help_text=(
             "توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب"
@@ -357,7 +386,6 @@ class ItemPriceHistory(models.Model):
         return f"{self.Item.ItemName} {self.Price}"
 
     class Meta:
-        models.UniqueConstraint(fields=["UntilDate"], name="unique_until_date")
         verbose_name = "تاریخچه قیمت آیتم"
         verbose_name_plural = "تاریخچه قیمت آیتم ها"
 
@@ -473,3 +501,37 @@ class ActionLog(models.Model):
     # AdminActionReason = models.TextField(null=True)  # combo
     # OldData = models.JSONField(...)
     # # NewData = models.JSONField(...)
+
+
+# class ItemDailyReport(models.Model):
+#     Id = models.PositiveIntegerField(primary_key=True)
+#     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+#     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+#     PAD = models.CharField(max_length=3, verbose_name="ساختمان پدیدار")
+#     OTH = models.CharField(max_length=3, verbose_name="ساختمان دیگر")
+
+#     class Meta:
+#         managed = False
+#         db_table = "ItemDailyReport"
+#         verbose_name = "گزارش سفارش روزانه"
+#         verbose_name_plural = "گزارش سفارشات روزانه"
+
+
+class PersonnelDailyReport(models.Model):
+    Id = models.PositiveIntegerField(primary_key=True)
+    Personnel = models.CharField(max_length=250)
+    FirstName = models.CharField(max_length=250)
+    LastName = models.CharField(max_length=250)
+    TeamName = models.CharField(max_length=250)
+    RoleName = models.CharField(max_length=250)
+    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+    ItemId = models.IntegerField()
+    Quantity = models.PositiveSmallIntegerField()
+    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+
+    class Meta:
+        managed = False
+        db_table = "PersonnelDailyReport"
+
+    def __str__(self) -> str:
+        return self.Personnel

@@ -17,6 +17,7 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
+    PersonnelDailyReport,
     Subsidy,
     SystemSetting,
 )
@@ -33,6 +34,8 @@ from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_csv,
+    get_submission_deadline,
+    localnow,
     split_dates,
 )
 
@@ -71,9 +74,7 @@ def add_item_to_menu(request):
 
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -102,9 +103,7 @@ def remove_item_from_menu(request):
         message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -147,7 +146,7 @@ def personnel_calendar(request):
     """
 
     # Past Auth...
-    personnel = "e.rezaee@eit"
+    personnel = "m.noruzi@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         message.add_message(
@@ -200,17 +199,9 @@ def personnel_calendar(request):
 
     # Couldn't use django orm because "Order" doesn't have
     # relation with orderitem table.
-    query = """
-    SELECT oi.DeliveryDate, oi.Quantity, oi.PricePerOne,
-           i.id, i.ItemName, i.Image, i.CurrentPrice,
-           i.Category_id, i.ItemDesc, oi.Personnel,
-           o.SubsidyAmount, o.PersonnelDebt, o.TotalPrice
-    FROM pors_orderitem AS oi
-    INNER JOIN pors_item AS i ON oi.Item_id = i.id
-    INNER JOIN "Order" AS o ON o.Personnel = oi.Personnel AND o.DeliveryDate = oi.DeliveryDate
-    WHERE oi.DeliveryDate between %s AND %s and oi.Personnel = %s
-    ORDER BY oi.DeliveryDate
-    """
+    with open("./pors/SQLs/PersonnelOrderWithBill.sql", mode="r") as f:
+        query = f.read()
+
     params = (first_day_date, last_day_date, personnel)
     order_items = execute_raw_sql_with_params(query, params)
 
@@ -306,17 +297,24 @@ def first_page(request):
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
     full_name = "test"  # DONT FORGET TO SPECIFY ...
     profile = "test"  # DONT FORGET TO SPECIFY ...
+    (
+        days_breakfast_deadline,
+        hours_breakfast_deadline,
+        days_launch_deadline,
+        hours_launch_deadline,
+    ) = get_submission_deadline()
+    now = localnow()
 
     if (
         system_settings.BreakfastRegistrationWindowHours
         < system_settings.LaunchRegistrationWindowHours
     ):
         year, month, day = b.get_first_orderable_date(
-            Item.MealTypeChoices.BREAKFAST
+            now, days_breakfast_deadline, hours_breakfast_deadline
         )
     else:
         year, month, day = b.get_first_orderable_date(
-            Item.MealTypeChoices.LAUNCH
+            now, days_launch_deadline, hours_launch_deadline
         )
 
     first_orderable_date = {"year": year, "month": month, "day": day}
@@ -353,7 +351,7 @@ def create_order_item(request):
 
     # past auth ...
     # past check is app open for creating order.
-    personnel = "e.rezaee@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
 
     validator = b.ValidateOrder(request.data)
@@ -367,9 +365,7 @@ def create_order_item(request):
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {
             "messages": message.messages(),
@@ -392,7 +388,7 @@ def remove_order_item(request):
         -  'item' (str): The item which you want to remove.
     """
 
-    personnel = "e.rezaee@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
@@ -402,9 +398,7 @@ def remove_order_item(request):
         )
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
-    message.add_message(
-        validator.message, Message.ERROR
-    )
+    message.add_message(validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -427,7 +421,7 @@ def create_breakfast_order(request):
 
     # past auth ...
 
-    personnel = "e.rezaee@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
@@ -444,43 +438,6 @@ def create_breakfast_order(request):
     )
 
 
-@api_view(["POST"])
-@check([is_open_for_admins])
-def item_ordering_personnel_list_report(request):
-    """
-    This view is responsible for generating a csv file that contains
-        personnel who have ordered a specific item on specific date.
-
-    Args:
-        request (dict): Request data which must contains:
-        -  'date' (str): The date which you want to look for.
-        -  'item' (str): The item which you want to look for.
-    """
-
-    # past auth ...
-    try:
-        date, item_id = b.validate_request(request.data)
-    except ValueError as err:
-        message.add_message(
-            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
-        )
-        return Response({"messages": message.messages(), "errors": str(err)})
-
-    personnel = OrderItem.objects.filter(
-        DeliveryDate=date, Item=item_id
-    ).values(
-        "Personnel",
-        "Quantity",
-    )
-    csv_content = generate_csv(personnel)
-
-    response = HttpResponse(
-        content=csv_content,
-        content_type="text/csv",
-    )
-    return response
-
-
 @api_view(["GET"])
 @check([is_open_for_personnel])
 def get_subsidy(request):
@@ -493,9 +450,31 @@ def get_subsidy(request):
             {"messages": message.messages(), "errors": "Invalid 'date' value."}
         )
 
-    subsidy = Subsidy.objects.filter(
-        Q(FromDate__lte=date, UntilDate__isnull=True)
-        | Q(FromDate__lte=date, UntilDate__gte=date)
-    ).first().Amount
+    subsidy = (
+        Subsidy.objects.filter(
+            Q(FromDate__lte=date, UntilDate__isnull=True)
+            | Q(FromDate__lte=date, UntilDate__gte=date)
+        )
+        .first()
+        .Amount
+    )
 
     return Response({"data": {"subsidy": subsidy}})
+
+
+# @api_view(["PATCH"])
+# @check([is_open_for_personnel])
+# def change_delivery_place(request):
+#     request.data["personnel"] = "e.rezaee@eit"
+#     validator = b.ValidateDeliveryPlace(request.data)
+#     if validator.is_valid():
+#         validator.change_delivary_place()
+#         message.add_message(
+#             "ساختمان تحویل سفارش شما با موفقیت عوض شد.", Message.SUCCESS
+#         )
+#         return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+#     message.add_message(validator.message, Message.ERROR)
+#     return Response(
+#         {"messages": message.messages(), "errors": validator.error}
+#     )

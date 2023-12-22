@@ -1,13 +1,23 @@
+import codecs
 import csv
 import json
 import re
-from io import StringIO
 from typing import Optional
 
 import jdatetime
+import pytz
 from django.db import connection
 from django.db.models import QuerySet
+from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
+
+from . import models as m
+
+
+def localnow() -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc)
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone)
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -62,11 +72,11 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 def get_current_date() -> tuple[int, int, int]:
     "Returning current date"
-    now = jdatetime.datetime.now()
+    now = localnow()
     return now.year, now.month, now.day
 
 
-def split_dates(dates, mode: str) -> int | list[int]:
+def split_dates(dates, mode: str):
     """
     Splitting date and returning requested section based on mode.
 
@@ -76,6 +86,7 @@ def split_dates(dates, mode: str) -> int | list[int]:
 
     Returns:
         List or single integer.
+        int | list[int]
     """
     new_dates = []
 
@@ -179,19 +190,96 @@ def generate_csv(queryset: QuerySet):
     Returns:
         str: csv content that generated from queryset.
     """
+    response = HttpResponse(content_type="text/csv")
+    response.write(codecs.BOM_UTF8)
 
-    csv_component = StringIO()
-    writer = csv.writer(csv_component)
+    writer = csv.writer(response)
 
     headers_appended = False
 
     for obj in queryset:
-        data = obj.values()
-        if not headers_appended:
-            writer.writerow(obj.keys())
-            headers_appended = True
-        writer.writerow(data)
+        if isinstance(obj, dict):
+            data = obj.values()
+            if not headers_appended:
+                writer.writerow(obj.keys())
+                headers_appended = True
+            writer.writerow(data)
+        else:
+            keys = []
+            values = []
+            for field in obj._meta.fields:
+                keys.append(field.name)
+                values.append(getattr(obj, field.name))
 
-    csv_content = csv_component.getvalue()
-    csv_component.close()
-    return csv_content
+            if not headers_appended:
+                writer.writerow(keys)
+                headers_appended = True
+            writer.writerow(values)
+
+    return response
+
+
+def validate_request_based_on_schema(schema: dict, data: dict) -> tuple[str, int]:
+    """
+    This function is responsible for validating request data based on the
+        provided schema.
+    Validation is checked by both checking parameter names
+        as well as their types.
+
+    Args:
+        schema (dict): Your prefered schema which you want
+            to receive from requets
+        data (dict): The request data.
+
+    """
+
+    schema_params = set(schema.keys())
+    data_params = set(data.keys())
+    diffs = schema_params.difference(data_params)
+    if diffs:
+        raise ValueError(f"{diffs} parameter(s) must specified.")
+
+    for param in schema_params:
+        if not isinstance(data.get(param), type(schema.get(param))):
+            raise ValueError(f"Invalid {param} value.")
+
+
+def get_submission_deadline(
+    meal_type: m.Item.MealTypeChoices = False,
+):
+    """
+    Returning the submission's deadline based on the mealtype it has.
+    The deadline is fetched from SystemSetting table.
+
+    If meal_type parameter is not specified, will return both deadlines
+        from database, first is breakfast, second is launch.
+
+    Args:
+        meal_type: The submission's deadline.
+
+    Returns:
+        The deadline value.
+        tuple[int, int, int, int] | tuple[int, int]
+    """
+
+    if not meal_type:
+        return (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
+
+    if meal_type == m.Item.MealTypeChoices.LAUNCH:
+        deadline = (
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
+
+    elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
+        deadline = (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+        )
+
+    return deadline

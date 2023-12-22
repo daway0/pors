@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import report_views, views
 
 app_name = "pors"
 
@@ -13,8 +13,8 @@ urlpatterns = [
         name="breakfast_order",
     ),
     path(
-        "administrative/reports/item-ordering-personnel-list/",
-        views.item_ordering_personnel_list_report,
+        "administrative/reports/specific-item/",
+        report_views.item_ordering_personnel_list_report,
         name="item_ordering_personnel_list_report",
     ),
     path("administrative/calendar/", views.edari_calendar, name="acalendar"),
@@ -40,6 +40,21 @@ urlpatterns = [
         name="remove_order_item",
     ),
     path("get-subsidy/", views.get_subsidy, name="get_subsidy"),
+    # path(
+    #     "change-delivery-place/",
+    #     views.change_delivery_place,
+    #     name="change_delivery_place",
+    # ),
+    path(
+        "administrative/reports/daily-orders/",
+        report_views.personnel_daily_report,
+        name="personnel_daily_report",
+    ),
+    path(
+        "administrative/reports/monthly-financial/",
+        report_views.personnel_financial_report,
+        name="personnel_financial_report",
+    ),
     path("", views.uiadmin),
     path("personnel/", views.ui),
 ]
