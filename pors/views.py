@@ -146,7 +146,7 @@ def personnel_calendar(request):
     """
 
     # Past Auth...
-    personnel = "m.zoley@eit"
+    personnel = "m.noruzi@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         message.add_message(
@@ -351,7 +351,7 @@ def create_order_item(request):
 
     # past auth ...
     # past check is app open for creating order.
-    personnel = "m.zoley@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
 
     validator = b.ValidateOrder(request.data)
@@ -388,7 +388,7 @@ def remove_order_item(request):
         -  'item' (str): The item which you want to remove.
     """
 
-    personnel = "m.zoley@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
@@ -421,7 +421,7 @@ def create_breakfast_order(request):
 
     # past auth ...
 
-    personnel = "m.zoley@eit"
+    personnel = "m.noruzi@eit"
     request.data["personnel"] = personnel
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
