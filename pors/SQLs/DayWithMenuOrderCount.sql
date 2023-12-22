@@ -5,4 +5,5 @@ FROM (
      ) AS menu
          LEFT JOIN [Order]
                    ON [Order].DeliveryDate = menu.AvailableDate
+WHERE menu.AvailableDate BETWEEN %s and %s
 GROUP BY menu.AvailableDate

@@ -35,3 +35,13 @@ class TestDeadlineValidators(unittest.TestCase):
         target_date = "1402/09/29"
         result = b.is_date_valid_for_action(mock_datetime, target_date, 1, 14)
         self.assertEqual(result, False, "NAKHOY")
+
+
+class TestValidateRemove(unittest):
+    def test_is_valid(self):
+        item = m.Item.objects.filter(IsActive=True).first()
+        m.DailyMenuItem.objects.filter(
+            Item=item, IsActive=True, AvailableDate="1402/09/29"
+        )
+        mock_data = {"date": "1402/09/29", "item": 1}
+        validator = b.ValidateRemove()

@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 from . import models as m
 from . import serializers as s
 from .utils import (
+    execute_raw_sql_with_params,
     first_and_last_day_date,
     get_submission_deadline,
     localnow,
@@ -90,15 +91,11 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
 
     first_day, last_day = first_and_last_day_date(month, year)
 
-    days_with_menu = (
-        m.Order.objects.filter(DeliveryDate__range=[first_day, last_day])
-        .values("DeliveryDate")
-        .order_by("DeliveryDate")
-        .annotate(TotalOrders=Count("DeliveryDate"))
-    )
-    days_with_menu_serializer = s.DayWithMenuSerializer(
-        days_with_menu, many=True
-    ).data
+    with open("./pors/SQLs/DayWithMenuOrderCount.sql", "r") as file:
+        query = file.read()
+    result = execute_raw_sql_with_params(query, (first_day, last_day))
+
+    days_with_menu_serializer = s.DayWithMenuSerializer(result, many=True).data
     splited_days_with_menu = split_json_dates(
         json.dumps(days_with_menu_serializer)
     )
