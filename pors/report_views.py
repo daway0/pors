@@ -1,5 +1,6 @@
 from django.db.models import Count, Sum
 from django.http.response import HttpResponse
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -27,7 +28,7 @@ def personnel_daily_report(request):
     try:
         u.validate_request_based_on_schema(schema, request.data)
     except ValueError as err:
-        return Response({"errors": str(err)})
+        return Response({"errors": str(err)}, status.HTTP_400_BAD_REQUEST)
 
     date = u.validate_date(request.data.get("date"))
 
@@ -37,7 +38,8 @@ def personnel_daily_report(request):
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Queryset is empty!"}
+            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            status.HTTP_404_NOT_FOUND,
         )
 
     response = u.generate_csv(queryset)
@@ -61,13 +63,15 @@ def personnel_financial_report(request):
     try:
         u.validate_request_based_on_schema(schema, request.data)
     except ValueError as err:
-        return Response({"errors": str(err)})
+        return Response({"errors": str(err)}, status.HTTP_400_BAD_REQUEST)
 
     month = request.data.get("month")
     year = request.data.get("year")
 
     if 12 < month < 0:
-        return Response({"errors": "Invalid month value."})
+        return Response(
+            {"errors": "Invalid month value."}, status.HTTP_400_BAD_REQUEST
+        )
 
     first_date, last_date = u.first_and_last_day_date(month, year)
 
@@ -88,7 +92,8 @@ def personnel_financial_report(request):
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Queryset is empty!"}
+            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            status.HTTP_404_NOT_FOUND,
         )
 
     csv_content = u.generate_csv(result)
@@ -115,7 +120,10 @@ def item_ordering_personnel_list_report(request):
         message.add_message(
             "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
         )
-        return Response({"messages": message.messages(), "errors": str(err)})
+        return Response(
+            {"messages": message.messages(), "errors": str(err)},
+            status.HTTP_400_BAD_REQUEST,
+        )
 
     # query sets that are in report must have .values for specifying columns
     personnel = m.PersonnelDailyReport.objects.filter(
@@ -130,6 +138,15 @@ def item_ordering_personnel_list_report(request):
         "Quantity",
         "DeliveryDate",
     )
+    if not personnel:
+        message.add_message(
+            "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            status.HTTP_404_NOT_FOUND,
+        )
+
     csv_content = u.generate_csv(personnel)
 
     response = HttpResponse(
