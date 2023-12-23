@@ -21,6 +21,24 @@ ActionLog ثبت شود.
 from django.db import models
 
 
+class User(models.Model):
+    Personnel = models.CharField(max_length=250)
+    FirstName = models.CharField(max_length=250)
+    LastName = models.CharField(max_length=250)
+    Profile = models.CharField(max_length=500, null=True, blank=True)
+    IsAdmin = models.BooleanField(default=False)
+    Key = models.CharField(max_length=64)
+    ExpiredAt = models.CharField(max_length=10)
+    IsActive = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["Personnel"], name="unique_personnel"
+            )
+        ]
+
+
 class SystemSetting(models.Model):
     """
     متغیر های سیستمی. برای مثال برای از دسترس خارج سیستم به جای اینکه

@@ -2,6 +2,7 @@ import codecs
 import csv
 import json
 import re
+from hashlib import sha256
 from typing import Optional
 
 import jdatetime
@@ -219,7 +220,9 @@ def generate_csv(queryset: QuerySet):
     return response
 
 
-def validate_request_based_on_schema(schema: dict, data: dict) -> tuple[str, int]:
+def validate_request_based_on_schema(
+    schema: dict, data: dict
+) -> tuple[str, int]:
     """
     This function is responsible for validating request data based on the
         provided schema.
@@ -283,3 +286,14 @@ def get_submission_deadline(
         )
 
     return deadline
+
+
+def generate_token_hash(
+    personnel: str, full_name: str, random_bit: int
+) -> str:
+    packed_args = (
+        personnel.encode()
+        + full_name.encode()
+        + bytes(str(random_bit), "utf-8")
+    )
+    return sha256(packed_args).hexdigest()

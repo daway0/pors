@@ -1,13 +1,23 @@
+from hashlib import sha256
+from random import getrandbits
+
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
+from jdatetime import timedelta
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import check, is_open_for_admins, is_open_for_personnel
+from .decorators import (
+    authenticate,
+    check,
+    is_open_for_admins,
+    is_open_for_personnel,
+)
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -16,10 +26,9 @@ from .models import (
     Item,
     ItemsOrdersPerDay,
     Order,
-    OrderItem,
-    PersonnelDailyReport,
     Subsidy,
     SystemSetting,
+    User,
 )
 from .serializers import (
     AllItemSerializer,
@@ -33,7 +42,7 @@ from .serializers import (
 from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
-    generate_csv,
+    generate_token_hash,
     get_submission_deadline,
     localnow,
     split_dates,
@@ -42,16 +51,19 @@ from .utils import (
 message = Message()
 
 
+@authenticate()
 def ui(request):
     return render(request, "personnelMainPanel.html")
 
 
+@authenticate(privileged_users=True)
 def uiadmin(request):
     return render(request, "administrativeMainPanel.html")
 
 
 @api_view(["POST"])
 @check([is_open_for_admins])
+@authenticate(privileged_users=True)
 def add_item_to_menu(request):
     """
     Adding items to menu.
@@ -83,6 +95,7 @@ def add_item_to_menu(request):
 
 @api_view(["POST"])
 @check([is_open_for_admins])
+@authenticate(privileged_users=True)
 def remove_item_from_menu(request):
     """
     Removing items from menu.
@@ -128,6 +141,7 @@ class Categories(ListAPIView):
 
 @api_view(["GET"])
 @check([is_open_for_personnel])
+@authenticate()
 def personnel_calendar(request):
     """
     Personnel's calendar which have enough information
@@ -227,6 +241,7 @@ def personnel_calendar(request):
 
 @api_view(["GET"])
 @check([is_open_for_admins])
+@authenticate(privileged_users=True)
 def edari_calendar(request):
     """
     Admin's calendar which have more detailed information about menus, orders.
@@ -278,6 +293,7 @@ def edari_calendar(request):
 
 
 @api_view(["GET"])
+@authenticate()
 def first_page(request):
     """
     First page information.
@@ -292,6 +308,9 @@ def first_page(request):
     """
 
     # ... past auth
+    personnel = "m.noruzi@eit"
+    first_name = "test"
+    last_name = "test"
     system_settings = SystemSetting.objects.last()
     open_for_admins = system_settings.IsSystemOpenForAdmin
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
@@ -332,11 +351,46 @@ def first_page(request):
         }
     ).initial_data
 
-    return Response(serializer, status.HTTP_200_OK)
+    response = Response(serializer, status.HTTP_200_OK)
+
+    personnel_user_record = User.objects.filter(
+        Personnel=personnel, IsActive=True
+    ).first()
+    if not personnel_user_record:
+        pack_info_for_token = (
+            personnel.encode()
+            + full_name.encode()
+            + bytes(str(getrandbits(10)), "utf-8")
+        )
+        token = sha256(pack_info_for_token).hexdigest()
+        User.objects.create(
+            Personnel=personnel,
+            FirstName=first_name,
+            LastName=last_name,
+            IsAdmin=True,
+            Key=True,
+            ExpiredAt="1402/12/12",
+            IsActive=True,
+        )
+
+        response.set_cookie("key", token, path="PersonnelService/Pors/")
+        return response
+
+    if personnel_user_record.ExpiredAt >= now.strftime("%Y/%m/%d"):
+        return response
+
+    token = generate_token_hash(personnel, full_name, getrandbits(10))
+    personnel_user_record.Key = token
+    personnel_user_record.ExpiredAt = "1402/12/14"
+    personnel_user_record.save()
+
+    response.set_cookie("key", token)
+    return response
 
 
 @api_view(["POST"])
 @check([is_open_for_personnel])
+@authenticate()
 def create_order_item(request):
     """
     Responsible for submitting orders.
@@ -377,6 +431,7 @@ def create_order_item(request):
 
 @api_view(["POST"])
 @check([is_open_for_personnel])
+@authenticate()
 def remove_order_item(request):
     """
     This view will remove an item from specific order.
@@ -407,6 +462,7 @@ def remove_order_item(request):
 
 @api_view(["POST"])
 @check([is_open_for_personnel])
+@authenticate()
 def create_breakfast_order(request):
     """
     Responsible for submitting breakfast orders.
@@ -460,6 +516,122 @@ def get_subsidy(request):
     )
 
     return Response({"data": {"subsidy": subsidy}})
+
+
+@api_view(["GET"])
+def auth_gateway(request):
+    """
+    Authentication gateway that will use fanavaran's auth method to get
+        personnel's info and create corresponding `User` record for them.
+
+    After authentication, we will generate a token for personnel and set
+        it as a cookie named `key` for them, with the max age of 2 weeks.
+
+    Any request to this gateway has a reason, which can be:
+        - Personnel doesn't have a user record in db.
+        - The token got expired and must get new one.
+        - Personnel already has a valid token in db, but the request's token
+            is invalid or not set at all.
+    If non of above scenarios happens, it means something unexpected happens.
+    In this case, we will not let the personnel pass but inform them with the
+        happened situation.
+
+    Front can use `next` query parameter to redirect the personnel to
+        its corresponding panel, either `personnel` or `admin`.
+    """
+
+    personnel = "m.noruzi@eit"
+    first_name = "mikaeil"
+    last_name = "norouzi"
+    full_name = first_name + " " + last_name
+    is_admin = False
+    profile = "blablabla"
+
+    personnel_user_record = User.objects.filter(
+        Personnel=personnel, IsActive=True
+    ).first()
+
+    now = localnow()
+    next_path: str = request.query_params.get("next")
+    if next_path == "admin":
+        redirect_to = reverse("pors:admin_panel")
+    else:
+        redirect_to = reverse("pors:personnel_panel")
+
+    response = HttpResponseRedirect(redirect_to=redirect_to)
+    cookies_expire_time = now + timedelta(weeks=2)
+    max_age = int((cookies_expire_time - now).total_seconds())
+    cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
+
+    request_cookie = request.COOKIES.get("key")
+    cookies_path = reverse("pors:personnel_panel")
+
+    if not personnel_user_record:
+        # Personnel does not have a user record at all.
+        # In this scenario, we will create a user record, with an api key
+        # that will set as a cookie for personnel.
+
+        token = generate_token_hash(personnel, full_name, getrandbits)
+        User.objects.create(
+            Personnel=personnel,
+            FirstName=first_name,
+            LastName=last_name,
+            Profile=profile,
+            IsAdmin=is_admin,
+            Key=token,
+            ExpiredAt=cookies_expire_time,
+            IsActive=True,
+        )
+
+        response.set_cookie("key", token, path=cookies_path, max_age=max_age)
+        return response
+
+    elif personnel_user_record.ExpiredAt <= now.strftime("%Y/%m/%d"):
+        # In this scenario, personnel's token is expired,
+        # So we generate a new one, update the existing one in database,
+        # and set the new token for personnel as a cookie.
+
+        token = generate_token_hash(personnel, full_name, getrandbits(10))
+        personnel_user_record.Key = token
+        personnel_user_record.ExpiredAt = cookies_expire_time
+        personnel_user_record.save()
+
+        response.set_cookie("key", token, path=cookies_path, max_age=max_age)
+        return response
+
+    elif not request_cookie or request_cookie != personnel_user_record.Key:
+        # This is scenario happens when user already has a valid record
+        # and token in database, but the request's token is invalid
+        # or not present at all.
+        # Eaither case, we fetch the current personnel's token from database
+        # and set it as a cookie.
+
+        response.set_cookie(
+            "key",
+            personnel_user_record.Key,
+            path=cookies_path,
+            max_age=max_age,
+        )
+        return response
+
+    # Non on above auth methods passed here, so something strange happend.
+    # Anyways, we don't let the user pass and instead inform them with
+    # current situation, and return 500 status code.
+    message.add_message(
+        "رفتار غیرقابل پیش‌بیشنی رخ داده است و سرور قادر به اعتبارسنجی شما"
+        " نیست. لطفا با ادمین سایت در ارتباط باشید.",
+        Message.ERROR,
+    )
+    return Response(
+        {
+            "messages": message.messages(),
+            "errors": (
+                "Unexpected behaviour happend while authenticating the user,"
+                " please contant SuperAdmin."
+            ),
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 # @api_view(["PATCH"])
