@@ -51,11 +51,13 @@ from .utils import (
 message = Message()
 
 
+@check([is_open_for_personnel])
 @authenticate()
 def ui(request):
     return render(request, "personnelMainPanel.html")
 
 
+@check([is_open_for_admins])
 @authenticate(privileged_users=True)
 def uiadmin(request):
     return render(request, "administrativeMainPanel.html")
@@ -159,8 +161,6 @@ def personnel_calendar(request):
         -  All ordered items and their detailed information.
     """
 
-    # Past Auth...
-    personnel = "m.noruzi@eit"
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         message.add_message(
@@ -173,6 +173,8 @@ def personnel_calendar(request):
 
     month = int(request.query_params.get("month"))
     year = int(request.query_params.get("year"))
+    token = request.COOKIES.get("key")
+    personnel = User.objects.filter(Key=token).first().Personnel
 
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
@@ -495,7 +497,6 @@ def create_breakfast_order(request):
 
 
 @api_view(["GET"])
-@check([is_open_for_personnel])
 def get_subsidy(request):
     date = b.validate_date(request.query_params.get("date"))
     if not date:
@@ -532,9 +533,6 @@ def auth_gateway(request):
         - The token got expired and must get new one.
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
-    If non of above scenarios happens, it means something unexpected happens.
-    In this case, we will not let the personnel pass but inform them with the
-        happened situation.
 
     Front can use `next` query parameter to redirect the personnel to
         its corresponding panel, either `personnel` or `admin`.
@@ -612,26 +610,8 @@ def auth_gateway(request):
             path=cookies_path,
             max_age=max_age,
         )
-        return response
 
-    # Non on above auth methods passed here, so something strange happend.
-    # Anyways, we don't let the user pass and instead inform them with
-    # current situation, and return 500 status code.
-    message.add_message(
-        "رفتار غیرقابل پیش‌بیشنی رخ داده است و سرور قادر به اعتبارسنجی شما"
-        " نیست. لطفا با ادمین سایت در ارتباط باشید.",
-        Message.ERROR,
-    )
-    return Response(
-        {
-            "messages": message.messages(),
-            "errors": (
-                "Unexpected behaviour happend while authenticating the user,"
-                " please contant SuperAdmin."
-            ),
-        },
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
+    return response
 
 
 # @api_view(["PATCH"])
