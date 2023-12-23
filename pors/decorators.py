@@ -87,7 +87,7 @@ def authenticate(privileged_users: bool = False):
             if not token:
                 return HttpResponseRedirect(redirect_to=gateway_url)
 
-            user = m.User.objects.filter(Key=token, IsActive=True).first()
+            user = m.User.objects.filter(Token=token, IsActive=True).first()
             if not user:
                 return HttpResponseRedirect(redirect_to=gateway_url)
 

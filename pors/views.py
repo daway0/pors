@@ -172,8 +172,8 @@ def personnel_calendar(request):
             status.HTTP_400_BAD_REQUEST,
         )
 
-    month = request.query_params.get("month")
-    year = request.query_params.get("year")
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
     personnel = get_personnel_from_token(
         request.COOKIES.get("token")
     ).Personnel
@@ -270,8 +270,8 @@ def edari_calendar(request):
             {"messages": message.messages(), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
-    month = request.query_params.get("month")
-    year = request.query_params.get("year")
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
 
     month_first_day_date, month_last_day_date = first_and_last_day_date(
         month, year
