@@ -82,7 +82,7 @@ def authenticate(privileged_users: bool = False):
     def decorator(view: Callable):
         @functools.wraps(view)
         def wrapper(request, *args, **kwargs):
-            token = request.COOKIES.get("key")
+            token = request.COOKIES.get("token")
             gateway_url = reverse("pors:gateway")
             if not token:
                 return HttpResponseRedirect(redirect_to=gateway_url)

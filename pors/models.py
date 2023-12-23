@@ -27,9 +27,16 @@ class User(models.Model):
     LastName = models.CharField(max_length=250)
     Profile = models.CharField(max_length=500, null=True, blank=True)
     IsAdmin = models.BooleanField(default=False)
-    Key = models.CharField(max_length=64)
+    Token = models.CharField(max_length=64)
     ExpiredAt = models.CharField(max_length=10)
     IsActive = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return self.Personnel
+
+    @property
+    def FullName(self):
+        return f"{self.FirstName} {self.LastName}"
 
     class Meta:
         constraints = [

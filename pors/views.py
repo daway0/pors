@@ -43,6 +43,7 @@ from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_token_hash,
+    get_personnel_from_token,
     get_submission_deadline,
     localnow,
     split_dates,
@@ -171,10 +172,11 @@ def personnel_calendar(request):
             status.HTTP_400_BAD_REQUEST,
         )
 
-    month = int(request.query_params.get("month"))
-    year = int(request.query_params.get("year"))
-    token = request.COOKIES.get("key")
-    personnel = User.objects.filter(Key=token).first().Personnel
+    month = request.query_params.get("month")
+    year = request.query_params.get("year")
+    personnel = get_personnel_from_token(
+        request.COOKIES.get("token")
+    ).Personnel
 
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
@@ -259,7 +261,6 @@ def edari_calendar(request):
         -  List of menu items on each day and number of orders on each item.
     """
 
-    # Past Auth...
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
         message.add_message(
@@ -269,8 +270,8 @@ def edari_calendar(request):
             {"messages": message.messages(), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
-    month = int(request.query_params.get("month"))
-    year = int(request.query_params.get("year"))
+    month = request.query_params.get("month")
+    year = request.query_params.get("year")
 
     month_first_day_date, month_last_day_date = first_and_last_day_date(
         month, year
@@ -309,21 +310,19 @@ def first_page(request):
         firstOrderableDate: First valid date for order submission.
     """
 
-    # ... past auth
-    personnel = "m.noruzi@eit"
-    first_name = "test"
-    last_name = "test"
+    personnel = get_personnel_from_token(request.COOKIES.get("token"))
+
     system_settings = SystemSetting.objects.last()
     open_for_admins = system_settings.IsSystemOpenForAdmin
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
-    full_name = "test"  # DONT FORGET TO SPECIFY ...
-    profile = "test"  # DONT FORGET TO SPECIFY ...
+
     (
         days_breakfast_deadline,
         hours_breakfast_deadline,
         days_launch_deadline,
         hours_launch_deadline,
     ) = get_submission_deadline()
+
     now = localnow()
 
     if (
@@ -344,8 +343,8 @@ def first_page(request):
         data={
             "isOpenForAdmins": open_for_admins,
             "isOpenForPersonnel": open_for_personnel,
-            "fullName": full_name,
-            "profile": profile,
+            "fullName": personnel.FullName,
+            "profile": personnel.Profile,
             "firstOrderableDate": first_orderable_date,
             "totalItemsCanOrderedForBreakfastByPersonnel": (
                 system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
@@ -353,41 +352,7 @@ def first_page(request):
         }
     ).initial_data
 
-    response = Response(serializer, status.HTTP_200_OK)
-
-    personnel_user_record = User.objects.filter(
-        Personnel=personnel, IsActive=True
-    ).first()
-    if not personnel_user_record:
-        pack_info_for_token = (
-            personnel.encode()
-            + full_name.encode()
-            + bytes(str(getrandbits(10)), "utf-8")
-        )
-        token = sha256(pack_info_for_token).hexdigest()
-        User.objects.create(
-            Personnel=personnel,
-            FirstName=first_name,
-            LastName=last_name,
-            IsAdmin=True,
-            Key=True,
-            ExpiredAt="1402/12/12",
-            IsActive=True,
-        )
-
-        response.set_cookie("key", token, path="PersonnelService/Pors/")
-        return response
-
-    if personnel_user_record.ExpiredAt >= now.strftime("%Y/%m/%d"):
-        return response
-
-    token = generate_token_hash(personnel, full_name, getrandbits(10))
-    personnel_user_record.Key = token
-    personnel_user_record.ExpiredAt = "1402/12/14"
-    personnel_user_record.save()
-
-    response.set_cookie("key", token)
-    return response
+    return Response(serializer, status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -405,10 +370,8 @@ def create_order_item(request):
         -  'item' (str): The item which you want to order.
     """
 
-    # past auth ...
-    # past check is app open for creating order.
-    personnel = "m.noruzi@eit"
-    request.data["personnel"] = personnel
+    personnel = get_personnel_from_token(request.COOKIES.get("token"))
+    request.data["personnel"] = personnel.Personnel
 
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(create=True):
@@ -445,8 +408,8 @@ def remove_order_item(request):
         -  'item' (str): The item which you want to remove.
     """
 
-    personnel = "m.noruzi@eit"
-    request.data["personnel"] = personnel
+    personnel = get_personnel_from_token(request.COOKIES.get("token"))
+    request.data["personnel"] = personnel.Personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
         validator.remove_order()
@@ -479,8 +442,9 @@ def create_breakfast_order(request):
 
     # past auth ...
 
-    personnel = "m.noruzi@eit"
-    request.data["personnel"] = personnel
+    personnel = get_personnel_from_token(request.COOKIES.get("token"))
+    request.data["personnel"] = personnel.Personnel
+
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
         validator.create_breakfast_order()
@@ -561,7 +525,7 @@ def auth_gateway(request):
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
 
-    request_cookie = request.COOKIES.get("key")
+    request_cookie = request.COOKIES.get("token")
     cookies_path = reverse("pors:personnel_panel")
 
     if not personnel_user_record:
@@ -576,12 +540,12 @@ def auth_gateway(request):
             LastName=last_name,
             Profile=profile,
             IsAdmin=is_admin,
-            Key=token,
+            Token=token,
             ExpiredAt=cookies_expire_time,
             IsActive=True,
         )
 
-        response.set_cookie("key", token, path=cookies_path, max_age=max_age)
+        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
         return response
 
     elif personnel_user_record.ExpiredAt <= now.strftime("%Y/%m/%d"):
@@ -590,14 +554,14 @@ def auth_gateway(request):
         # and set the new token for personnel as a cookie.
 
         token = generate_token_hash(personnel, full_name, getrandbits(10))
-        personnel_user_record.Key = token
+        personnel_user_record.Token = token
         personnel_user_record.ExpiredAt = cookies_expire_time
         personnel_user_record.save()
 
-        response.set_cookie("key", token, path=cookies_path, max_age=max_age)
+        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
         return response
 
-    elif not request_cookie or request_cookie != personnel_user_record.Key:
+    elif not request_cookie or request_cookie != personnel_user_record.Token:
         # This is scenario happens when user already has a valid record
         # and token in database, but the request's token is invalid
         # or not present at all.
@@ -605,8 +569,8 @@ def auth_gateway(request):
         # and set it as a cookie.
 
         response.set_cookie(
-            "key",
-            personnel_user_record.Key,
+            "token",
+            personnel_user_record.Token,
             path=cookies_path,
             max_age=max_age,
         )

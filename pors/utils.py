@@ -297,3 +297,7 @@ def generate_token_hash(
         + bytes(str(random_bit), "utf-8")
     )
     return sha256(packed_args).hexdigest()
+
+
+def get_personnel_from_token(token: str):
+    return m.User.objects.filter(Token=token, IsActive=True).first()

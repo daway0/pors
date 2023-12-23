@@ -66,10 +66,8 @@ def validate_calendar_request(
 
     if not (year and month):
         return "'year' and 'month' parameters must specifed."
-    try:
-        month = int(month)
-        year = int(year)
-    except ValueError:
+
+    if not (isinstance(month, int) and isinstance(year, int)):
         return "Invalid parameters."
 
     if not 1 <= month <= 12:
