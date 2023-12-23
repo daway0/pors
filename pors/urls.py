@@ -55,6 +55,7 @@ urlpatterns = [
         report_views.personnel_financial_report,
         name="personnel_financial_report",
     ),
-    path("", views.uiadmin),
-    path("personnel/", views.ui),
+    path("auth-gateway/", views.auth_gateway, name="gateway"),
+    path("admin/", views.uiadmin, name="admin_panel"),
+    path("", views.ui, name="personnel_panel"),
 ]
