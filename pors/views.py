@@ -2,7 +2,7 @@ from hashlib import sha256
 from random import getrandbits
 
 from django.db.models import Q
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from jdatetime import timedelta
@@ -497,9 +497,6 @@ def auth_gateway(request):
         - The token got expired and must get new one.
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
-
-    Front can use `next` query parameter to redirect the personnel to
-        its corresponding panel, either `personnel` or `admin`.
     """
 
     personnel = "m.noruzi@eit"
@@ -514,13 +511,8 @@ def auth_gateway(request):
     ).first()
 
     now = localnow()
-    next_path: str = request.query_params.get("next")
-    if next_path == "admin":
-        redirect_to = reverse("pors:admin_panel")
-    else:
-        redirect_to = reverse("pors:personnel_panel")
 
-    response = HttpResponseRedirect(redirect_to=redirect_to)
+    response = HttpResponse(status=202)
     cookies_expire_time = now + timedelta(weeks=2)
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
