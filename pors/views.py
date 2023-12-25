@@ -45,10 +45,11 @@ from .utils import (
     generate_token_hash,
     get_personnel_from_token,
     get_submission_deadline,
+    get_user_minimal_info,
     localnow,
     split_dates,
-    get_user_minimal_info
 )
+
 # from Utility.Authentication.Utils import (
 #     V1_PermissionControl as permission_control,
 #     V1_get_data_from_token as get_token_data,
@@ -64,9 +65,7 @@ message = Message()
 @authenticate()
 def ui(request, current_user):
     return render(
-        request,
-        "personnelMainPanel.html",
-        get_user_minimal_info(current_user)
+        request, "personnelMainPanel.html", get_user_minimal_info(current_user)
     )
 
 
@@ -76,7 +75,8 @@ def uiadmin(request, current_user):
     return render(
         request,
         "administrativeMainPanel.html",
-        get_user_minimal_info(current_user))
+        get_user_minimal_info(current_user),
+    )
 
 
 @api_view(["POST"])
@@ -340,8 +340,10 @@ def first_page(request, current_user):
 
     now = localnow()
 
-    if (system_settings.BreakfastRegistrationWindowDays <
-            system_settings.LaunchRegistrationWindowDays):
+    if (
+        system_settings.BreakfastRegistrationWindowDays
+        < system_settings.LaunchRegistrationWindowDays
+    ):
         year, month, day = b.get_first_orderable_date(
             now, days_breakfast_deadline, hours_breakfast_deadline
         )
@@ -495,6 +497,7 @@ def get_subsidy(request):
 
     return Response({"data": {"subsidy": subsidy}})
 
+
 # @permission_control
 @api_view(["GET"])
 def auth_gateway(request):
@@ -510,10 +513,8 @@ def auth_gateway(request):
         - The token got expired and must get new one.
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
-
-    Front can use `next` query parameter to redirect the personnel to
-        its corresponding panel, either `personnel` or `admin`.
     """
+
     # token = find_token(request)
     # personnel = get_token_data(token, "username")
     #
@@ -529,17 +530,7 @@ def auth_gateway(request):
 
     now = localnow()
 
-    next_path: str = request.query_params.get("next")
-    if next_path == "admin":
-        redirect_to = reverse("pors:admin_panel")
-    else:
-        redirect_to = reverse("pors:personnel_panel")
-
-    full_path = f"{request.scheme}://{request.get_host()}{redirect_to}"
-    response = HttpResponse(
-        content=f"<script>window.location.replace('{full_path}')</script>",
-        status=202,
-    )
+    response = HttpResponse(status=202)
     cookies_expire_time = now + timedelta(weeks=2)
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
@@ -551,7 +542,6 @@ def auth_gateway(request):
         # Personnel does not have a user record at all.
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
-
 
         # profile = user_info(personnel)["StaticPhotoURL"]
         profile = ""
@@ -597,4 +587,3 @@ def auth_gateway(request):
         )
 
     return response
-
