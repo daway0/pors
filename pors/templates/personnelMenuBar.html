@@ -2,10 +2,12 @@
 {#            User profile#}
 <div class="group flex items-center">
     <img id="personnel-image" class="shrink-0 h-12 w-12 rounded-md"
-         src=""
+         {% with defaulting="/static/Pors/images/placeholder.png" %}
+         src="{{ profile|default:defaulting }}"
+         {% endwith %}
          alt=""/>
     <div class="mr-3">
-        <p class="text-base font-medium text-slate-900">پشوتن میرمیرانی</p>
+        <p class="text-base font-medium text-slate-900">{{ fullname }}</p>
         <p class="text-base font-medium text-slate-500">پرسنل</p>
     </div>
 </div>

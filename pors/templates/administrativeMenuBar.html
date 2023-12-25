@@ -1,9 +1,12 @@
 {% load static %}
 <div class="group flex items-center">
     <img class="shrink-0 h-12 w-12 rounded-md"
-         src="" alt=""/>
+         {% with defaulting="/static/Pors/images/placeholder.png" %}
+         src="{{ profile|default:defaulting }}"
+         {% endwith %}
+    >
     <div class="mr-3">
-        <p class="text-base font-medium text-slate-900">شهرزاد وطن دوست</p>
+        <p class="text-base font-medium text-slate-900">{{ fullname }}</p>
         <p class="text-base font-medium text-slate-500">ادمین اداری</p>
     </div>
 </div>
