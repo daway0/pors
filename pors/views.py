@@ -2,7 +2,7 @@ from hashlib import sha256
 from random import getrandbits
 
 from django.db.models import Q
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse
 from jdatetime import timedelta
@@ -517,7 +517,7 @@ def auth_gateway(request):
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
 
-    request_cookie = request.COOKIES.get("token")
+    request_token = request.COOKIES.get("token")
     cookies_path = reverse("pors:personnel_panel")
 
     if not personnel_user_record:
@@ -553,11 +553,11 @@ def auth_gateway(request):
         response.set_cookie("token", token, path=cookies_path, max_age=max_age)
         return response
 
-    elif not request_cookie or request_cookie != personnel_user_record.Token:
+    elif not request_token or request_token != personnel_user_record.Token:
         # This is scenario happens when user already has a valid record
         # and token in database, but the request's token is invalid
         # or not present at all.
-        # Eaither case, we fetch the current personnel's token from database
+        # Either case, we fetch the current personnel's token from database
         # and set it as a cookie.
 
         response.set_cookie(

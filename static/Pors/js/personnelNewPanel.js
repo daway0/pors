@@ -798,6 +798,15 @@ function getSelectedCalendarMonthDropdown() {
     return $("#calSelectedMonth option:selected").attr("value")
 }
 
+function redirectToGateway(){
+    window.location.replace(addPrefixTo("auth-gateway/"))
+}
+
+function checkErrorRelatedToAuth(errorCode) {
+    if (errorCode === 403) redirectToGateway()
+}
+
+
 $(document).ready(function () {
 
 
@@ -932,17 +941,19 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            success: function (data) {
-                addNewItemToMenu(id)
-                updateOrders(selectedDate.month, selectedDate.year)
-                updateItemsCounter()
-                updateHasOrderedCalendarDayBlock()
-                updateOrderBillDetail()
-                catchResponseMessagesToDisplay(data.messages)
-
+            statusCode:{
+                201: function (data) {
+                    addNewItemToMenu(id)
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    updateItemsCounter()
+                    updateHasOrderedCalendarDayBlock()
+                    updateOrderBillDetail()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
             },
             error: function (xhr, status, error) {
                 console.error('Item not added!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
@@ -968,20 +979,22 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            success: function (data) {
-                removeItemFromMenu(id)
-                updateOrders(selectedDate.month, selectedDate.year)
-                updateItemsCounter()
-                updateHasOrderedCalendarDayBlock()
-                updateOrderBillDetail()
-                catchResponseMessagesToDisplay(data.messages)
+            statusCode:{
+                200: function (data) {
+                    removeItemFromMenu(id)
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    updateItemsCounter()
+                    updateHasOrderedCalendarDayBlock()
+                    updateOrderBillDetail()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
-
     });
 
     $(document).on('click', '#dayBlocksWrapper div[data-date]', function () {

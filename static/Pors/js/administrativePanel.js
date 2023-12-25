@@ -688,6 +688,15 @@ function getSelectedCalendarMonthDropdown() {
     return $("#calSelectedMonth option:selected").attr("value")
 }
 
+
+function redirectToGateway(){
+    window.location.replace(addPrefixTo("auth-gateway/"))
+}
+
+function checkErrorRelatedToAuth(errorCode) {
+    if (errorCode === 403) redirectToGateway()
+}
+
 $(document).ready(function () {
 
 
@@ -800,16 +809,18 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            success: function (data) {
-                addNewItemToMenu(id)
-                updateSelectedItems(selectedDate.month, selectedDate.year)
-                updateItemsCounter()
-                updateHasMenuCalendarDayBlock()
-                catchResponseMessagesToDisplay(data.messages)
-
+            statusCode:{
+                200: function (data) {
+                    addNewItemToMenu(id)
+                    updateSelectedItems(selectedDate.month, selectedDate.year)
+                    updateItemsCounter()
+                    updateHasMenuCalendarDayBlock()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
             },
             error: function (xhr, status, error) {
                 console.error('Item not added!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
@@ -838,8 +849,9 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            success: function (data) {
-                startDownloadReport(
+            statusCode:{
+                200: function (data) {
+                    startDownloadReport(
                     oneItemOrderedByPersonnelReportFileName(
                         {
                             "item": id,
@@ -847,10 +859,12 @@ $(document).ready(function () {
                         }
                     ),data
                 )
+                }
             },
             error: function (xhr, status, error) {
                 console.error('the report didnt downloaded', status, 'and' +
                     ' error:', error, 'detail:', xhr.responseJSON );
+                checkErrorRelatedToAuth(xhr.status)
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
@@ -876,15 +890,18 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            success: function (data) {
-                removeItemFromMenu(id)
-                updateSelectedItems(selectedDate.month, selectedDate.year)
-                updateItemsCounter()
-                updateHasMenuCalendarDayBlock()
-                catchResponseMessagesToDisplay(data.messages)
+            statusCode:{
+                200: function (data) {
+                    removeItemFromMenu(id)
+                    updateSelectedItems(selectedDate.month, selectedDate.year)
+                    updateItemsCounter()
+                    updateHasMenuCalendarDayBlock()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
             },
             error: function (xhr, status, error) {
                 console.error('Item not removed!', status, 'and error:', error, 'detail:', xhr.responseJSON );
+                checkErrorRelatedToAuth(xhr.status)
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
@@ -901,18 +918,21 @@ $(document).ready(function () {
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(report.data()),
-        success: function (data) {
-            startDownloadReport(
-                fileNameGen(
-                    {
-                        "date": toShamsiFormat(selectedDate)
-                    }
-                ),data
-            )
+        statusCode: {
+            200: function (data) {
+                startDownloadReport(
+                    fileNameGen(
+                        {
+                            "date": toShamsiFormat(selectedDate)
+                        }
+                    ), data
+                )
+            }
         },
         error: function (xhr, status, error) {
             console.error('the report didnt downloaded', status, 'and' +
                 ' error:', error, 'detail:', xhr.responseJSON );
+            checkErrorRelatedToAuth(xhr.status)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
