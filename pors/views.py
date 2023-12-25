@@ -61,7 +61,6 @@ from .utils import (
 message = Message()
 
 
-@check([is_open_for_personnel])
 @authenticate()
 def ui(request, current_user):
     return render(
@@ -69,7 +68,6 @@ def ui(request, current_user):
     )
 
 
-@check([is_open_for_admins])
 @authenticate(privileged_users=True)
 def uiadmin(request, current_user):
     return render(
