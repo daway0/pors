@@ -774,7 +774,7 @@ $(document).ready(function () {
                     finishLoadingDisplay()
 
                     // بررسی می کنیم اگه عکس ها به خصوص عکس پرسنل لود نشده بوده اواتار بگذاره
-                    $('img').error(function () {
+                    $('img').on("error", function () {
                         $(this).attr('src', addStaticFilePrefixTo(DEFAULTITEMIMAGE));
                     });
                     catchResponseMessagesToDisplay(data.messages)
