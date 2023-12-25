@@ -85,7 +85,12 @@ def authenticate(privileged_users: bool = False):
         def wrapper(request, *args, **kwargs):
             now = u.localnow()
             token = request.COOKIES.get("token")
+
+            is_requested_from_admin = "admin" in request.path
             gateway_url = reverse("pors:gateway")
+            if is_requested_from_admin:
+                gateway_url += "?next=admin"
+
             if not token:
                 return HttpResponseRedirect(redirect_to=gateway_url)
 

@@ -530,7 +530,17 @@ def auth_gateway(request):
 
     now = localnow()
 
-    response = HttpResponse(status=202)
+    next_path: str = request.query_params.get("next")
+    if next_path == "admin":
+        redirect_to = reverse("pors:admin_panel")
+    else:
+        redirect_to = reverse("pors:personnel_panel")
+
+    full_path = f"{request.scheme}://{request.get_host()}{redirect_to}"
+    response = HttpResponse(
+        content=f"<script>window.location.replace('{full_path}')</script>",
+        status=202,
+    )
     cookies_expire_time = now + timedelta(weeks=2)
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
