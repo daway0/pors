@@ -21,6 +21,13 @@ def localnow() -> jdatetime.datetime:
     return utc_now.astimezone(local_timezone)
 
 
+def get_user_minimal_info(user) -> dict:
+    return {
+        "fullname": user.FullName,
+        "profile": user.Profile
+    }
+
+
 def get_str(date: jdatetime.date) -> str:
     """تبدیل کردن آبجکت دیت جلالی به رشته
     yyyy/mm/dd

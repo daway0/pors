@@ -97,7 +97,7 @@ def authenticate(privileged_users: bool = False):
                     " privilege ;)."
                 )
 
-            return view(request, *args, **kwargs)
+            return view(request, user, *args, **kwargs)
 
         return wrapper
 

@@ -47,6 +47,7 @@ from .utils import (
     get_submission_deadline,
     localnow,
     split_dates,
+    get_user_minimal_info
 )
 
 message = Message()
@@ -54,20 +55,27 @@ message = Message()
 
 @check([is_open_for_personnel])
 @authenticate()
-def ui(request):
-    return render(request, "personnelMainPanel.html")
+def ui(request, current_user):
+    return render(
+        request,
+        "personnelMainPanel.html",
+        get_user_minimal_info(current_user)
+    )
 
 
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def uiadmin(request):
-    return render(request, "administrativeMainPanel.html")
+def uiadmin(request, current_user):
+    return render(
+        request,
+        "administrativeMainPanel.html",
+        get_user_minimal_info(current_user))
 
 
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def add_item_to_menu(request):
+def add_item_to_menu(request, current_user):
     """
     Adding items to menu.
     Data will pass several validations in order to add item in menu.
@@ -99,7 +107,7 @@ def add_item_to_menu(request):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def remove_item_from_menu(request):
+def remove_item_from_menu(request, current_user):
     """
     Removing items from menu.
     Data will pass several validations in order to remove item.
@@ -145,7 +153,7 @@ class Categories(ListAPIView):
 @api_view(["GET"])
 @check([is_open_for_personnel])
 @authenticate()
-def personnel_calendar(request):
+def personnel_calendar(request, current_user):
     """
     Personnel's calendar which have enough information
         to generate the calendar from them.
@@ -246,7 +254,7 @@ def personnel_calendar(request):
 @api_view(["GET"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def edari_calendar(request):
+def edari_calendar(request, current_user):
     """
     Admin's calendar which have more detailed information about menus, orders.
 
@@ -297,7 +305,7 @@ def edari_calendar(request):
 
 @api_view(["GET"])
 @authenticate()
-def first_page(request):
+def first_page(request, current_user):
     """
     First page information.
     will pass authentication first.
@@ -358,7 +366,7 @@ def first_page(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_order_item(request):
+def create_order_item(request, current_user):
     """
     Responsible for submitting orders.
     The data will pass several validations in order to submit.
@@ -397,7 +405,7 @@ def create_order_item(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def remove_order_item(request):
+def remove_order_item(request, current_user):
     """
     This view will remove an item from specific order.
     Check `ValidateOrder` docs for more information about validators.
@@ -428,7 +436,7 @@ def remove_order_item(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_breakfast_order(request):
+def create_breakfast_order(request, current_user):
     """
     Responsible for submitting breakfast orders.
     The data will pass several validations in order to submit.
@@ -503,9 +511,6 @@ def auth_gateway(request):
     """
 
     personnel = "m.noruzi@eit"
-    full_name = "mikaeil norouzi"
-    is_admin = False
-    profile = "blablabla"
 
     personnel_user_record = User.objects.filter(
         Personnel=personnel, IsActive=True
@@ -536,6 +541,9 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
+        full_name = "mikaeil norouzi"
+        is_admin = False
+        profile = "blablabla"
         token = generate_token_hash(personnel, full_name, getrandbits)
         User.objects.create(
             Personnel=personnel,
@@ -579,20 +587,3 @@ def auth_gateway(request):
 
     return response
 
-
-# @api_view(["PATCH"])
-# @check([is_open_for_personnel])
-# def change_delivery_place(request):
-#     request.data["personnel"] = "e.rezaee@eit"
-#     validator = b.ValidateDeliveryPlace(request.data)
-#     if validator.is_valid():
-#         validator.change_delivary_place()
-#         message.add_message(
-#             "ساختمان تحویل سفارش شما با موفقیت عوض شد.", Message.SUCCESS
-#         )
-#         return Response({"messages": message.messages()}, status.HTTP_200_OK)
-
-#     message.add_message(validator.message, Message.ERROR)
-#     return Response(
-#         {"messages": message.messages(), "errors": validator.error}
-#     )
