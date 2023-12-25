@@ -23,8 +23,7 @@ from django.db import models
 
 class User(models.Model):
     Personnel = models.CharField(max_length=250)
-    FirstName = models.CharField(max_length=250)
-    LastName = models.CharField(max_length=250)
+    FullName = models.CharField(max_length=250)
     Profile = models.CharField(max_length=500, null=True, blank=True)
     IsAdmin = models.BooleanField(default=False)
     Token = models.CharField(max_length=64)
@@ -33,10 +32,7 @@ class User(models.Model):
 
     def __str__(self) -> str:
         return self.Personnel
-
-    @property
-    def FullName(self):
-        return f"{self.FirstName} {self.LastName}"
+    
 
     class Meta:
         constraints = [

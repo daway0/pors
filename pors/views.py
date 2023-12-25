@@ -497,12 +497,13 @@ def auth_gateway(request):
         - The token got expired and must get new one.
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
+
+    Front can use `next` query parameter to redirect the personnel to
+        its corresponding panel, either `personnel` or `admin`.
     """
 
     personnel = "m.noruzi@eit"
-    first_name = "mikaeil"
-    last_name = "norouzi"
-    full_name = first_name + " " + last_name
+    full_name = "mikaeil norouzi"
     is_admin = False
     profile = "blablabla"
 
@@ -512,7 +513,17 @@ def auth_gateway(request):
 
     now = localnow()
 
-    response = HttpResponse(status=202)
+    next_path: str = request.query_params.get("next")
+    if next_path == "admin":
+        redirect_to = reverse("pors:admin_panel")
+    else:
+        redirect_to = reverse("pors:personnel_panel")
+
+    full_path = f"{request.scheme}://{request.get_host()}{redirect_to}"
+    response = HttpResponse(
+        content=f"<script>window.location.replace('{full_path}')</script>",
+        status=202,
+    )
     cookies_expire_time = now + timedelta(weeks=2)
     max_age = int((cookies_expire_time - now).total_seconds())
     cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
@@ -528,8 +539,7 @@ def auth_gateway(request):
         token = generate_token_hash(personnel, full_name, getrandbits)
         User.objects.create(
             Personnel=personnel,
-            FirstName=first_name,
-            LastName=last_name,
+            FullName=full_name,
             Profile=profile,
             IsAdmin=is_admin,
             Token=token,
