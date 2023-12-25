@@ -49,6 +49,13 @@ from .utils import (
     split_dates,
     get_user_minimal_info
 )
+# from Utility.Authentication.Utils import (
+#     V1_PermissionControl as permission_control,
+#     V1_get_data_from_token as get_token_data,
+#     V1_find_token_from_request as find_token
+# )
+#
+# from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
 message = Message()
 
@@ -333,10 +340,8 @@ def first_page(request, current_user):
 
     now = localnow()
 
-    if (
-        system_settings.BreakfastRegistrationWindowHours
-        < system_settings.LaunchRegistrationWindowHours
-    ):
+    if (system_settings.BreakfastRegistrationWindowDays >
+            system_settings.LaunchRegistrationWindowDays):
         year, month, day = b.get_first_orderable_date(
             now, days_breakfast_deadline, hours_breakfast_deadline
         )
@@ -490,7 +495,7 @@ def get_subsidy(request):
 
     return Response({"data": {"subsidy": subsidy}})
 
-
+# @permission_control
 @api_view(["GET"])
 def auth_gateway(request):
     """
@@ -509,8 +514,14 @@ def auth_gateway(request):
     Front can use `next` query parameter to redirect the personnel to
         its corresponding panel, either `personnel` or `admin`.
     """
-
+    # token = find_token(request)
+    # personnel = get_token_data(token, "username")
+    #
+    # full_name = get_token_data(token, "user_FullName")
+    # is_admin = False
     personnel = "m.noruzi@eit"
+    full_name = "mikaeil norouzi"
+    is_admin = False
 
     personnel_user_record = User.objects.filter(
         Personnel=personnel, IsActive=True
@@ -541,9 +552,9 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
-        full_name = "mikaeil norouzi"
-        is_admin = False
-        profile = "blablabla"
+
+        # profile = user_info(personnel)["StaticPhotoURL"]
+        profile = ""
         token = generate_token_hash(personnel, full_name, getrandbits)
         User.objects.create(
             Personnel=personnel,
