@@ -697,6 +697,12 @@ function checkErrorRelatedToAuth(errorCode) {
     if (errorCode === 403) redirectToGateway()
 }
 
+function imgError(image) {
+    image.onerror = "";
+    image.src = addStaticFilePrefixTo(DEFAULTITEMIMAGE);
+    return true;
+}
+
 $(document).ready(function () {
 
 

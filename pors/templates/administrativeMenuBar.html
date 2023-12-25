@@ -1,6 +1,6 @@
 {% load static %}
 <div class="group flex items-center">
-    <img class="shrink-0 h-12 w-12 rounded-md"
+    <img class="shrink-0 h-12 w-12 rounded-md" onerror="imgError(this);"
          {% with defaulting="/static/Pors/images/placeholder.png" %}
          src="{{ profile|default:defaulting }}"
          {% endwith %}
