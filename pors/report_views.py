@@ -16,7 +16,7 @@ message = Message()
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def personnel_daily_report(request):
+def personnel_daily_report(request, current_user):
     """
     Generating CSV based report for personnel's orders on each day.
 
@@ -51,7 +51,7 @@ def personnel_daily_report(request):
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def personnel_financial_report(request):
+def personnel_financial_report(request, current_user):
     """
     Returning monthly financial report for each personel on the provided date.
 
@@ -105,7 +105,7 @@ def personnel_financial_report(request):
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def item_ordering_personnel_list_report(request):
+def item_ordering_personnel_list_report(request, current_user):
     """
     This view is responsible for generating a csv file that contains
         personnel who have ordered a specific item on specific date.
