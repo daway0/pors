@@ -340,7 +340,7 @@ def first_page(request, current_user):
 
     now = localnow()
 
-    if (system_settings.BreakfastRegistrationWindowDays >
+    if (system_settings.BreakfastRegistrationWindowDays <
             system_settings.LaunchRegistrationWindowDays):
         year, month, day = b.get_first_orderable_date(
             now, days_breakfast_deadline, hours_breakfast_deadline
