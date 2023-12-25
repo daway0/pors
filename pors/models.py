@@ -322,6 +322,8 @@ class Order(models.Model):
 class OrderItem(models.Model):
     """ایتم های سفارش داده شده برای کاربران"""
 
+    CreatedAt = models.DateTimeField(auto_now_add=True)
+    ModifiedAt = models.DateTimeField(auto_now=True, null=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
     # DeliveryPlace = models.CharField(
