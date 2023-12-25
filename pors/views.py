@@ -550,7 +550,7 @@ def auth_gateway(request):
         response.set_cookie("token", token, path=cookies_path, max_age=max_age)
         return response
 
-    elif personnel_user_record.ExpiredAt <= now.strftime("%Y/%m/%d"):
+    elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
         # In this scenario, personnel's token is expired,
         # So we generate a new one, update the existing one in database,
         # and set the new token for personnel as a cookie.

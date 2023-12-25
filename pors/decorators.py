@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from . import models as m
+from . import utils as u
 from .messages import Message
 
 messages = Message()
@@ -82,12 +83,17 @@ def authenticate(privileged_users: bool = False):
     def decorator(view: Callable):
         @functools.wraps(view)
         def wrapper(request, *args, **kwargs):
+            now = u.localnow()
             token = request.COOKIES.get("token")
             gateway_url = reverse("pors:gateway")
             if not token:
                 return HttpResponseRedirect(redirect_to=gateway_url)
 
-            user = m.User.objects.filter(Token=token, IsActive=True).first()
+            user = m.User.objects.filter(
+                Token=token,
+                IsActive=True,
+                ExpiredAt__gte=now.strftime("%Y/%m/%d"),
+            ).first()
             if not user:
                 return HttpResponseRedirect(redirect_to=gateway_url)
 
