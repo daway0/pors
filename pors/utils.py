@@ -21,11 +21,11 @@ def localnow() -> jdatetime.datetime:
     return utc_now.astimezone(local_timezone)
 
 
-def get_user_minimal_info(user) -> dict:
+def get_user_minimal_info(user: m.User) -> dict:
     return {
         "fullname": user.FullName,
         "profile": user.Profile,
-        "is_admin":user.IsAdmin
+        "is_admin": user.IsAdmin,
     }
 
 
