@@ -200,7 +200,7 @@ function displayDismiss(color, content, duration) {
     <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
       <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
     </svg>
-    <div class="ms-3 text-sm font-medium">
+    <div class="ms-3 text-xs font-medium">
         ${content}
     </div>
 </div>
@@ -236,9 +236,9 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
     let opacity = ""
     let orderedBy = ""
     let MenuIcon = addStaticFilePrefixTo("images/food-dish.svg")
-    let menuIconHTML = `<img class="w-8 h-8 hidden" src="${MenuIcon}" alt="">`
+    let menuIconHTML = `<img class="w-6 h-6 hidden" src="${MenuIcon}" alt="">`
     if (hasMenu === true) {
-        menuIconHTML = `<img class="w-8 h-8" src="${MenuIcon}" alt="">`
+        menuIconHTML = `<img class="w-6 h-6" src="${MenuIcon}" alt="">`
     }
     let date = toShamsiFormat({
         year: yearNumber,
@@ -251,7 +251,7 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
     }
 
     if (orderedByCounter > 0 && hasMenu){
-        orderedBy = `<span class="text-sm text-slate-500 self-center">${convertToPersianNumber(orderedByCounter)}</span>`
+        orderedBy = `<span class="text-xs text-slate-500 self-center">${convertToPersianNumber(orderedByCounter)}</span>`
     }
 
 
@@ -259,9 +259,9 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
 
     return `<div data-date="${date}" data-day-title="${dayTitle}" data-day-number="${dayNumber}" class="cd- ${opacity} cursor-pointer flex flex-col items-center justify-around border border-gray-100 p-4 grow hover:bg-gray-200 hover:border-gray-300">
                                 <div> 
-                                    <span class="text-4xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
+                                    <span class="text-2xl ${dayNumberStyle}">${convertToPersianNumber(dayNumber)}</span>
                                 </div>
-                                <div class="w-8 h-8 flex flex-col">
+                                <div class="w-6 h-6 flex flex-col">
                                     ${menuIconHTML}
                                     ${orderedBy}
                                 </div>
@@ -293,7 +293,7 @@ function menuItemBlock(id, itemName, pic, orderedByCount) {
                 class="h-16 w-16 rounded object-cover self-start"
         />
         <div class="w-8/12">
-            <div><h3 class="text-sm text-gray-900">${itemName}</h3>
+            <div><h3 class="text-xs text-gray-900">${itemName}</h3>
             </div>
         </div>
         <div class="flex justify-end w-3/12 gap-2">
@@ -307,12 +307,12 @@ function menuItemBlock(id, itemName, pic, orderedByCount) {
 }
 
 function dropDownItemBlock(id, title, category,mealType) {
-    return `<a data-item-id="${id}" class="flex flex-row justify-between px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md">
+    return `<a data-item-id="${id}" class="flex flex-row justify-between text-xs px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md">
     <span>${title}</span>
 
 <span class="float-left">
-<span class="italic text-gray-500 text-sm">${category}</span>
-<span class="italic text-gray-500 text-sm">${mealType}</span>
+<span class="italic text-gray-500 text-xs">${category}</span>
+<span class="italic text-gray-500 text-xs">${mealType}</span>
 </span>
 </a>`
 }

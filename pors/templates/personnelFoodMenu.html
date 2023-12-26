@@ -2,32 +2,32 @@
 <div class="flex justify-between">
     <div class="flex items-center gap-3">
         <img class="w-6 h-6" src="{% static 'Pors/images/today.svg' %}" alt="">
-        <span id="menu-date-wrapper" data-date="1402/02/08" class="text-lg"></span>
+        <span id="menu-date-wrapper" data-date="1402/02/08" class="text-base"></span>
     </div>
     <div class="flex items-center gap-3"><img class="w-6 h-6" src="{% static 'Pors/images/fast-food.svg' %}"
-                                              alt=""> <span id="menu-items-counter" class="text-lg pt-2"></span></div>
+                                              alt=""> <span id="menu-items-counter" class="text-base pt-2"></span></div>
 </div>
 <!-- component -->
 <div class="mt-8 flex flex-col space-y-4">
-    <ul id="menu-items-container" class="space-y-2 max-h-[38rem] pb-2 overflow-y-auto">
+    <ul id="menu-items-container" class="space-y-2 max-h-[32rem] pb-2 overflow-y-auto">
     </ul>
-    <div id="day-bill" class="hidden rounded-md bg-white p-2 shadow-md">
+    <div id="day-bill" class="hidden rounded-md bg-white p-2 shadow-md text-sm">
 <h2 class="px-2 font-bold">جزییات سفارش</h2>
 <hr class="h-px mt-2 mb-4 bg-gray-200 border-0">
 
         <ul>
 {#            <li class="flex gap-3 justify-between px-2 pb-2"><span>محل تحویل سفارش</span><span#}
 {#                    class="flex gap-0.5"><span >ساختمان پدیدار</span><a#}
-{#                    id="location-modal-trigger" class="text-sm bg-blue-100 hover:bg-blue-300 rounded-full px-2 !cursor-pointer">ویرایش</a></span></li>#}
+{#                    id="location-modal-trigger" class="text-xs bg-blue-100 hover:bg-blue-300 rounded-full px-2 !cursor-pointer">ویرایش</a></span></li>#}
             <li class="flex gap-3 justify-between px-2"><span>کل</span><span
                     class="flex gap-0.5"><span class="total-amount">۱۲۵۰۰۰۰</span><span
-                    class="text-sm">تومان</span></span></li>
+                    class="text-xs">تومان</span></span></li>
             <li class="flex gap-3 justify-between px-2"><span>یارانه فناوران</span><span
                     class="flex gap-0.5"><span class="subsidy-amount">۱۲۵۰۰۰۰</span><span
-                    class="text-sm">تومان</span></span></li>
+                    class="text-xs">تومان</span></span></li>
             <li class="flex gap-3 justify-between px-2 bg-green-200 text-green-950 font-bold rounded-md"><span>قابل پرداخت</span><span
                     class="flex gap-0.5"><span class="debt-amount">۱۲۵۰۰۰۰</span><span
-                    class="text-sm">تومان</span></span></li>
+                    class="text-xs">تومان</span></span></li>
         </ul>
     </div>
     <div id="no-order-for-today" class="flex flex-col w-full items-center gap-3 text-gray-500">

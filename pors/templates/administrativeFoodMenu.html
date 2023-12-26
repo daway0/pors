@@ -2,14 +2,14 @@
 <div class="flex justify-between">
     <div class="flex items-center gap-3">
         <img class="w-6 h-6" src="{% static 'Pors/images/today.svg' %}" alt="">
-        <span id="menu-date-wrapper" class="text-lg">چهارشنبه 28 آبان</span>
+        <span id="menu-date-wrapper" class="text-base">چهارشنبه 28 آبان</span>
     </div>
     <div class="flex items-center gap-3">
 
 
 
         <img class="w-6 h-6" src="{% static 'Pors/images/fast-food.svg' %}" alt="">
-        <span id="menu-items-counter" class="text-lg pt-2">3</span>
+        <span id="menu-items-counter" class="text-base pt-2">3</span>
     </div>
 </div>
 
@@ -17,7 +17,7 @@
 <div class="mt-4">
     <div id="dropdown-menu-container" class="relative group hidden">
         <button id="dropdown-button"
-                class="inline-flex justify-between w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500">
+                class="inline-flex justify-between w-full px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500">
             <span class="mr-2">افزودن غذای جدید به منو </span>
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ml-2 -mr-1" viewBox="0 0 20 20" fill="currentColor"
                  aria-hidden="true">
@@ -29,7 +29,7 @@
         <div id="dropdown-menu"
              class="hidden w-full max-h-[25rem] overflow-y-auto absolute right-0 mt-2 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-1 space-y-1">
             <input id="search-input"
-                   class="block w-full px-4 py-2 text-gray-800 border rounded-md  border-gray-300 focus:outline-none"
+                   class="block text-xs w-full px-4 py-2 text-gray-800 border rounded-md  border-gray-300 focus:outline-none"
                    type="text" placeholder="جستجو آیتم مورد نظر" autocomplete="off">
 
 
@@ -101,7 +101,7 @@
 
 
 <div class="mt-8">
-    <ul id="menu-items-container" class="max-h-[45rem] pb-2 overflow-y-auto grid grid-cols-2 gap-3">
+    <ul id="menu-items-container" class="max-h-[32rem] pb-2 overflow-y-auto grid grid-cols-2 gap-3">
     </ul>
 </div>
 
