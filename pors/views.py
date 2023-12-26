@@ -49,12 +49,14 @@ from .utils import (
     split_dates,
 )
 
+# todo
 # from Utility.Authentication.Utils import (
 #     V1_PermissionControl as permission_control,
 #     V1_get_data_from_token as get_token_data,
 #     V1_find_token_from_request as find_token
 # )
 #
+# todo
 # from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
 message = Message()
@@ -487,7 +489,7 @@ def get_subsidy(request):
 
     return Response({"data": {"subsidy": subsidy}})
 
-
+# todo
 # @permission_control
 @api_view(["GET"])
 def auth_gateway(request):
@@ -504,7 +506,7 @@ def auth_gateway(request):
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
     """
-
+    # todo
     # token = find_token(request)
     # personnel = get_token_data(token, "username")
     #
@@ -538,6 +540,7 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
+        # todo
         # profile = user_info(personnel)["StaticPhotoURL"]
         profile = ""
         token = generate_token_hash(personnel, full_name, getrandbits)
