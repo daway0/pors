@@ -1,10 +1,32 @@
+import codecs
+import csv
 import json
 import re
+from hashlib import sha256
+from typing import Optional
 
 import jdatetime
-from persiantools.jdatetime import JalaliDate, timedelta
+import pytz
+from django.db import connection
+from django.db.models import QuerySet
+from django.http import HttpResponse
+from persiantools.jdatetime import JalaliDate
 
-from .config import ORDER_REGISTRATION_CLOSED_IN
+from . import models as m
+
+
+def localnow() -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc)
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone)
+
+
+def get_user_minimal_info(user: m.User) -> dict:
+    return {
+        "fullname": user.FullName,
+        "profile": user.Profile,
+        "is_admin": user.IsAdmin,
+    }
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -58,30 +80,23 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 
 def get_current_date() -> tuple[int, int, int]:
-    now = jdatetime.datetime.now()
+    "Returning current date"
+    now = localnow()
     return now.year, now.month, now.day
-
-
-def get_first_orderable_date() -> tuple[int, int, int]:
-    now = jdatetime.datetime.now()
-
-    if now.hour > ORDER_REGISTRATION_CLOSED_IN:
-        now += timedelta(days=2)
-    else:
-        now += timedelta(days=1)
-    return now.year, now.month, now.day
-
-
-def replace_hyphens_from_date(*dates: str):
-    if len(dates) == 1:
-        return dates[0].replace("-", "/")
-    new_date = []
-    for date in dates:
-        new_date.append(date.replace("-", "/"))
-    return new_date
 
 
 def split_dates(dates, mode: str):
+    """
+    Splitting date and returning requested section based on mode.
+
+    Args:
+        dates: List of dates, or a single date to split.
+        mode: The section, choose between `year`, `month` and `day`.
+
+    Returns:
+        List or single integer.
+        int | list[int]
+    """
     new_dates = []
 
     if mode == "day":
@@ -104,14 +119,41 @@ def split_dates(dates, mode: str):
         return new_dates
 
 
-def split_json_dates(dates: str):
+def split_json_dates(dates: str) -> dict[str, str]:
+    """
+    Splitting a json list of dates and generating a dict with day number.
+    This function assumes that you have a `day` key in your json data that
+    contains a VALID date
+
+    Args:
+        dates: serialized (json) data contains a `date` key.
+
+    Returns:
+        Deserialized data, date key will contain the number of day only.
+    """
+
     dates = json.loads(dates)
     for obj in dates:
         obj["day"] = int(obj["day"].split("/")[2])
     return dates
 
 
-def validate_date(date: str):
+def validate_date(date: str) -> Optional[str]:
+    """
+    Validating date value and format.
+    Replacing "-" with "/" if the value is valid.
+
+    Example:
+        "1402/00/01" = valid
+        "1402/0/1" = invalid, month and day section must have 2 integers.
+
+    Args:
+        date: the date for validation.
+
+    Returns:
+        date | None: date value or None if it was invalid.
+    """
+
     pattern = r"^\d{4}\/\d{2}\/\d{2}$"
     if not isinstance(date, str):
         return None
@@ -121,3 +163,149 @@ def validate_date(date: str):
         return date
     else:
         return None
+
+
+def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
+    """
+    Executing raw queries via context manager
+
+    Args:
+        query: the raw query
+        params: parameters used in query, avoiding sql injections
+
+    Returns:
+        result: the data retrieved by query
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(query, params)
+        columns = [col[0] for col in cursor.description]
+        result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return result
+
+
+def generate_csv(queryset: QuerySet):
+    """
+    This function generates a dynamic csv content based on
+        the queryset data argument.
+
+    Warnings:
+        Please note that you have to customize your queryset via filter, values
+            and other stuffs before using this function.
+        All fields and values on received queryset will use in csv.
+
+    Args:
+        queryset: The queryset that you want to generate csv from it.
+
+    Returns:
+        str: csv content that generated from queryset.
+    """
+    response = HttpResponse(content_type="text/csv")
+    response.write(codecs.BOM_UTF8)
+
+    writer = csv.writer(response)
+
+    headers_appended = False
+
+    for obj in queryset:
+        if isinstance(obj, dict):
+            data = obj.values()
+            if not headers_appended:
+                writer.writerow(obj.keys())
+                headers_appended = True
+            writer.writerow(data)
+        else:
+            keys = []
+            values = []
+            for field in obj._meta.fields:
+                keys.append(field.name)
+                values.append(getattr(obj, field.name))
+
+            if not headers_appended:
+                writer.writerow(keys)
+                headers_appended = True
+            writer.writerow(values)
+
+    return response
+
+
+def validate_request_based_on_schema(
+    schema: dict, data: dict
+) -> tuple[str, int]:
+    """
+    This function is responsible for validating request data based on the
+        provided schema.
+    Validation is checked by both checking parameter names
+        as well as their types.
+
+    Args:
+        schema (dict): Your prefered schema which you want
+            to receive from requets
+        data (dict): The request data.
+
+    """
+
+    schema_params = set(schema.keys())
+    data_params = set(data.keys())
+    diffs = schema_params.difference(data_params)
+    if diffs:
+        raise ValueError(f"{diffs} parameter(s) must specified.")
+
+    for param in schema_params:
+        if not isinstance(data.get(param), type(schema.get(param))):
+            raise ValueError(f"Invalid {param} value.")
+
+
+def get_submission_deadline(
+    meal_type: m.Item.MealTypeChoices = False,
+):
+    """
+    Returning the submission's deadline based on the mealtype it has.
+    The deadline is fetched from SystemSetting table.
+
+    If meal_type parameter is not specified, will return both deadlines
+        from database, first is breakfast, second is launch.
+
+    Args:
+        meal_type: The submission's deadline.
+
+    Returns:
+        The deadline value.
+        tuple[int, int, int, int] | tuple[int, int]
+    """
+
+    if not meal_type:
+        return (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
+
+    if meal_type == m.Item.MealTypeChoices.LAUNCH:
+        deadline = (
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
+
+    elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
+        deadline = (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+        )
+
+    return deadline
+
+
+def generate_token_hash(
+    personnel: str, full_name: str, random_bit: int
+) -> str:
+    packed_args = (
+        personnel.encode()
+        + full_name.encode()
+        + bytes(str(random_bit), "utf-8")
+    )
+    return sha256(packed_args).hexdigest()
+
+
+def get_personnel_from_token(token: str):
+    return m.User.objects.filter(Token=token, IsActive=True).first()

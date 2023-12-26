@@ -1,0 +1,1677 @@
+[
+  {
+    "model": "pors.systemsetting",
+    "pk": 1,
+    "fields": {
+      "IsSystemOpenForPersonnel": true,
+      "IsSystemOpenForAdmin": true,
+      "SystemUpdating": false,
+      "SuperAdmins": "e.rezaee@eit",
+      "BreakfastRegistrationWindowHours": 14,
+      "BreakfastRegistrationWindowDays": 2,
+      "LaunchRegistrationWindowHours": 14,
+      "LaunchRegistrationWindowDays": 1,
+      "IsSystemOpenForLaunchSubmission": true,
+      "IsSystemOpenForBreakfastSubmission": true,
+      "TotalItemsCanOrderedForBreakfastByPersonnel": 1
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 6,
+    "fields": {
+      "HolidayDate": "1402/09/26"
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 7,
+    "fields": {
+      "HolidayDate": "1402/10/05"
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 8,
+    "fields": {
+      "HolidayDate": "1402/10/19"
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 9,
+    "fields": {
+      "HolidayDate": "1402/10/22"
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 10,
+    "fields": {
+      "HolidayDate": "1402/12/06"
+    }
+  },
+  {
+    "model": "pors.holiday",
+    "pk": 11,
+    "fields": {
+      "HolidayDate": "1402/12/29"
+    }
+  },
+  {
+    "model": "pors.category",
+    "pk": 1,
+    "fields": {
+      "CategoryName": "سنتی"
+    }
+  },
+  {
+    "model": "pors.category",
+    "pk": 2,
+    "fields": {
+      "CategoryName": "ایرانی"
+    }
+  },
+  {
+    "model": "pors.subsidy",
+    "pk": 1,
+    "fields": {
+      "Amount": 5000,
+      "FromDate": "1402/02/02",
+      "UntilDate": "1402/05/06"
+    }
+  },
+  {
+    "model": "pors.subsidy",
+    "pk": 2,
+    "fields": {
+      "Amount": 6000,
+      "FromDate": "1402/05/07",
+      "UntilDate": "1402/09/14"
+    }
+  },
+  {
+    "model": "pors.subsidy",
+    "pk": 3,
+    "fields": {
+      "Amount": 100000,
+      "FromDate": "1402/09/15",
+      "UntilDate": null
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 1,
+    "fields": {
+      "ItemName": "خوراک کباب سلطانی ",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "۳۰۰ گرم برنج صددرصد ايرانی، ٣٠ گرم برنج زعفرانی ،١٠٠ گرم گوشت چرخ کرده ، ۳۰ گرم سيب زميني سرخ شده ،بسته بندی بهداشتی ماكروفری",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 570000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 3,
+    "fields": {
+      "ItemName": "خوراک کباب فیله ",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "گوشت چرخ کرده، آرد نخودچی، لپه، سیب زمینی، رب، نعنا",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 420000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 4,
+    "fields": {
+      "ItemName": "کوفته نخودچی اصفهان",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "گوشت چرخ کرده، آرد نخودچی، لپه، سیب زمینی، رب، نعنا",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 168800
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 5,
+    "fields": {
+      "ItemName": "چلو خورشت واویشکا",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "۳۰۰ گرم برنج صددرصد ايرانی، ٣٠ گرم برنج زعفرانی ،١٠٠ گرم گوشت چرخ کرده ، ۳۰ گرم سيب زميني سرخ شده ،بسته بندی بهداشتی ماكروفری",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 6,
+    "fields": {
+      "ItemName": "چکدرمه با مرغ",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "240 گرم ران پخته شده، 320 گرم برنج صددرصد ایرانی، سس گوجه مخصوص چکدرمه، ادویه مخصوص، بسته بندی بهداشتی مایکروفری",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 7,
+    "fields": {
+      "ItemName": "کوفته کرمانشاهی",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "حدود 100 گرم برنج به اضافه 80 گرم گوشت چرخ کرده با انواع سبزیجات معطر و سس انار با نان بسته بندی ",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 56000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 8,
+    "fields": {
+      "ItemName": "یارما پلو آذری",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "پلو، بلغور گندم، گوشت چرخ کرده، سیب زمینی، هویج",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 9,
+    "fields": {
+      "ItemName": "پلو بندری جنوبی با ماهی",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "پلو با مخلوطی از فلفل تند و شیرینف شوید، تن ماهی، ادویه تند",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 10,
+    "fields": {
+      "ItemName": "تابه گشنیز جنوبی با پلو",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "حدود 300 گرم پلو 130 گرم کباب تابه ای با گشنیز و گوجه سرخ شده ",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 11,
+    "fields": {
+      "ItemName": "خوراک کباب سلطانی ",
+      "Category": 1,
+      "MealType": "LNC",
+      "ItemDesc": "۳ عدد تخم مرغ، ۱۵۰ گرم اسفناج، نصف نان بربری، دورچین: خیارشور اسلایسی، نصف لیمو ترش",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 12,
+    "fields": {
+      "ItemName": "املت ایرانی",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "۲ عدد تخم مرغ، ۴۰ گرم پپرونی ۶۰%، نصف نان بربری، دورچین: خیارشور اسلایسی، نصف لیمو ترش، ظرف آلمینیومی",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 100000
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 13,
+    "fields": {
+      "ItemName": "نون پنیر گردو",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "دو عدد تخم مرغ، ۷۰ گرم ھات داگ مجاری ۶۰%، دورچین: نصف نان بربری، خیارشور اسلایسی، نصف لیمو ترش، ظرف آلومینومی",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 16,
+    "fields": {
+      "ItemName": " ساندویچ پنیر خامه ای و خرما",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم ، پنیر خامه ای و خرما",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 17,
+    "fields": {
+      "ItemName": " ساندویچ پنیر خامه ای و مربای بهار نارنج",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم،پنیر خامه ای و مربای بهار نارنج",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 18,
+    "fields": {
+      "ItemName": " ساندویچ پنیر خامه ای و گردو ",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم ، پنیر خامه ای و گردو",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 19,
+    "fields": {
+      "ItemName": " ساندویج پنیر خامه ای و حلوا ارده ",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم،پنیر خامه ای و حلوا ارده",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 20,
+    "fields": {
+      "ItemName": " ساندویچ پنیر خامه ای و زیتون",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم،پنیر خامه ای،زیتون،سبزی معطر،ادویه",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.item",
+    "pk": 21,
+    "fields": {
+      "ItemName": " ساندویچ پنیر خامه ای و سبزیجات ",
+      "Category": 2,
+      "MealType": "BRF",
+      "ItemDesc": "نان حجیم ،پنیر خامه ای ، سبزی معطر، ادویه",
+      "IsActive": true,
+      "Image": "",
+      "CurrentPrice": 0
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 120,
+    "fields": {
+      "AvailableDate": "1402/11/09",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 121,
+    "fields": {
+      "AvailableDate": "1402/11/08",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 123,
+    "fields": {
+      "AvailableDate": "1402/11/12",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 130,
+    "fields": {
+      "AvailableDate": "1402/11/18",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 135,
+    "fields": {
+      "AvailableDate": "1402/01/03",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 147,
+    "fields": {
+      "AvailableDate": "1402/08/24",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 151,
+    "fields": {
+      "AvailableDate": "1402/08/16",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 153,
+    "fields": {
+      "AvailableDate": "1402/08/16",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 154,
+    "fields": {
+      "AvailableDate": "1402/08/16",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 166,
+    "fields": {
+      "AvailableDate": "1402/08/18",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 167,
+    "fields": {
+      "AvailableDate": "1402/08/18",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 168,
+    "fields": {
+      "AvailableDate": "1402/08/18",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 169,
+    "fields": {
+      "AvailableDate": "1402/08/18",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 171,
+    "fields": {
+      "AvailableDate": "1402/08/26",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 172,
+    "fields": {
+      "AvailableDate": "1402/08/26",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 174,
+    "fields": {
+      "AvailableDate": "1402/08/26",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 175,
+    "fields": {
+      "AvailableDate": "1402/08/26",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 176,
+    "fields": {
+      "AvailableDate": "1402/11/11",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 179,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 181,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 182,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 183,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 184,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 185,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 186,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 187,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 188,
+    "fields": {
+      "AvailableDate": "1402/11/01",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 192,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 193,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 194,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 195,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 196,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 197,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 198,
+    "fields": {
+      "AvailableDate": "1402/08/19",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 199,
+    "fields": {
+      "AvailableDate": "1402/08/11",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 200,
+    "fields": {
+      "AvailableDate": "1402/08/11",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 201,
+    "fields": {
+      "AvailableDate": "1402/08/09",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 202,
+    "fields": {
+      "AvailableDate": "1402/08/09",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 203,
+    "fields": {
+      "AvailableDate": "1402/08/07",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 204,
+    "fields": {
+      "AvailableDate": "1402/08/07",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 205,
+    "fields": {
+      "AvailableDate": "1402/08/07",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 206,
+    "fields": {
+      "AvailableDate": "1402/08/07",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 210,
+    "fields": {
+      "AvailableDate": "1402/08/17",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 211,
+    "fields": {
+      "AvailableDate": "1402/08/10",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 212,
+    "fields": {
+      "AvailableDate": "1402/08/10",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 213,
+    "fields": {
+      "AvailableDate": "1402/08/04",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 214,
+    "fields": {
+      "AvailableDate": "1402/08/04",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 215,
+    "fields": {
+      "AvailableDate": "1402/08/04",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 218,
+    "fields": {
+      "AvailableDate": "1402/08/04",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 220,
+    "fields": {
+      "AvailableDate": "1402/08/15",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 221,
+    "fields": {
+      "AvailableDate": "1402/08/25",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 222,
+    "fields": {
+      "AvailableDate": "1402/08/14",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 223,
+    "fields": {
+      "AvailableDate": "1402/12/19",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 231,
+    "fields": {
+      "AvailableDate": "1402/08/23",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 254,
+    "fields": {
+      "AvailableDate": "1402/09/20",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 255,
+    "fields": {
+      "AvailableDate": "1402/09/20",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 256,
+    "fields": {
+      "AvailableDate": "1402/09/20",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 262,
+    "fields": {
+      "AvailableDate": "1402/09/09",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 263,
+    "fields": {
+      "AvailableDate": "1402/09/09",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 265,
+    "fields": {
+      "AvailableDate": "1402/09/09",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 266,
+    "fields": {
+      "AvailableDate": "1402/09/11",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 267,
+    "fields": {
+      "AvailableDate": "1402/09/11",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 268,
+    "fields": {
+      "AvailableDate": "1402/09/11",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 269,
+    "fields": {
+      "AvailableDate": "1402/09/11",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 272,
+    "fields": {
+      "AvailableDate": "1402/09/21",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 273,
+    "fields": {
+      "AvailableDate": "1402/09/21",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 276,
+    "fields": {
+      "AvailableDate": "1402/09/14",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 278,
+    "fields": {
+      "AvailableDate": "1402/09/14",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 279,
+    "fields": {
+      "AvailableDate": "1402/09/14",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 280,
+    "fields": {
+      "AvailableDate": "1402/09/14",
+      "Item": 11,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 284,
+    "fields": {
+      "AvailableDate": "1402/09/23",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 286,
+    "fields": {
+      "AvailableDate": "1402/09/23",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 287,
+    "fields": {
+      "AvailableDate": "1402/09/23",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 288,
+    "fields": {
+      "AvailableDate": "1402/09/23",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 290,
+    "fields": {
+      "AvailableDate": "1402/09/29",
+      "Item": 11,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 303,
+    "fields": {
+      "AvailableDate": "1402/12/20",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 315,
+    "fields": {
+      "AvailableDate": "1402/11/08",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 335,
+    "fields": {
+      "AvailableDate": "1402/11/26",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 337,
+    "fields": {
+      "AvailableDate": "1402/11/13",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 347,
+    "fields": {
+      "AvailableDate": "1402/09/29",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 348,
+    "fields": {
+      "AvailableDate": "1402/09/29",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 365,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 369,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 371,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 10,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 373,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 376,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 381,
+    "fields": {
+      "AvailableDate": "1402/10/01",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 382,
+    "fields": {
+      "AvailableDate": "1402/10/02",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 384,
+    "fields": {
+      "AvailableDate": "1402/10/04",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 386,
+    "fields": {
+      "AvailableDate": "1402/10/06",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 387,
+    "fields": {
+      "AvailableDate": "1402/10/07",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 388,
+    "fields": {
+      "AvailableDate": "1402/10/08",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 389,
+    "fields": {
+      "AvailableDate": "1402/10/10",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 390,
+    "fields": {
+      "AvailableDate": "1402/10/09",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 391,
+    "fields": {
+      "AvailableDate": "1402/10/11",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 392,
+    "fields": {
+      "AvailableDate": "1402/10/12",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 393,
+    "fields": {
+      "AvailableDate": "1402/10/13",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 394,
+    "fields": {
+      "AvailableDate": "1402/10/14",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 395,
+    "fields": {
+      "AvailableDate": "1402/10/15",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 396,
+    "fields": {
+      "AvailableDate": "1402/10/16",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 397,
+    "fields": {
+      "AvailableDate": "1402/10/17",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 398,
+    "fields": {
+      "AvailableDate": "1402/10/19",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 399,
+    "fields": {
+      "AvailableDate": "1402/10/18",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 400,
+    "fields": {
+      "AvailableDate": "1402/10/20",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 401,
+    "fields": {
+      "AvailableDate": "1402/10/21",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 402,
+    "fields": {
+      "AvailableDate": "1402/10/20",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 404,
+    "fields": {
+      "AvailableDate": "1402/10/23",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 405,
+    "fields": {
+      "AvailableDate": "1402/10/24",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 406,
+    "fields": {
+      "AvailableDate": "1402/10/26",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 407,
+    "fields": {
+      "AvailableDate": "1402/10/25",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 408,
+    "fields": {
+      "AvailableDate": "1402/10/27",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 409,
+    "fields": {
+      "AvailableDate": "1402/10/28",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 410,
+    "fields": {
+      "AvailableDate": "1402/10/29",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 411,
+    "fields": {
+      "AvailableDate": "1402/10/30",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 412,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 413,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 414,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 13,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 416,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 417,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 3,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 418,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 419,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 7,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 420,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 8,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 421,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 4,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 422,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 9,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 424,
+    "fields": {
+      "AvailableDate": "1402/09/30",
+      "Item": 11,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 428,
+    "fields": {
+      "AvailableDate": "1402/09/24",
+      "Item": 5,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 429,
+    "fields": {
+      "AvailableDate": "1402/09/29",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 439,
+    "fields": {
+      "AvailableDate": "1402/10/06",
+      "Item": 12,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 440,
+    "fields": {
+      "AvailableDate": "1402/10/06",
+      "Item": 13,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 441,
+    "fields": {
+      "AvailableDate": "1402/09/27",
+      "Item": 16,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 442,
+    "fields": {
+      "AvailableDate": "1402/09/27",
+      "Item": 17,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 443,
+    "fields": {
+      "AvailableDate": "1402/09/27",
+      "Item": 18,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 444,
+    "fields": {
+      "AvailableDate": "1402/09/27",
+      "Item": 19,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 445,
+    "fields": {
+      "AvailableDate": "1402/09/27",
+      "Item": 20,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 447,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 16,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 448,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 17,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 449,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 18,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 450,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 19,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 451,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 20,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 452,
+    "fields": {
+      "AvailableDate": "1402/09/28",
+      "Item": 21,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 453,
+    "fields": {
+      "AvailableDate": "1402/10/03",
+      "Item": 16,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 454,
+    "fields": {
+      "AvailableDate": "1402/10/03",
+      "Item": 20,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 455,
+    "fields": {
+      "AvailableDate": "1402/10/03",
+      "Item": 11,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 457,
+    "fields": {
+      "AvailableDate": "1402/10/29",
+      "Item": 1,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 458,
+    "fields": {
+      "AvailableDate": "1402/10/01",
+      "Item": 21,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 459,
+    "fields": {
+      "AvailableDate": "1402/10/01",
+      "Item": 18,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 462,
+    "fields": {
+      "AvailableDate": "1402/09/29",
+      "Item": 6,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 463,
+    "fields": {
+      "AvailableDate": "1402/10/03",
+      "Item": 19,
+      "IsActive": true
+    }
+  },
+  {
+    "model": "pors.dailymenuitem",
+    "pk": 464,
+    "fields": {
+      "AvailableDate": "1402/10/22",
+      "Item": 11,
+      "IsActive": true
+    }
+  }
+]

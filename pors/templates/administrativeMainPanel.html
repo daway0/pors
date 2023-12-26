@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Vazirmatn">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="{% static 'js/administrativePanel.js' %}"></script>
-
+    <title>ادمین | سیستم سفارش صبحانه و ناهار</title>
+    <link rel="stylesheet" href="{% static 'Pors/css/vazir.css' %}">
+    <link href="{% static 'Pors/css/flowbite.min.css' %}" rel="stylesheet" />
+    <script src="{% static 'Pors/js/jquery-3.7.1.min.js' %}"
+        crossorigin="anonymous"></script>
+    <script src="{% static 'Pors/js/tailwind.js' %}"></script>
+    <script src="{% static 'Pors/js/administrativePanel.js' %}"></script>
+    <script src="{% static 'Pors/js/jalali-moment.js' %}"></script>
     <style>
         body {
             font-family: "Vazirmatn", sans-serif;
@@ -17,7 +19,12 @@
     </style>
 </head>
 <body class="items-center select-none">
-<div class="pt-[2.5rem] flex items-start justify-center h-screen">
+{#loading element for good user experience #}
+<div id="loading" class="flex items-center justify-center w-full h-screen border border-gray-200 rounded-lg bg-gray-50" style="direction: rtl">
+    <div class="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse">در حال راه اندازی...</div>
+</div>
+
+<div id="main-panel-wrapper" class="hidden pt-[2.5rem] flex items-start justify-center h-screen">
     <div class="flex flex-col w-7/12 h-[50rem] space-y-4 ">
         {#        Administrative Menu bar#}
         <div class="flex items-center justify-between bg-gray-100 border-gray-200 p-2" style="direction: rtl">
@@ -34,11 +41,10 @@
             </div>
         </div>
     </div>
-
 </div>
-<div id="dump-image-container" class="hidden">
-
-</div>
+<div id="dismiss" class="fixed bottom-4 right-4 flex flex-col items-start w-1/4 float-right" style="direction: rtl"></div>
+<div id="dump-image-container" class="hidden"></div>
+<script src="{% static 'Pors/js/flowbite.min.js' %}"></script>
 
 </body>
 

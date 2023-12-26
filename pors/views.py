@@ -1,325 +1,587 @@
-from django.db.models import (
-    Case,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Sum,
-    Value,
-    When,
-    fields,
-)
-from django.shortcuts import get_list_or_404, render
+from hashlib import sha256
+from random import getrandbits
+
+from django.db.models import Q
+from django.http.response import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render
+from django.urls import reverse
+from jdatetime import timedelta
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .config import OPEN_FOR_ADMINISTRATIVE
-from .general_actions import get_general_calendar
-from .models import Category, DailyMenuItem, Item, ItemsOrdersPerDay
+from .decorators import (
+    authenticate,
+    check,
+    is_open_for_admins,
+    is_open_for_personnel,
+)
+from .general_actions import GeneralCalendar
+from .messages import Message
+from .models import (
+    Category,
+    DailyMenuItem,
+    Item,
+    ItemsOrdersPerDay,
+    Order,
+    Subsidy,
+    SystemSetting,
+    User,
+)
 from .serializers import (
-    AddMenuItemSerializer,
-    AvailableItemsSerializer,
+    AllItemSerializer,
     CategorySerializer,
-    CreateOrderItemSerializer,
-    DayMenuSerializer,
-    EdariFirstPageSerializer,
-    ItemOrderSerializer,
+    FirstPageSerializer,
+    ListedDaysWithMenu,
+    MenuItemSerializer,
     OrderSerializer,
-    SelectedItemSerializer,
+    PersonnelMenuItemSerializer,
 )
 from .utils import (
+    execute_raw_sql_with_params,
     first_and_last_day_date,
-    get_current_date,
-    get_first_orderable_date,
+    generate_token_hash,
+    get_submission_deadline,
+    get_user_minimal_info,
+    localnow,
+    split_dates,
 )
 
+# todo
+# from Utility.Authentication.Utils import (
+#     V1_PermissionControl as permission_control,
+#     V1_get_data_from_token as get_token_data,
+#     V1_find_token_from_request as find_token
+# )
+#
+# todo
+# from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
-# Create your views here.
+message = Message()
 
 
-def ui(request):
-    return render(request, "administrativeMainPanel.html")
+@authenticate()
+def ui(request, user):
+    return render(
+        request, "personnelMainPanel.html", get_user_minimal_info(user)
+    )
+
+
+@authenticate(privileged_users=True)
+def uiadmin(request, user):
+    return render(
+        request,
+        "administrativeMainPanel.html",
+        get_user_minimal_info(user),
+    )
 
 
 @api_view(["POST"])
-def add_item_to_menu(request):
-    serializer = AddMenuItemSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            "Successfully added the item into the menu.", status.HTTP_200_OK
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def add_item_to_menu(request, user):
+    """
+    Adding items to menu.
+    Data will pass several validations in order to add item in menu.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to add item on.
+        -  'item' (str): The item which you want to add.
+    """
+
+    validator = b.ValidateAddMenuItem(request.data)
+    if validator.is_valid():
+        validator.add_item()
+
+        message.add_message(
+            "آیتم با موفقیت اضافه شد.",
+            Message.SUCCESS,
         )
-    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["POST"])
-def remove_item_from_menu(request):
-    validatior = b.ValidateRemove(request.data)
-    if validatior.is_valid():
-        validatior.remove_item()
-        return Response("Successsfully deleted the item from menu.", status.HTTP_200_OK)
-    return Response(validatior.error, status.HTTP_400_BAD_REQUEST)
-
-
-class AvailableItems(ListAPIView):
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def remove_item_from_menu(request, user):
     """
-    تمام ایتم های موجود برگشت داده می‌شود.
+    Removing items from menu.
+    Data will pass several validations in order to remove item.
+
+    If any order has been submitted on that menu's item, then the
+    item will not get removed.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to remove item from.
+        -  'item' (str): The item which you want to remove.
     """
 
-    queryset = Item.objects.filter(IsActive=True)
-    serializer_class = AvailableItemsSerializer
+    validator = b.ValidateRemove(request.data)
+    if validator.is_valid():
+        validator.remove_item()
+        message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
-@api_view(["GET"])
-def DayMenu(request):
+class AllItems(ListAPIView):
     """
-    این ویو مسئولیت ارائه منو غذایی مطابق پارامتر `date` را دارا است.
+    Returning list of all items from database.
     """
-    requested_date = request.query_params.get("date")
-    if not requested_date:
-        return Response(
-            "'date' parameter must be specified.",
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    queryset = get_list_or_404(DailyMenuItem, AvailableDate=requested_date)
-    serializer = DayMenuSerializer(data=queryset, many=True)
-    return Response(serializer.data, status.HTTP_200_OK)
+
+    queryset = Item.objects.filter()
+    serializer_class = AllItemSerializer
 
 
 class Categories(ListAPIView):
+    """Returning list of all categories from dataase."""
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-# @api_view(["GET"])
-# def personnel_calendar(request):
-#     """
-#     این ویو مسئولیت  ارائه روز های ماه و اطلاعات مربوط آن ها را دارد.
-#     این اطلاعات شامل سفارشات روز و تعطیلی روز ها می‌باشد.
-#     در صورت دریافت پارامتر های `month` و `year`, اطلاعات مربوط به تاریخ وارد شده ارائه داده می‌شود.
-#     """
-#     # Past Auth...
-#     personnel = ...
-#     year = request.query_params.get("year")
-#     month = request.query_params.get("month")
-#     if year is None or month is None:
-#         return Response(
-#             "'year' and 'month' parameters must specified.",
-#             status.HTTP_400_BAD_REQUEST,
-#         )
-#     try:
-#         month = int(month)
-#         year = int(year)
-#     except ValueError:
-#         return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
-#     if month > 12:
-#         return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
-#     first_day_date, last_day_date = first_and_last_day_date(month, year)
-#     general_calendar = get_general_calendar(year, month)
-#     ordered_days = Order.objects.filter(
-#         DeliveryDate__range=(first_day_date, last_day_date),
-#         Personnel=personnel,
-#     ).values("DeliveryDate")
-#     ordered_days_list = [date["DeliveryDate"] for date in ordered_days]
-#     # Todo handle the difference between subidy and total cost
-#     debt = (
-#         Order.objects.filter(DeliveryDate__range=["1402/00/00", "1403/00/00"])
-#         .annotate(
-#             total_price=Sum(
-#                 ExpressionWrapper(
-#                     F("orderitem__Quantity") * F("orderitem__PricePerOne"),
-#                     output_field=fields.IntegerField(),
-#                 )
-#             )
-#         )
-#         .aggregate(
-#             total_price=Sum("total_price"),
-#             total_subsidy=Sum("AppliedSubsidy"),
-#             difference=Sum(
-#                 ExpressionWrapper(
-#                     F("orderitem__Quantity") * F("orderitem__PricePerOne"),
-#                     output_field=fields.IntegerField(),
-#                 )
-#             )
-#             - Sum("AppliedSubsidy"),
-#         )
-#     )
-#     """
-#     ```sql
-#     SELECT SUM(OI."Quantity" * OI."PricePerOne") AS total_cost,
-#     SUM(O."AppliedSubsidy") AS subsidy,
-#     CASE
-#                     WHEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy") > 0 THEN SUM(OI."Quantity" * OI."PricePerOne") - SUM(O."AppliedSubsidy")
-#                     ELSE 0
-#     END AS debt
-#     FROM PORS_ORDER AS O
-#     INNER JOIN PORS_ORDERITEM AS OI ON O."id" = OI."Order_id"
-#     WHERE o."IsDeleted" = False
-#     """
-#
-#     # debt_serializer = DebtSerializer(debt).data
-#     orders_items_qs = (
-#         OrderItem.objects.filter(
-#             Order__DeliveryDate__range=(first_day_date, last_day_date),
-#             Order__IsDeleted=False,
-#         )
-#         .select_related("Order", "OrderedItem")
-#         .values(
-#             "Order__DeliveryDate",
-#             "OrderedItem__id",
-#             "OrderedItem__ItemName",
-#             "OrderedItem__ItemDesc",
-#             "OrderedItem__Image",
-#             "OrderedItem__CurrentPrice",
-#             "OrderedItem__Category_id",
-#             "Quantity",
-#             "PricePerOne",
-#         )
-#         .annotate(
-#             total=ExpressionWrapper(
-#                 F("Quantity") * F("PricePerOne"),
-#                 output_field=fields.IntegerField(),
-#             ),
-#             fanavaran=F("Order__AppliedSubsidy"),
-#             debt=ExpressionWrapper(
-#                 F("Quantity") * F("PricePerOne") - F("Order__AppliedSubsidy"),
-#                 output_field=fields.IntegerField(),
-#             ),
-#         )
-#     )
-#
-#     orders = []
-#     order_items = {}
-#     order_bill = {}
-#
-#     for order in orders_items_qs:
-#         if order["Order__DeliveryDate"] in order_bill.keys():
-#             continue
-#
-#         order_bill[order["Order__DeliveryDate"]] = {
-#             "total": order["total"],
-#             "fanavaran": order["fanavaran"],
-#             "debt": order["debt"],
-#         }
-#
-#     for order in orders_items_qs:
-#         if order["Order__DeliveryDate"] not in order_items:
-#             order_items[order["Order__DeliveryDate"]] = []
-#
-#         order_items[order["Order__DeliveryDate"]].append(
-#             {
-#                 "OrderedItem__id": order["OrderedItem__id"],
-#                 "OrderedItem__ItemName": order["OrderedItem__ItemName"],
-#                 "OrderedItem__ItemDesc": order["OrderedItem__ItemDesc"],
-#                 "OrderedItem__Image": order["OrderedItem__Image"],
-#                 "OrderedItem__CurrentPrice": order[
-#                     "OrderedItem__CurrentPrice"
-#                 ],
-#                 "OrderedItem__Category_id": order["OrderedItem__Category_id"],
-#                 "Quantity": order["Quantity"],
-#                 "PricePerOne": order["PricePerOne"],
-#             }
-#         )
-#
-#     for order_date in order_bill.keys():
-#         orders.append(
-#             {
-#                 "orderDate": order_date,
-#                 "orderItems": order_items[order_date],
-#                 "orderBill": order_bill[order_date],
-#             }
-#         )
-#
-#     orders_serializer = OrderSerializer(instance=orders, many=True).data
-#     return Response(
-#         data=(
-#             general_calendar,
-#             ordered_days_list,
-#             # debt_serializer,
-#             orders_serializer,
-#         ),
-#         status=status.HTTP_200_OK,
-#     )
-
-
 @api_view(["GET"])
-def edari_calendar(request):
-    # Past Auth...
-    personnel = ...
-    year = request.query_params.get("year")
-    month = request.query_params.get("month")
+@check([is_open_for_personnel])
+@authenticate()
+def personnel_calendar(request, user: User):
+    """
+    Personnel's calendar which have enough information
+        to generate the calendar from them.
 
-    if year is None or month is None:
+    Args:
+        year: Requested year.
+        month: Requested month.
+
+    Returns:
+        Will return several information which are:
+        -  General calendar data.
+        -  Days that contains menu.
+        -  List of menu items on each day.
+        -  All ordered items and their detailed information.
+    """
+
+    error_message = b.validate_calendar_request(request.query_params)
+    if error_message:
+        message.add_message(
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        )
         return Response(
-            "'year' and 'month' parameters must specified.",
+            {"messages": message.messages(), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
-    try:
-        month = int(month)
-        year = int(year)
-    except ValueError:
-        return Response("Invalid parameters.", status.HTTP_400_BAD_REQUEST)
 
-    if not 1 <= month <= 12:
-        return Response("Invalid month value.", status.HTTP_400_BAD_REQUEST)
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
+    first_day_date, last_day_date = first_and_last_day_date(month, year)
 
-    month_first_day_date, month_last_day_date = first_and_last_day_date(month, year)
-    general_calendar = get_general_calendar(year, month)
+    personnel = user.Personnel
 
-    selected_items = ItemsOrdersPerDay.objects.filter(
-        Date__range=[month_first_day_date, month_last_day_date]
+    general_calendar = GeneralCalendar(year, month)
+
+    # Days that have menues.
+    days_with_menu_qs = (
+        DailyMenuItem.objects.filter(
+            AvailableDate__range=[first_day_date, last_day_date]
+        )
+        .values("AvailableDate")
+        .order_by("AvailableDate")
+        .distinct()
     )
-    selected_items_serializer = SelectedItemSerializer(selected_items).data
+    days_with_menu_data = ListedDaysWithMenu(days_with_menu_qs).data
+    splited_days_with_menu = split_dates(
+        days_with_menu_data["dates"], mode="day"
+    )
 
+    menu_items = (
+        DailyMenuItem.objects.filter(
+            AvailableDate__range=[first_day_date, last_day_date],
+            IsActive=True,
+        )
+        .order_by("AvailableDate", "Item_id")
+        .values("AvailableDate", "Item_id")
+    )
+    menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
+
+    orders = Order.objects.filter(
+        DeliveryDate__range=(first_day_date, last_day_date),
+        Personnel=personnel,
+    )
+    totalDebt = sum([obj.PersonnelDebt for obj in orders])
+
+    ordered_days_list = [obj.DeliveryDate for obj in orders]
+    spilitted_ordered_days_list = split_dates(ordered_days_list, "day")
+
+    # Couldn't use django orm because "Order" doesn't have
+    # relation with orderitem table.
+    with open("./pors/SQLs/PersonnelOrderWithBill.sql", mode="r") as f:
+        query = f.read()
+
+    params = (first_day_date, last_day_date, personnel)
+    order_items = execute_raw_sql_with_params(query, params)
+
+    orders_items_data = OrderSerializer(order_items).data
+    ordered_days_and_debt = {
+        "orderedDays": spilitted_ordered_days_list,
+        "totalDebt": totalDebt,
+    }
+
+    # Unpacking Serializers data into 1 single dictionary
+    final_schema = {
+        **general_calendar.get_calendar(),
+        "daysWithMenu": splited_days_with_menu,
+        **menu_items_serialized_data,
+        **ordered_days_and_debt,
+        **orders_items_data,
+    }
     return Response(
-        data=(general_calendar, selected_items_serializer),
+        data=(final_schema),
         status=status.HTTP_200_OK,
     )
 
 
 @api_view(["GET"])
-def edari_first_page(request):
-    # ... past auth
-    is_open = OPEN_FOR_ADMINISTRATIVE
-    full_name = "test"  # DONT FORGET TO SPECIFY ...
-    profile = "test"  # DONT FORGET TO SPECIFY ...
-    year, month, day = get_first_orderable_date()
-    current_date = {"day": day, "month": month, "year": year}
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def edari_calendar(request, user: User):
+    """
+    Admin's calendar which have more detailed information about menus, orders.
 
-    serializer = EdariFirstPageSerializer(
+    Args:
+        year: Requested year.
+        month: Requested month.
+
+    Returns:
+        Will return several information which are:
+        -  General calendar data.
+        -  Days that contains menu, and number of orders on each day.
+        -  List of menu items on each day and number of orders on each item.
+    """
+
+    error_message = b.validate_calendar_request(request.query_params)
+    if error_message:
+        message.add_message(
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": error_message},
+            status.HTTP_400_BAD_REQUEST,
+        )
+    month = int(request.query_params.get("month"))
+    year = int(request.query_params.get("year"))
+
+    month_first_day_date, month_last_day_date = first_and_last_day_date(
+        month, year
+    )
+    general_calendar = GeneralCalendar(year, month)
+    days_with_menu = b.get_days_with_menu(month, year)
+
+    menu_items = ItemsOrdersPerDay.objects.filter(
+        Date__range=[month_first_day_date, month_last_day_date]
+    )
+    menu_items_serializer = MenuItemSerializer(menu_items).data
+
+    final_schema = {
+        **general_calendar.get_calendar(),
+        "daysWithMenu": days_with_menu,
+        **menu_items_serializer,
+    }
+    return Response(
+        data=final_schema,
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authenticate()
+def first_page(request, user: User):
+    """
+    First page information.
+    will pass authentication first.
+
+    Returns:
+        isOpenForAdmins: Is system responsive to any admin actions.
+        isOpenForPersonnel: Is system responsive to any personnel actions.
+        fullName: User's full name
+        profile: User's profile picture
+        firstOrderableDate: First valid date for order submission.
+    """
+
+    system_settings = SystemSetting.objects.last()
+    open_for_admins = system_settings.IsSystemOpenForAdmin
+    open_for_personnel = system_settings.IsSystemOpenForPersonnel
+
+    (
+        days_breakfast_deadline,
+        hours_breakfast_deadline,
+        days_launch_deadline,
+        hours_launch_deadline,
+    ) = get_submission_deadline()
+
+    now = localnow()
+
+    if (
+        system_settings.BreakfastRegistrationWindowDays
+        < system_settings.LaunchRegistrationWindowDays
+    ):
+        year, month, day = b.get_first_orderable_date(
+            now, days_breakfast_deadline, hours_breakfast_deadline
+        )
+    else:
+        year, month, day = b.get_first_orderable_date(
+            now, days_launch_deadline, hours_launch_deadline
+        )
+
+    first_orderable_date = {"year": year, "month": month, "day": day}
+
+    serializer = FirstPageSerializer(
         data={
-            "isOpen": is_open,
-            "fullName": full_name,
-            "profile": profile,
-            "currentDate": current_date,
+            "isOpenForAdmins": open_for_admins,
+            "isOpenForPersonnel": open_for_personnel,
+            "fullName": user.FullName,
+            "profile": user.Profile,
+            "firstOrderableDate": first_orderable_date,
+            "totalItemsCanOrderedForBreakfastByPersonnel": (
+                system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
+            ),
         }
     ).initial_data
 
     return Response(serializer, status.HTTP_200_OK)
 
 
-# @api_view(["GET"])
-# def create_order(request):
-#     # pas auth ...
-#     personnel = ...
-#     item = request.data.get("item")
-#     date = request.data.get("date")
-#     quantity = request.data.get("quantity")
-#     if not item or date or quantity:
-#         return Response(
-#             "'item','date' and 'quantity' must specified.",
-#             status.HTTP_400_BAD_REQUEST,
-#         )
-#     date = validate_date(date)
-#     order = Order.objects.filter(DeliveryDate=date, Personnel=personnel)
-#     if not order:
-#         order_serializer = CreateOrderSerializer(data=request.data)
-#         if not order_serializer.is_valid():
-#             return Response(
-#                 order_serializer.errors, status.HTTP_400_BAD_REQUEST
-#             )
-#     else:
-#         CreateOrderItemSerializer(request.data)
-#         ...
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def create_order_item(request, user: User):
+    """
+    Responsible for submitting orders.
+    The data will pass several validations in order to submit.
+    check `ValidateOrder` docs for mor info.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to submit order.
+        -  'item' (str): The item which you want to order.
+    """
+
+    request.data["personnel"] = user.Personnel
+
+    validator = b.ValidateOrder(request.data)
+    if validator.is_valid(create=True):
+        validator.create_order()
+        message.add_message(
+            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
+        )
+        return Response(
+            {"messages": message.messages()},
+            status.HTTP_201_CREATED,
+        )
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {
+            "messages": message.messages(),
+            "errors": validator.error,
+        },
+        status.HTTP_400_BAD_REQUEST,
+    )
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def remove_order_item(request, user: User):
+    """
+    This view will remove an item from specific order.
+    Check `ValidateOrder` docs for more information about validators.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to remove order item from.
+        -  'item' (str): The item which you want to remove.
+    """
+
+    request.data["personnel"] = user.Personnel
+    validator = b.ValidateOrder(request.data)
+    if validator.is_valid(remove=True):
+        validator.remove_order()
+        message.add_message(
+            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
+        )
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def create_breakfast_order(request, user: User):
+    """
+    Responsible for submitting breakfast orders.
+    The data will pass several validations in order to submit.
+    check `ValidateBreakfast` docs for mor info.
+
+    Args:
+        request (dict): Request data which must contains:
+        -  'date' (str): The date which you want to submit order.
+        -  'item' (str): The item which you want to order.
+    """
+
+    # past auth ...
+
+    request.data["personnel"] = user.Personnel
+
+    validator = b.ValidateBreakfast(request.data)
+    if validator.is_valid():
+        validator.create_breakfast_order()
+        message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
+        return Response(
+            {"messages": message.messages()}, status.HTTP_201_CREATED
+        )
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
+
+
+@api_view(["GET"])
+def get_subsidy(request):
+    date = b.validate_date(request.query_params.get("date"))
+    if not date:
+        message.add_message(
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        )
+        return Response(
+            {"messages": message.messages(), "errors": "Invalid 'date' value."}
+        )
+
+    subsidy = (
+        Subsidy.objects.filter(
+            Q(FromDate__lte=date, UntilDate__isnull=True)
+            | Q(FromDate__lte=date, UntilDate__gte=date)
+        )
+        .first()
+        .Amount
+    )
+
+    return Response({"data": {"subsidy": subsidy}})
+
+# todo
+# @permission_control
+@api_view(["GET"])
+def auth_gateway(request):
+    """
+    Authentication gateway that will use fanavaran's auth method to get
+        personnel's info and create corresponding `User` record for them.
+
+    After authentication, we will generate a token for personnel and set
+        it as a cookie named `key` for them, with the max age of 2 weeks.
+
+    Any request to this gateway has a reason, which can be:
+        - Personnel doesn't have a user record in db.
+        - The token got expired and must get new one.
+        - Personnel already has a valid token in db, but the request's token
+            is invalid or not set at all.
+    """
+    # todo
+    # token = find_token(request)
+    # personnel = get_token_data(token, "username")
+    #
+    # full_name = get_token_data(token, "user_FullName")
+    # is_admin = False
+    personnel = "m.noruzi@eit"
+    full_name = "mikaeil norouzi"
+    is_admin = False
+
+    personnel_user_record = User.objects.filter(
+        Personnel=personnel, IsActive=True
+    ).first()
+
+    now = localnow()
+
+    cookies_expire_time = now + timedelta(weeks=2)
+    max_age = int((cookies_expire_time - now).total_seconds())
+    cookies_expire_time = cookies_expire_time.strftime("%Y/%m/%d")
+
+    request_token = request.COOKIES.get("token")
+    cookies_path = reverse("pors:personnel_panel")
+
+    full_path = f"{request.scheme}://{request.get_host()}{cookies_path}"
+    response = HttpResponse(
+        content=f"<script>window.location.replace('{full_path}')</script>",
+        status=202,
+    )
+
+    if not personnel_user_record:
+        # Personnel does not have a user record at all.
+        # In this scenario, we will create a user record, with an api key
+        # that will set as a cookie for personnel.
+
+        # todo
+        # profile = user_info(personnel)["StaticPhotoURL"]
+        profile = ""
+        token = generate_token_hash(personnel, full_name, getrandbits)
+        User.objects.create(
+            Personnel=personnel,
+            FullName=full_name,
+            Profile=profile,
+            IsAdmin=is_admin,
+            Token=token,
+            ExpiredAt=cookies_expire_time,
+            IsActive=True,
+        )
+
+        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        return response
+
+    elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
+        # In this scenario, personnel's token is expired,
+        # So we generate a new one, update the existing one in database,
+        # and set the new token for personnel as a cookie.
+
+        token = generate_token_hash(personnel, full_name, getrandbits(10))
+        personnel_user_record.Token = token
+        personnel_user_record.ExpiredAt = cookies_expire_time
+        personnel_user_record.save()
+
+        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        return response
+
+    elif not request_token or request_token != personnel_user_record.Token:
+        # This is scenario happens when user already has a valid record
+        # and token in database, but the request's token is invalid
+        # or not present at all.
+        # Either case, we fetch the current personnel's token from database
+        # and set it as a cookie.
+
+        response.set_cookie(
+            "token",
+            personnel_user_record.Token,
+            path=cookies_path,
+            max_age=max_age,
+        )
+
+    return response
