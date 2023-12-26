@@ -320,8 +320,6 @@ def first_page(request, user: User):
         firstOrderableDate: First valid date for order submission.
     """
 
-    personnel = user.Personnel
-
     system_settings = SystemSetting.objects.last()
     open_for_admins = system_settings.IsSystemOpenForAdmin
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
@@ -353,8 +351,8 @@ def first_page(request, user: User):
         data={
             "isOpenForAdmins": open_for_admins,
             "isOpenForPersonnel": open_for_personnel,
-            "fullName": personnel.FullName,
-            "profile": personnel.Profile,
+            "fullName": user.FullName,
+            "profile": user.Profile,
             "firstOrderableDate": first_orderable_date,
             "totalItemsCanOrderedForBreakfastByPersonnel": (
                 system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
