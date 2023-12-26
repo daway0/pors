@@ -598,7 +598,7 @@ class ValidateBreakfast:
             m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
         )
         if total_breakfast_orders >= threshold:
-            self.message = "آستانه ثبت سفارش صبحانه شما تمام شده است."
+            self.message = "محدودیت ثبت سفارش صبحانه‌ای رد شده است."
             raise ValueError(
                 "Personnel has already submitted a breakfast order on this"
                 " date."
@@ -616,6 +616,17 @@ class ValidateBreakfast:
             raise ValueError(
                 "This method is only available if provided data is valid."
             )
+        
+        instance = m.OrderItem.objects.filter(
+            Personnel=self.data.get("personnel"),
+            DeliveryDate=self.date,
+            # DeliveryPlace=self.place,
+            Item=self.item,
+        ).first()
+        if instance:
+            instance.Quantity += 1
+            instance.save()
+            return
 
         m.OrderItem.objects.create(
             Personnel=self.data.get("personnel"),
