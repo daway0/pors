@@ -81,7 +81,7 @@ def uiadmin(request, user):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def add_item_to_menu(request, user):
+def add_item_to_menu(request, user: User):
     """
     Adding items to menu.
     Data will pass several validations in order to add item in menu.
@@ -113,7 +113,7 @@ def add_item_to_menu(request, user):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def remove_item_from_menu(request, user):
+def remove_item_from_menu(request, user: User):
     """
     Removing items from menu.
     Data will pass several validations in order to remove item.
@@ -380,8 +380,6 @@ def create_order_item(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    request.data["personnel"] = user.Personnel
-
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(create=True):
         validator.create_order()
@@ -417,7 +415,6 @@ def remove_order_item(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    request.data["personnel"] = user.Personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
         validator.remove_order()
@@ -447,10 +444,6 @@ def create_breakfast_order(request, user: User):
         -  'date' (str): The date which you want to submit order.
         -  'item' (str): The item which you want to order.
     """
-
-    # past auth ...
-
-    request.data["personnel"] = user.Personnel
 
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
@@ -488,6 +481,7 @@ def get_subsidy(request):
     )
 
     return Response({"data": {"subsidy": subsidy}})
+
 
 # todo shipment
 # @permission_control

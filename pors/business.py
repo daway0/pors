@@ -48,7 +48,7 @@ def validate_request(data: dict) -> tuple[str, int]:
 
 
 def validate_calendar_request(
-        data: dict,
+    data: dict,
 ) -> Optional[str]:
     """
     Responsible for validating request data for calendars.
@@ -105,7 +105,7 @@ def get_days_with_menu(month: int, year: int) -> dict[str, str]:
 
 
 def is_date_valid_for_action(
-        now: jdatetime.datetime, date: str, days_deadline: int, hours_deadline: int
+    now: jdatetime.datetime, date: str, days_deadline: int, hours_deadline: int
 ) -> bool:
     """
     This function is responsible for checking if the date
@@ -132,7 +132,7 @@ def is_date_valid_for_action(
 
 
 def get_first_orderable_date(
-        now: jdatetime.datetime, days_deadline: int, hours_deadline: int
+    now: jdatetime.datetime, days_deadline: int, hours_deadline: int
 ):
     """
     Returning the first valid date for order submission based on deadline.
@@ -263,8 +263,11 @@ class ValidateRemove:
         m.DailyMenuItem.objects.get(
             AvailableDate=self.date, Item=self.item
         ).delete(
-            log=f"Item {self.item.ItemName} just removed from menu for {self.date}",
-            user="",  # todo user
+            log=(
+                f"Item {self.item.ItemName} just removed from menu for"
+                f" {self.date}"
+            ),
+            user=self.data.get("personnel"),
         )
 
 
@@ -409,27 +412,31 @@ class ValidateOrder:
         instance = m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            # DeliveryPlace=self.place,
             Item=self.item,
         ).first()
         if instance:
             instance.Quantity += 1
             instance.save(
-                log=f"Launch Item {self.item.ItemName}'s Quantity just increased by 1 for {self.date}",
-                user=""  # todo user
+                log=(
+                    f"Launch Item {self.item.ItemName}'s Quantity just"
+                    f" increased by 1 for {self.date}"
+                ),
+                user=self.data.get("personnel"),
             )
             return
 
         m.OrderItem(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            # DeliveryPlace=self.place,
             Item=self.item,
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
         ).save(
-            log=f"Launch Item {self.item.ItemName} just added to order for {self.date}",
-            user=""  # todo user
+            log=(
+                f"Launch Item {self.item.ItemName} just added to order for"
+                f" {self.date}"
+            ),
+            user=self.data.get("personnel"),
         )
 
     def remove_order(self):
@@ -452,13 +459,19 @@ class ValidateOrder:
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
             self.order_item.save(
-                log=f"Item {self.item.ItemName}'s Quantity just decreased by 1 for {self.date}",
-                user=""  # todo user
+                log=(
+                    f"Item {self.item.ItemName}'s Quantity just decreased by 1"
+                    f" for {self.date}"
+                ),
+                user=self.data.get("personnel"),
             )
         else:
             self.order_item.delete(
-                log=f"Item {self.item.ItemName} removed from order for {self.date}",
-                user=""  # todo user
+                log=(
+                    f"Item {self.item.ItemName} removed from order for"
+                    f" {self.date}"
+                ),
+                user=self.data.get("personnel"),
             )
 
 
@@ -530,7 +543,6 @@ class ValidateBreakfast:
             raise ValueError("Item is not valid.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
-        # self.place = place
 
     def _validate_date(self):
         """
@@ -598,26 +610,30 @@ class ValidateBreakfast:
         instance = m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            # DeliveryPlace=self.place,
             Item=self.item,
         ).first()
         if instance:
             instance.Quantity += 1
             instance.save(
-                log=f"Breakfast Item {self.item.ItemName}'s Quantity just increased by 1 for {self.date}",
-                user=""  # todo user
+                log=(
+                    f"Breakfast Item {self.item.ItemName}'s Quantity just"
+                    f" increased by 1 for {self.date}"
+                ),
+                user=self.data.get("personnel"),
             )
             return
 
         m.OrderItem(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-            # DeliveryPlace=self.place,
             Item=self.item,
             PricePerOne=self.item.CurrentPrice,
         ).save(
-            log=f"Breakfast Item {self.item.ItemName} just added to the order for {self.date}",
-            user=""  # todo user
+            log=(
+                f"Breakfast Item {self.item.ItemName} just added to the order"
+                f" for {self.date}"
+            ),
+            user=self.data.get("personnel"),
         )
 
 
@@ -735,10 +751,10 @@ class ValidateAddMenuItem:
                 "This method is only available if provided data is valid."
             )
 
-        m.DailyMenuItem(
-            AvailableDate=self.date,
-            Item=self.item
-        ).save(
-            log=f"Item {self.item.ItemName} just added to the menu for {self.date}",
-            user=""  # todo user
+        m.DailyMenuItem(AvailableDate=self.date, Item=self.item).save(
+            log=(
+                f"Item {self.item.ItemName} just added to the menu for"
+                f" {self.date}"
+            ),
+            user=self.data.get("personnel"),
         )
