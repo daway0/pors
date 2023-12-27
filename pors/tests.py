@@ -1,11 +1,9 @@
 import unittest
 
 import jdatetime
-from django.test import TestCase
 
 from . import business as b
 from . import models as m
-from . import utils as u
 
 # Create your tests here.
 

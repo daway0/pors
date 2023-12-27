@@ -19,6 +19,60 @@ ActionLog ثبت شود.
 """
 
 from django.db import models
+from django.forms.models import model_to_dict
+
+
+class Logger(models.Model):
+    # todo doc
+    def save(self, *args, **kwargs):
+
+        user = kwargs.pop("user", "SYSTEM")
+        log_msg = kwargs.pop("log", None)
+
+        if self._state.adding:
+            action_type = ActionLog.ActionTypeChoices.CREATE
+            old_data = None
+        else:
+            action_type = ActionLog.ActionTypeChoices.UPDATE
+            old_instance = self.__class__.objects.get(pk=self.pk)
+            old_data = model_to_dict(old_instance)
+
+        super().save(*args, **kwargs)
+
+        model = self._meta.model
+        record_id = self.id
+
+        ActionLog.objects.log(
+            action_type=action_type,
+            log_msg=log_msg,
+            model=model,
+            record_id=record_id,
+            old_data=old_data,
+            user=user
+        )
+
+    def delete(self, *args, **kwargs):
+
+        user = kwargs.pop("user", "SYSTEM")
+        log_msg = kwargs.pop("log", None)
+        old_data = model_to_dict(self)
+
+        record_id = self.id
+        model = self._meta.model
+
+        super().delete(*args, **kwargs)
+
+        ActionLog.objects.log(
+            action_type=ActionLog.ActionTypeChoices.DELETE,
+            log_msg=log_msg,
+            model=model,
+            record_id=record_id,
+            old_data=old_data,
+            user=user
+        )
+
+    class Meta:
+        abstract = True
 
 
 class User(models.Model):
@@ -114,13 +168,6 @@ class SystemSetting(models.Model):
         ),
     )
 
-    @property
-    def SuperAdminUsername(self):
-        return (
-            self.SuperAdmins.replace(" ", "").split(",")
-            if self.SuperAdmins
-            else []
-        )
 
 
 class Holiday(models.Model):
@@ -131,15 +178,6 @@ class Holiday(models.Model):
     """
 
     HolidayDate = models.CharField(max_length=10, verbose_name="تاریخ")
-
-    @property
-    def HolidayYear(self): ...
-
-    @property
-    def HolidayMonth(self): ...
-
-    @property
-    def HolidayDay(self): ...
 
     def __str__(self) -> str:
         return self.HolidayDate
@@ -227,7 +265,7 @@ class Item(models.Model):
         """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
         می کنیم
 
-        توجه**********: در صورت سینتکس کد باید کد متناظر در  فرانت هم
+        توجه**********: در صورت تغییر کد وعده ها باید کد متناظر در  فرانت هم
         بازنویسی شود!!!!
         پس با احتیاط عمل کن دوست خوب من
         """
@@ -275,11 +313,6 @@ class Item(models.Model):
         verbose_name_plural = "اطلاعات ایتم ها"
 
 
-class DeliveryPlaceChoices(models.TextChoices):
-    PADIDAR = "PAD", "ساختمان پدیدار"
-    GAN = "GAN", "ساختمان گاندی"
-
-
 class Order(models.Model):
     """
     *** PersonnelDebt = TotalPrice - SubsidyCap
@@ -293,14 +326,6 @@ class Order(models.Model):
     TeamName = models.CharField(max_length=250, verbose_name="تیم")
     RoleName = models.CharField(max_length=250, verbose_name="سمت")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    # DeliveryPlace = models.CharField(
-    #     max_length=3,
-    #     help_text=(
-    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-    #         "چیزی که سفارش دهید یک جا تحویل می گیرید که از جدول "
-    #         "OrderItem خوانده می شود"
-    #     ),
-    # )
     SubsidyCap = models.PositiveIntegerField(
         verbose_name="یارانه فناوران به تومان"
     )
@@ -319,21 +344,13 @@ class Order(models.Model):
         verbose_name_plural = "سفارشات"
 
 
-class OrderItem(models.Model):
+class OrderItem(Logger):
     """ایتم های سفارش داده شده برای کاربران"""
 
     CreatedAt = models.DateTimeField(auto_now_add=True)
     ModifiedAt = models.DateTimeField(auto_now=True, null=True)
     Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    # DeliveryPlace = models.CharField(
-    #     max_length=3,
-    #     choices=DeliveryPlaceChoices.choices,
-    #     help_text=(
-    #         "محل تحویل سفارش فرقی نمی کند که صبحانه باشد یا ناهار. هر "
-    #         "چیزی که سفارش دهید یک جا تحویل می گیرید"
-    #     ),
-    # )
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, verbose_name="آیتم"
     )
@@ -412,7 +429,7 @@ class ItemPriceHistory(models.Model):
         verbose_name_plural = "تاریخچه قیمت آیتم ها"
 
 
-class DailyMenuItem(models.Model):
+class DailyMenuItem(Logger):
     """
     اطلاعات غذای قابل سفارش در هر روز را مشخص می کند
     """
@@ -424,15 +441,6 @@ class DailyMenuItem(models.Model):
         Item, on_delete=models.CASCADE, verbose_name="ایتم"
     )
     IsActive = models.BooleanField(help_text="", default=True)  # todo
-
-    @property
-    def AvailableYear(self): ...
-
-    @property
-    def AvailableMonth(self): ...
-
-    @property
-    def AvailableDay(self): ...
 
     class Meta:
         constraints = [
@@ -450,23 +458,6 @@ class ActionLog(models.Model):
     اکشن ها قابل توسعه هستند
 
     --------------------------
-     برای مثال فرض کنیم که برای تعداد غذا های قابل سفارش در یک روز محدودیت
-     بگذاریم. مثلا 80 تا جوجه و 240 تا کوبیده
-
-     در صورتی که اداری تصمیم بگیرد ظرفیت غذا ها را تغییر دهد عملی به نام
-     تغییر ظرفیت غذا تعریف می شود به شرح زیر
-
-
-     CHANGE_FOOD_LIMITATION = "CFL", "CHANGE FOOD LIMITATION"
-
-     در ویوو مربوط هنگام عوض کردن STATE (دیتا) باید لاگ به صورت زیر ذخیره کنند
-
-     ActionLog.objects.create(
-        User= AuthenticatedUser,
-        ActionCode= ObjectChoices.CHANGE_FOOD_LIMITATION,
-        ActionDesc= "ظرفیت جوجه برای روز 1402/08/15 از 80 به 180 تغییر کرد"
-        AdminActionReason= "طی تماس با رستوران افزایش ظرفیت اعمال شد"
-     )
 
      --------------------------
     درباره ActionDesc: توضیح اصلی که  هنگام رخداد این عمل/ این عمل چه
@@ -487,56 +478,49 @@ class ActionLog(models.Model):
     --------------------------
     به صورت خلاصه کنار اکشن هایی که نیاز است در صورت تغییر آن توسط ادمین
     دلیل آن نیز (AdminActionReason)ثبت شود نوشته REASON_REQUIRED کامنت شده است
-
-
     """
 
-    # class ActionType(models.TextChoices):
-    #     CREATE = "CREATE" "ساختن"
-    #     READ = "READ" "خواندن"
-    #     UPDATE = "UPDATE" "بروز رسانی"
-    #     DELETE = "پاک کردن"
-    #
-    # # class ActionChoices(models.TextChoices):
-    # #     ORDER_CREATION = "ORDER_CREATION", "سفارش جدید"
-    # #     ORDER_MODIFICATION = (
-    # #         "ORDER_MODIFICATION",
-    # #         "تغییر سفارش",
-    # #     )  # REASON_REQUIRED
-    # #
-    # #     # DELETE = "DEL", "DELETE"
-    # #     # UPDATE = "UPT", "UPDATE"
-    # #     # CANCEL = "CN", "CANCEL"
-    # #     # EMAIL_TO_SUPER_ADMIN = ""
-    # #     # EMAIL_TO_ADMIN = ""
-    #
-    # ActionAt = models.DateTimeField(auto_now_add=True)
-    #
-    # # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
-    # # به صورت "SYSTEM" ثبت شود
-    # User = models.CharField(max_length=250)
-    # TabelName = models.CharField(max_length=50)
-    # ReferencedRecordId = models.PositiveIntegerField()
-    # ActionType = models.CharField(choices=ActionType.choices)
-    #
-    # ActionDesc = models.CharField(max_length=1000)
-    # AdminActionReason = models.TextField(null=True)  # combo
-    # OldData = models.JSONField(...)
-    # # NewData = models.JSONField(...)
+    class LogManager(models.Manager):
+        def log(
+                self,
+                action_type,
+                user="SYSTEM",
+                log_msg=None,
+                model=None,
+                record_id=None,
+                old_data: dict = None
+        ):
+            table_name = model._meta.model_name if model else None
+            return self.create(
+                User=user,
+                TableName=table_name,
+                ReferencedRecordId=record_id,
+                ActionType=action_type,
+                ActionDesc=log_msg,
+                OldData=old_data
+            )
 
+    class ActionTypeChoices(models.TextChoices):
+        CREATE = "C", "create"
+        READ = "R", "read"
+        UPDATE = "U", "update"
+        DELETE = "D", "delete"
 
-# class ItemDailyReport(models.Model):
-#     Id = models.PositiveIntegerField(primary_key=True)
-#     ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
-#     DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-#     PAD = models.CharField(max_length=3, verbose_name="ساختمان پدیدار")
-#     OTH = models.CharField(max_length=3, verbose_name="ساختمان دیگر")
+    ActionAt = models.DateTimeField(auto_now_add=True)
 
-#     class Meta:
-#         managed = False
-#         db_table = "ItemDailyReport"
-#         verbose_name = "گزارش سفارش روزانه"
-#         verbose_name_plural = "گزارش سفارشات روزانه"
+    # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
+    # به صورت "SYSTEM" ثبت شود
+    User = models.CharField(max_length=250)
+    TableName = models.CharField(max_length=50, null=True)
+    ReferencedRecordId = models.PositiveIntegerField(null=True)
+    ActionType = models.CharField(max_length=1, choices=ActionTypeChoices.choices)
+
+    # summary of what happened in this log for system supporter
+    # (in the most human-readable word)
+    ActionDesc = models.CharField(max_length=1000, null=True)
+    OldData = models.JSONField(null=True)
+
+    objects = LogManager()
 
 
 class PersonnelDailyReport(models.Model):

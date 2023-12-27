@@ -136,7 +136,6 @@ class OrderSerializer(serializers.Serializer):
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
-            # schema["deliveryPlace"] = object["DeliveryPlace"]
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
@@ -228,10 +227,6 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                         hours_breakfast_deadline
                     )
                 )
-                # current_date_obj["lockChangeDeliveryPlace"] = (
-                #     current_date_obj["openForBreakfast"]
-                #     and current_date_obj["openForLaunch"]
-                # )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
                 result.append(current_date_obj)
