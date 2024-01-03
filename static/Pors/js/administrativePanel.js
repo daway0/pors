@@ -777,6 +777,7 @@ $(document).ready(function () {
                         currentDate.year
                     )
                     makeReportSectionMenu()
+                    document.body.style.zoom = "85%"
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 

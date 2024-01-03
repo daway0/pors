@@ -10,7 +10,11 @@
         <p class="text-sm font-medium text-slate-500">ادمین اداری</p>
     </div>
 </div>
-<div class="flex flex-row gap-5 justify-end items-center">
+
+<div class="flex flex-row gap-2 justify-end items-center">
+    <div class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center">
+        <a href="{% url 'pors:personnel_panel' %}">پنل سفارش گیری</a>
+    </div>
     <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown"
                 class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center"
                 type="button"> گزارش گیری

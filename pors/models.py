@@ -522,6 +522,8 @@ class ActionLog(models.Model):
 
     objects = LogManager()
 
+    class Meta:
+        ordering = ["-ActionAt"]
 
 class PersonnelDailyReport(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
