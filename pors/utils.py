@@ -165,7 +165,7 @@ def validate_date(date: str) -> Optional[str]:
         return None
 
 
-def execute_raw_sql_with_params(query: str, params: tuple[str]) -> list:
+def execute_raw_sql_with_params(query: str, params: tuple) -> list:
     """
     Executing raw queries via context manager
 

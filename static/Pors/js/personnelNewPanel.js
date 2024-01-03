@@ -893,6 +893,7 @@ $(document).ready(function () {
                         currentDate.month,
                         currentDate.year
                     )
+                    document.body.style.zoom = "85%"
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
 

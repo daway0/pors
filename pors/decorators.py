@@ -104,6 +104,11 @@ def authenticate(privileged_users: bool = False):
                     " privilege ;)."
                 )
 
+            try:
+                request.data["personnel"] = user.Personnel
+            except AttributeError:
+                request.data = {"personnel": user.Personnel}
+
             return view(request, user, *args, **kwargs)
 
         return wrapper

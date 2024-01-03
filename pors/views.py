@@ -49,14 +49,14 @@ from .utils import (
     split_dates,
 )
 
-# todo
+# todo shipment
 # from Utility.Authentication.Utils import (
 #     V1_PermissionControl as permission_control,
 #     V1_get_data_from_token as get_token_data,
 #     V1_find_token_from_request as find_token
 # )
 #
-# todo
+# todo shipment
 # from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
 message = Message()
@@ -81,7 +81,7 @@ def uiadmin(request, user):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def add_item_to_menu(request, user):
+def add_item_to_menu(request, user: User):
     """
     Adding items to menu.
     Data will pass several validations in order to add item in menu.
@@ -113,7 +113,7 @@ def add_item_to_menu(request, user):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def remove_item_from_menu(request, user):
+def remove_item_from_menu(request, user: User):
     """
     Removing items from menu.
     Data will pass several validations in order to remove item.
@@ -380,8 +380,6 @@ def create_order_item(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    request.data["personnel"] = user.Personnel
-
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(create=True):
         validator.create_order()
@@ -417,7 +415,6 @@ def remove_order_item(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    request.data["personnel"] = user.Personnel
     validator = b.ValidateOrder(request.data)
     if validator.is_valid(remove=True):
         validator.remove_order()
@@ -447,10 +444,6 @@ def create_breakfast_order(request, user: User):
         -  'date' (str): The date which you want to submit order.
         -  'item' (str): The item which you want to order.
     """
-
-    # past auth ...
-
-    request.data["personnel"] = user.Personnel
 
     validator = b.ValidateBreakfast(request.data)
     if validator.is_valid():
@@ -489,7 +482,8 @@ def get_subsidy(request):
 
     return Response({"data": {"subsidy": subsidy}})
 
-# todo
+
+# todo shipment
 # @permission_control
 @api_view(["GET"])
 def auth_gateway(request):
@@ -506,7 +500,7 @@ def auth_gateway(request):
         - Personnel already has a valid token in db, but the request's token
             is invalid or not set at all.
     """
-    # todo
+    # todo shipment
     # token = find_token(request)
     # personnel = get_token_data(token, "username")
     #
@@ -540,7 +534,7 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
-        # todo
+        # todo shipment
         # profile = user_info(personnel)["StaticPhotoURL"]
         profile = ""
         token = generate_token_hash(personnel, full_name, getrandbits)
