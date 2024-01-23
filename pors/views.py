@@ -1,8 +1,8 @@
-from hashlib import sha256
+from collections import namedtuple
 from random import getrandbits
 
 from django.db.models import Q
-from django.http.response import HttpResponse, HttpResponseForbidden
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from jdatetime import timedelta
@@ -23,8 +23,10 @@ from .messages import Message
 from .models import (
     Category,
     DailyMenuItem,
+    Deadlines,
     Item,
     ItemsOrdersPerDay,
+    MealTypeChoices,
     Order,
     Subsidy,
     SystemSetting,
@@ -43,7 +45,6 @@ from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_token_hash,
-    get_submission_deadline,
     get_user_minimal_info,
     localnow,
     split_dates,
@@ -326,25 +327,28 @@ def first_page(request, user: User):
     open_for_admins = system_settings.IsSystemOpenForAdmin
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
 
-    (
-        days_breakfast_deadline,
-        hours_breakfast_deadline,
-        days_launch_deadline,
-        hours_launch_deadline,
-    ) = get_submission_deadline()
-
     now = localnow()
+    today_deadline = Deadlines.objects.filter(WeekDay=now.weekday())
+    if not today_deadline:
+        return Response(
+            "No deadline has been found for today's week number, Abort!",
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
-    if (
-        system_settings.BreakfastRegistrationWindowDays
-        < system_settings.LaunchRegistrationWindowDays
-    ):
+    Deadline = namedtuple("Deadline", "Days Hour")
+    for row in today_deadline:
+        if row.MealType == MealTypeChoices.BREAKFAST:
+            breakfast_deadline = Deadline(row.Days, row.Hour)
+        else:
+            launch_deadline = Deadline(row.Days, row.Hour)
+
+    if breakfast_deadline.Days < launch_deadline.Days:
         year, month, day = b.get_first_orderable_date(
-            now, days_breakfast_deadline, hours_breakfast_deadline
+            now, breakfast_deadline.Days, breakfast_deadline.Hour
         )
     else:
         year, month, day = b.get_first_orderable_date(
-            now, days_launch_deadline, hours_launch_deadline
+            now, launch_deadline.Days, launch_deadline.Hour
         )
 
     first_orderable_date = {"year": year, "month": month, "day": day}

@@ -1,3 +1,4 @@
+import jdatetime
 from rest_framework import serializers
 
 from . import business as b
@@ -68,12 +69,9 @@ class MenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        (
-            days_breakfast_deadline,
-            hours_breakfast_deadline,
-            days_launch_deadline,
-            hours_launch_deadline,
-        ) = u.get_submission_deadline()
+        breakfast_deadlines, launch_deadlines = u.get_deadlines()
+        breakfast_deadlines: dict
+        launch_deadlines: dict
         now = u.localnow()
 
         for object in obj:
@@ -85,18 +83,19 @@ class MenuItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
+                weekday = u.create_jdate_object(object.Date).weekday()
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
                     now,
                     current_date_obj["date"],
-                    days_launch_deadline,
-                    hours_launch_deadline,
+                    launch_deadlines.get(weekday)[0],  # hour deadline
+                    launch_deadlines.get(weekday)[1],  # day deadline
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        days_breakfast_deadline,
-                        hours_breakfast_deadline,
+                        breakfast_deadlines.get(weekday)[0],  # hour deadline
+                        breakfast_deadlines.get(weekday)[1],  # day deadline
                     )
                 )
                 current_date_obj["items"] = []
@@ -198,12 +197,9 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        (
-            days_breakfast_deadline,
-            hours_breakfast_deadline,
-            days_launch_deadline,
-            hours_launch_deadline,
-        ) = u.get_submission_deadline()
+        breakfast_deadlines, launch_deadlines = u.get_deadlines()
+        breakfast_deadlines: dict
+        launch_deadlines: dict
         now = u.localnow()
 
         for object in obj:
@@ -213,18 +209,21 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.get("AvailableDate")
+                weekday = u.create_jdate_object(
+                    object.get("AvailableDate")
+                ).weekday()
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
                     now,
                     current_date_obj["date"],
-                    days_launch_deadline,
-                    hours_launch_deadline
+                    launch_deadlines.get(weekday)[0],  # hour deadline
+                    launch_deadlines.get(weekday)[1],  # day deadline
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        days_breakfast_deadline,
-                        hours_breakfast_deadline
+                        breakfast_deadlines.get(weekday)[0],  # hour deadline
+                        breakfast_deadlines.get(weekday)[1],  # day deadline
                     )
                 )
                 current_date_obj["items"] = []
