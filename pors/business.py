@@ -235,10 +235,11 @@ class ValidateRemove:
     def _validate_date(self):
         """Validating date based on `is_date_valid_for_action` logic."""
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+
+        days_deadline, hours_deadline = get_submission_deadline(
+            self.item.MealType, now.weekday()
+        )
 
         is_date_valid_for_removal = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -380,10 +381,11 @@ class ValidateOrder:
         and valid for submission | removal.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+
+        days_deadline, hours_deadline = get_submission_deadline(
+            self.item.MealType, now.weekday()
+        )
 
         is_valid = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -552,10 +554,10 @@ class ValidateBreakfast:
         Personnel must submit breakfast orders 1 week sooner.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+        days_deadline, hours_deadline = get_submission_deadline(
+            self.item.MealType, now.weekday()
+        )
 
         is_valid_for_submission = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -721,10 +723,10 @@ class ValidateAddMenuItem:
             -  If the deadline has passed for adding.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+        days_deadline, hours_deadline = get_submission_deadline(
+            self.item.MealType, now.weekday()
+        )
 
         is_date_valid_for_add = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
