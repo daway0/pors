@@ -239,21 +239,21 @@ def validate_request_based_on_schema(
 
 
 def get_submission_deadline(
-    meal_type: m.Item.MealTypeChoices = None, weekday: int = 0
-):
+    meal_type: m.Item.MealTypeChoices = None, weekday: int = None
+) -> QuerySet | [int, int]:
     """
     Returning the submission's deadline based on the mealtype it has.
     Deadline is fetched from db based on the weekday.
 
-    If meal_type parameter is not specified, will return both deadlines
-        from database, first is breakfast, second is launch.
-
+    If meal_type parameter is not specified, will all deadlines available in
+        Deadlines table.
     Args:
         meal_type: The submission's deadline.
+        weekday: Number of weekday (due to dynamic deadline logic).
 
     Returns:
-        The deadline value.
-        tuple[int, int, int, int] | tuple[int, int]
+        Queryset of all deadlines | Days and hour value.
+        Queryset | tuple[int, int]
     """
 
     if not meal_type and weekday:
