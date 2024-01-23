@@ -26,28 +26,19 @@ def get_user_minimal_info(user: m.User) -> dict:
         "fullname": user.FullName,
         "profile": user.Profile,
         "is_admin": user.IsAdmin,
-    }
+        }
 
 
 def get_str(date: jdatetime.date) -> str:
-    """تبدیل کردن آبجکت دیت جلالی به رشته
+    """Converting a Jalali date object to a string
     yyyy/mm/dd
     """
     return date.strftime("%Y/%m/%d")
 
 
 def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
-    """
-    این تابع یک ابکجت دیت جلالی از روز اول و روز اخر تاریخ وارد شده
-    بر می‌گرداند.
-
-    ورودی ها:
-        year: سال
-        month: ماه
-    بازگشتی ها:
-        jalali_first_day_date: ابجکت روز اول
-        jalali_last_day_date: ابجکت روز اخر
-
+    """This function returns a Jalali date object from the start and end
+    dates provided
     """
 
     # Todo convert year and month to gro
@@ -59,14 +50,7 @@ def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
 
 
 def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
-    """
-    این تابع مسئولیت حساب کردن تعطیلات اخر هفته را دارد.
-
-    ورودی ها:
-        year: سال
-        month: ماه
-    بازگشتی ها:
-        holidays: لیستی از تعطیلات اخر خفته
+    """This function is responsible for calculating weekend holidays
     """
 
     # Todo get last day of month in jalali date
@@ -80,7 +64,7 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 
 def get_current_date() -> tuple[int, int, int]:
-    "Returning current date"
+    """Returning current date"""
     now = localnow()
     return now.year, now.month, now.day
 
@@ -229,8 +213,8 @@ def generate_csv(queryset: QuerySet):
 
 
 def validate_request_based_on_schema(
-    schema: dict, data: dict
-) -> tuple[str, int]:
+        schema: dict, data: dict
+        ) -> tuple[str, int]:
     """
     This function is responsible for validating request data based on the
         provided schema.
@@ -256,8 +240,8 @@ def validate_request_based_on_schema(
 
 
 def get_submission_deadline(
-    meal_type: m.Item.MealTypeChoices = False,
-):
+        meal_type: m.Item.MealTypeChoices = False,
+        ):
     """
     Returning the submission's deadline based on the mealtype it has.
     The deadline is fetched from SystemSetting table.
@@ -279,30 +263,30 @@ def get_submission_deadline(
             m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
             m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
             m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
-        )
+            )
 
     if meal_type == m.Item.MealTypeChoices.LAUNCH:
         deadline = (
             m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
             m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
-        )
+            )
 
     elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
         deadline = (
             m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
             m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
-        )
+            )
 
     return deadline
 
 
 def generate_token_hash(
-    personnel: str, full_name: str, random_bit: int
-) -> str:
+        personnel: str, full_name: str, random_bit: int
+        ) -> str:
     packed_args = (
-        personnel.encode()
-        + full_name.encode()
-        + bytes(str(random_bit), "utf-8")
+            personnel.encode()
+            + full_name.encode()
+            + bytes(str(random_bit), "utf-8")
     )
     return sha256(packed_args).hexdigest()
 

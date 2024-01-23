@@ -1,21 +1,23 @@
-"""
- توجهات **
-0. تمنا دارم قبل از اعمال تغییر تمامی مستندات پروژه رو مطالعه بفرمایید
+"""Before making any changes, I would like you to read all project documents.
 
+    Under no circumstances should operations be performed manually at the
+    database level. This is because the log is not stored in the ActionLog
+    table, and such behavior has consequences for the developer. Operations
+    should be performed through the specialized admin panel  (not referring
+    to the Django admin panel but a custom-designed panel).
 
+    Note that, in addition to these models, some database views are also
+    used in this project, and you can find its code in /pors/SQLs
 
-1. به هیچ وجه به صورت دستی در سطح دیتابیس عملیاتی صورت نگیرد. چرا که لاگ آن
-در جدول ActionLog ذخیره نشده و پیامد چنین رفتاری با توسعه دهنده است. عملیات
-باید از طریق پنل مخصوص ادمین صورت گیرد (منظور Django admin panel  نیست بلکه
-پنل مخصوص طراحی شده است)
+    Contracts:
 
-قرارداد ها **
- 1. تاریخ به صورت شمسی و با دیتا تایپ charfield در دیتابیس باید قرار بگیرد
+    The date should be stored in the database as a solar(shamsi) date and with
+    the Charfield data type.
 
-2. تغییر در یک از state ها که شامل داده در دیتابیس می شود باید در جدول
-ActionLog ثبت شود.
+    Any change in one of the states that includes data in the database
+    should be recorded in the ActionLog table.
 
-3. قیمت ها همه جا به تومان است
+    Prices are in Toman everywhere.
 """
 
 from django.db import models
@@ -49,7 +51,7 @@ class Logger(models.Model):
             record_id=record_id,
             old_data=old_data,
             user=user
-        )
+            )
 
     def delete(self, *args, **kwargs):
 
@@ -69,19 +71,26 @@ class Logger(models.Model):
             record_id=record_id,
             old_data=old_data,
             user=user
-        )
+            )
 
     class Meta:
         abstract = True
 
 
 class User(models.Model):
+    """This table is used for auth purposes"""
+
     Personnel = models.CharField(max_length=250)
     FullName = models.CharField(max_length=250)
     Profile = models.CharField(max_length=500, null=True, blank=True)
+
+    # Change this to True if a personnel is admin
     IsAdmin = models.BooleanField(default=False)
+
     Token = models.CharField(max_length=64)
     ExpiredAt = models.CharField(max_length=10)
+
+    # todo
     IsActive = models.BooleanField(default=True)
 
     def __str__(self) -> str:
@@ -91,393 +100,319 @@ class User(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["Personnel"], name="unique_personnel"
-            )
-        ]
+                )
+            ]
 
 
 class SystemSetting(models.Model):
+    """System Variables
+    For example, instead of going to the IIS to take  it offline, we change
+    the field in this table from 1 to 0, and in this way, the system cannot
+    be accessed anymore.
+
+    In general, all the variables below should undergo changes through the
+    database.
+
+    All these actions have been taken to provide a better user experience
+    with the current system.
+
+    Note that only one record should be created in this table.
     """
-    متغیر های سیستمی. برای مثال برای از دسترس خارج سیستم به جای اینکه
-    برویم و توی IIS سیستم رو داون کنیم فیلد این جدول رو از 1 به صفر
-    تغییر می دهیم و اینطوری دیگه سفارشی پردازش نمیشه
 
-    کلا همه متغیر های زیر از طریق دیتابیس باید دستخوش تغییر قرار گیرند
+    # In case the order panel is closed, a message indicating unavailability
+    # is shown to the user, and requests towards the server are not processed.
+    IsSystemOpenForPersonnel = models.BooleanField(default=True)
+    IsSystemOpenForAdmin = models.BooleanField(default=True)
 
-    همه این کار ها شده تا کاربر حس بهتری به سیستم فعلی بکنه
-    توجه شود که فقط یک رکورد از این جدول باید ساخته شود
-    """
-
-    IsSystemOpenForPersonnel = models.BooleanField(
-        default=True,
-        help_text=(
-            "در صورت بسته بودن برای پرسنل استاتوس در دسترس نبودن سیستم "
-            "به کاربر نمایش "
-            "داده می شود "
-            "و ریکوعست های سمت بک پردازش نمی شوند"
-        ),
-    )
-    IsSystemOpenForAdmin = models.BooleanField(
-        default=True, help_text="مانند فیلد بالا"
-    )
-    SystemUpdating = models.BooleanField(
-        default=False,
-        help_text=(
-            "هنگام آپدیت کردن سیستم گزینه را فعال کرده تا به یوزر "
-            "نشان دهد که سیستم در حال آپدیت شدن است و امکان ثبت سفارش "
-            "فعال نیست"
-        ),
-    )
-
-    # برای ارسال لاگ به ادمین سیستم استفاده می شود و از طریق دیتابیس قابل
-    # تغییر است ضمن اینکه می دونم خیلی بده ولی باید به صورت زیر باشه
-    # "heshmat@eit,kabud@eit,abud@eit"
-    SuperAdmins = models.CharField(max_length=250, null=True)
+    # During system updates, enable this option to inform the user that the
+    # system is undergoing an update, and the ability to place orders is not
+    # available.
+    # todo
+    SystemUpdating = models.BooleanField(default=False)
 
     BreakfastRegistrationWindowHours = models.IntegerField(
         default=0,
-    )
+        )
     BreakfastRegistrationWindowDays = models.IntegerField(
         default=0,
-    )
+        )
 
     LaunchRegistrationWindowHours = models.IntegerField(
         default=0,
-    )
+        )
     LaunchRegistrationWindowDays = models.IntegerField(
         default=0,
-    )
+        )
 
-    IsSystemOpenForLaunchSubmission = models.BooleanField(
-        default=False,
-        help_text="سیستم خدمات مربوط به ناهار را انجام می دهد یا خیر",
-    )
+    # Does the system provide lunch-related services or not?
+    IsSystemOpenForLaunchSubmission = models.BooleanField(default=False)
 
-    IsSystemOpenForBreakfastSubmission = models.BooleanField(
-        default=True,
-        help_text="سیستم خدمات مربوط به صبحانه را انجام می دهد یا خیر",
-    )
+    # Does the system provide breakfast-related services or not?
+    IsSystemOpenForBreakfastSubmission = models.BooleanField(default=True)
 
-    TotalItemsCanOrderedForBreakfastByPersonnel = models.PositiveSmallIntegerField(
-        null=True,
-        default=1,
-        help_text=(
-            "در حال حاضر با توجه به قوانین واحد اداری هر فرد "
-            "از منوی صبحانه فقط یک ایتم می تونه سفارش بده."
-            "این فیلد جمع ایتم های قابل سفارش برای صبحانه را "
-            "تعیین می کند"
-        ),
-    )
-
+    # Currently, according to the administrative unit(HR) regulations,
+    # each individual can only order one item from the breakfast menu. This
+    # field determines the total number of orderable items for breakfast.
+    TotalItemsCanOrderedForBreakfastByPersonnel = (
+        models.PositiveSmallIntegerField(
+            null=True,
+            default=1,
+            ))
 
 
 class Holiday(models.Model):
     """
-       روز های تعطیلی رسمی کشور.
-       عملیات غیر از Read روی این جدول به صورت معمول صورت گرفته نمی شود.
-    احتمالا تاریخ تعطیلات رسمی کشور سال به سال در این جدول ورود اطلاعات خواهد شد
+      On official holidays of the country, operations other than Read are
+      not typically performed on this table. It is likely that the date of
+      official holidays in the country will be entered into this table year
+      by year.
+
+      So far, the holidays for the year 1402 have been entered into the table
     """
 
-    HolidayDate = models.CharField(max_length=10, verbose_name="تاریخ")
+    HolidayDate = models.CharField(max_length=10)
 
     def __str__(self) -> str:
         return self.HolidayDate
 
-    class Meta:
-        verbose_name = "تعطیل رسمی"
-        verbose_name_plural = "تعطیلات رسمی"
-
 
 class Category(models.Model):
-    """دسته بندی ایتم های قابل سفارش در این جدول قرار می گیرند
-    توجه کنید که هر ایتم قابل سفارشی می تواند شامل دسته بندی باشد
+    """The categorization of orderable items is placed in this table. Note
+    that each orderable item can belong to a category.
 
-    برای مثال پک قاشق و چنگال نیز می تواند در دسته اضافات قرار گیرد"""
+    For example,
+    a cutlery set can also be placed in the 'Additions' category.
+    a NoonPanir can also be placed in the 'Sobune' category.
+    a Nushabe can aslo be placed in the 'Nushidani' category.
+    and so on...
+    """
 
-    CategoryName = models.CharField(
-        max_length=300, verbose_name="نام دسته بندی"
-    )
+    CategoryName = models.CharField(max_length=300)
 
     def __str__(self):
         return self.CategoryName
 
-    class Meta:
-        verbose_name = "دسته بندی ایتم"
-        verbose_name_plural = "دسته بندی ایتم ها"
-
 
 class Subsidy(models.Model):
-    """مقدار یارانه یا سهم فناوران از سفارش به صورت روزانه
+    """Subsidy or the share of Fanavaran from the order on a daily basis.
+
+    Points related to the company's subsidy allocation:
+
+    1. The subsidy is allocated on a daily basis to the order, and its
+    accumulation is not possible.
+
+    2. If the individual places an order with an amount less than the
+    subsidy limit, nothing will be refunded from the Fanavarans' share.
 
 
-    نکات مربوط به لاچیک سوبسید شرکت:
+       id   fromDate        untilDate      amount
+       -----------------------------------------
+       1    1402/02/05      1402/02/12     12
+       2    1402/02/13      null           15
 
-    1. یارانه به صورت روزانه تعلق می گیرد به سفارش و امکان انباشت آن وجود
-    ندارد
+    Note 1: On the 5th and 12th days of Ordibehesht month, there is an
+    allocation of 12 subsidies.
 
-    2. در صورتی که فرد مورد نظر سفارشی با مبلغ کمتر از حد سوبسید خریداری
-    کند از سهم فناوران چیزی به وی عودت داده نمی شود
-
-    3. قرار داد ثبت تاریخ ها به صورت زیر تا در زمان query گیری از دیتابیس
-    سهل الوصول تر باشد
-
-
-    id   fromDate        untilDate      amount
-    ------------------------------
-    1    1402/02/05      1402/02/12     12
-    2    1402/02/13      null           15
-
-    توجه 1: روز 5 و 12 اردیبهشت ماه نیز با یارانه 12 حساب
-    می شود
-    توجه 2: ستونی که untildate آن null است سهم سوبسید فعلی را نشان می دهد
+    Note 2: The column with a null 'untilDate' indicates the current
+    subsidy share
     """
 
-    Amount = models.PositiveIntegerField(verbose_name="سهم فناوران به تومان")
-    FromDate = models.CharField(max_length=10, verbose_name="تاریخ شروع")
-    UntilDate = models.CharField(
-        max_length=10,
-        null=True,
-        verbose_name="تاریخ پایان",
-        help_text="خود تاریخ شروع و پایان نیز با همین سوبسید محاسبه می شود",
-    )
+    # Fanavarans' share
+    Amount = models.PositiveIntegerField()
 
-    def current_subsidy_amount(self) -> int:
-        """میزان سوبسید فعلی شرکت"""
-        ...
-
-    def __str__(self): ...
+    FromDate = models.CharField(max_length=10)
+    UntilDate = models.CharField(max_length=10, null=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["UntilDate"], name="untildate_unique"
-            )
-        ]
-        verbose_name = "یارانه"
-        verbose_name_plural = "یارانه ها"
+                )
+            ]
 
 
 class Item(models.Model):
-    """هر چیز قابل سفارش دادن
-    می تواند غذا باشد یا نوشیدنی / پک قاشق چنگال مثلا و ...
+    """Anything that can be ordered may include food, beverages, cutlery
+    sets, etc.
     """
 
     class MealTypeChoices(models.TextChoices):
-        """برای مشخص کردن زمان سرو یک وعده غذایی از انتخاب های زیر استفاده
-        می کنیم
+        """To determine the serving time of a meal, we use the following
+        choices.
 
-        توجه**********: در صورت تغییر کد وعده ها باید کد متناظر در  فرانت هم
-        بازنویسی شود!!!!
-        پس با احتیاط عمل کن دوست خوب من
+        Note: In case of changing the codes for meals, the corresponding
+        code in the front-end must be rewritten too!!!! So, be cautious,
+        my friend
         """
 
         BREAKFAST = "BRF", "صبحانه"
         LAUNCH = "LNC", "ناهار"
 
-    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
-    Category = models.ForeignKey(
-        "Category", on_delete=models.CASCADE, verbose_name="دسته بندی"
-    )
+    ItemName = models.CharField(max_length=500)
+    Category = models.ForeignKey("Category", on_delete=models.CASCADE)
     MealType = models.CharField(
         choices=MealTypeChoices.choices,
         default=MealTypeChoices.BREAKFAST,
         max_length=3,
-    )
-    ItemDesc = models.TextField(blank=True, null=True, verbose_name="شرح ایتم")
-    IsActive = models.BooleanField(default=True, help_text="")  # todo
+        )
+    ItemDesc = models.TextField(blank=True, null=True)
+
+    # todo
+    IsActive = models.BooleanField(default=True, help_text="")
+
+    # If no image is uploaded, the system automatically sets a default image
     Image = models.ImageField(
         upload_to="media/items/",
         null=True,
         blank=True,
-        help_text=(
-            "در صورتی که عکس آپلود نشود سیستم به صورت خودکار عکس پیشفرض "
-            "قرار می دهد"
-        ),
-    )
+        )
 
-    # این فیلد نباید قابل تغییر توسط ادمین و یا حتی DBA باشد. تغییرات این
-    # فیلد باید در صورت اضافه کردن رکورد جدید در جدول ItemPriceHistory صورت
-    # بگیرد
-    CurrentPrice = models.PositiveIntegerField(
-        verbose_name="قیمت فعلی آیتم به تومان",
-        help_text=(
-            "برای تغییر این فیلد باید رکورد جدید در تاریخچه قیمت "
-            "مربوط به این آیتم ایجاد کنید"
-        ),
-    )
+    # This field should not be modified by the admin or even the DBA.
+    # Changes to this field should occur when adding a new record to the
+    # ItemPriceHistory table
+    CurrentPrice = models.PositiveIntegerField()
 
     def __str__(self):
         return self.ItemName
 
-    class Meta:
-        verbose_name = "اطلاعات ایتم"
-        verbose_name_plural = "اطلاعات ایتم ها"
-
 
 class Order(models.Model):
-    """
-    *** PersonnelDebt = TotalPrice - SubsidyCap
-    توجه شود که PersonnelDebt هیچ گاه منفی نخواهد شد
-    """
+    """Personnel Orders View"""
 
     Id = models.PositiveIntegerField(primary_key=True)
-    Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
-    FirstName = models.CharField(max_length=250, verbose_name="نام")
-    LastName = models.CharField(max_length=250, verbose_name="نام خانوادگی")
-    TeamName = models.CharField(max_length=250, verbose_name="تیم")
-    RoleName = models.CharField(max_length=250, verbose_name="سمت")
-    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
-    SubsidyCap = models.PositiveIntegerField(
-        verbose_name="یارانه فناوران به تومان"
-    )
-    TotalPrice = models.PositiveIntegerField(
-        verbose_name="مبلغ کل سفارش به تومان"
-    )
-    PersonnelDebt = models.PositiveIntegerField(verbose_name="بدهی به تومان")
-    SubsidySpent = models.PositiveIntegerField(
-        verbose_name="خرج فناوران"
-    )  # TODO help text.
+    Personnel = models.CharField(max_length=250)
+    FirstName = models.CharField(max_length=250)
+    LastName = models.CharField(max_length=250)
+    TeamName = models.CharField(max_length=250)
+    RoleName = models.CharField(max_length=250)
+    DeliveryDate = models.CharField(max_length=10)
+    SubsidyCap = models.PositiveIntegerField()
+    TotalPrice = models.PositiveIntegerField()
+
+    # PersonnelDebt = TotalPrice - SubsidyCap
+    # Note that PersonnelDebt will never be negative
+    PersonnelDebt = models.PositiveIntegerField()
+
+    # The amount spent by Fanavaran
+    SubsidySpent = models.PositiveIntegerField()
 
     class Meta:
         managed = False
         db_table = "Order"
-        verbose_name = "سفارش"
-        verbose_name_plural = "سفارشات"
 
 
 class OrderItem(Logger):
-    """ایتم های سفارش داده شده برای کاربران"""
+    """The ordered items for personnel"""
 
     CreatedAt = models.DateTimeField(auto_now_add=True)
     ModifiedAt = models.DateTimeField(auto_now=True, null=True)
-    Personnel = models.CharField(max_length=250, verbose_name="پرسنل")
-    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    Personnel = models.CharField(max_length=250)
+    DeliveryDate = models.CharField(max_length=10)
     Item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, verbose_name="آیتم"
-    )
+        Item, on_delete=models.CASCADE
+        )
     Quantity = models.PositiveSmallIntegerField(
-        default=1, verbose_name="تعداد"
-    )
+        default=1
+        )
 
-    # که از قیمت فعلی آیتم گرفته شده و در اینجا وارد می شود
-    # افزونگی تکنیکی
-    PricePerOne = models.PositiveIntegerField(verbose_name="قیمت به تومان")
+    # Taken from the current item price (Item/CurrentPrice) and entered here.
+    # Technical redundancy
+    PricePerOne = models.PositiveIntegerField()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["Personnel", "DeliveryDate", "Item"],
                 name="unique_item_date_personnel",
-            ),
-        ]
-        verbose_name = "آیتم سفارشی"
-        verbose_name_plural = "آیتم های سفارشی"
+                ),
+            ]
 
 
 class ItemsOrdersPerDay(models.Model):
-    """
-    ویوو زیر نمایان این که ایتم های روزانه ای که توسط اداری ثبت شده است تا
-    به حال چند عدد ثبت سفارش گرفته است؟‌
-    در صورتی که ایتمی ثبت سفارش نداشته باشد عدد 0 به عنوان TotalOrders
-    بازگردانده می شود
+    """The following view shows how many daily items have been ordered
+    until now. If an item has not been ordered, it returns 0 as TotalOrders
+
+    In simpler terms, this view shows how many people have ordered a
+    particular item, and TotalOrders indicates that count.
     """
 
     Id = models.PositiveIntegerField(primary_key=True)
-    Item = models.PositiveIntegerField(verbose_name="آیتم")
-    Date = models.CharField(max_length=10, verbose_name="سفارش برای")
-    TotalOrders = models.PositiveIntegerField(verbose_name="مجموع سفارش ها")
+    Item = models.PositiveIntegerField()
+    Date = models.CharField(max_length=10)
+    TotalOrders = models.PositiveIntegerField()
 
     class Meta:
         managed = False
         db_table = "ItemsOrdersPerDay"
-        verbose_name = "تعداد سفارش بر حسب آیتم"
-        verbose_name_plural = "تعداد سفارشات بر حسب آیتم"
+
 
 
 class ItemPriceHistory(models.Model):
-    """
-    این جدول تاریخچه تغییر قیمت اقلام را نگه می دارد و لاگ ان در جدول
-    جداگانه ذخیره می شود
+    """This table keeps the price change history of items.
 
-    توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب می شود
+    Note that the start and end date of a record are considered with the
+    same price.
+
+    Note 2 This tabel has trigger on DB level # todo
     """
 
     Item = models.ForeignKey(
         Item,
         on_delete=models.CASCADE,
         null=False,
-        blank=False,
-        verbose_name="ایتم",
-    )
+        blank=False
+        )
 
-    Price = models.PositiveIntegerField(verbose_name="قیمت به تومان")
-    FromDate = models.CharField(max_length=10, verbose_name="تاریخ شروع")
+    Price = models.PositiveIntegerField()
+    FromDate = models.CharField(max_length=10)
     UntilDate = models.CharField(
         max_length=10,
-        null=True,
-        verbose_name="تاریخ پایان",
-        help_text=(
-            "توجه شود که تاریخ شروع و پایان یک رکورد نیز با همان قیمت حساب"
-            " می شود"
-        ),
-    )
+        null=True
+        )
 
     def __str__(self):
         return f"{self.Item.ItemName} {self.Price}"
 
-    class Meta:
-        verbose_name = "تاریخچه قیمت آیتم"
-        verbose_name_plural = "تاریخچه قیمت آیتم ها"
-
 
 class DailyMenuItem(Logger):
     """
-    اطلاعات غذای قابل سفارش در هر روز را مشخص می کند
+    It specifies information about the item available for order on each day
     """
 
-    AvailableDate = models.CharField(
-        max_length=10, verbose_name="قابل سفارش برای"
-    )
-    Item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, verbose_name="ایتم"
-    )
-    IsActive = models.BooleanField(help_text="", default=True)  # todo
+    AvailableDate = models.CharField(max_length=10)
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    IsActive = models.BooleanField(default=True)  # todo
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["AvailableDate", "Item"],
                 name="unique_AvailableDate_Item",
-            )
-        ]
-        verbose_name = "منو"
-        verbose_name_plural = "منو ها"
+                )
+            ]
 
 
 class ActionLog(models.Model):
-    """لاگ هر عملی که در این سیستم انجام شود در این جدول ذخیره  می شود
-    اکشن ها قابل توسعه هستند
+    """Every action performed in this system is stored in this table.
+    Models that inherit from Logger have default CRUD operations logged for
+    them
 
-    --------------------------
+    ActionDesc: The main explanation, stating what data has changed during
+    the occurrence of this action, or in general, what has happened, should
+    be transparently expressed. The design of the message structure is the
+    responsibility of the developer.
 
-     --------------------------
-    درباره ActionDesc: توضیح اصلی که  هنگام رخداد این عمل/ این عمل چه
-    دیتایی تغییر کرده است یا به صورت کلی چه اتفاقی افتاده است به صورت کاملا
-    شفاف باید بیان شود و طراحی ساختار پیام به عهده توسعه دهنده است
+    AdminActionReason: The system, especially the order
+    registration/cancellation and modification process, is designed to
+    eliminate the need for admin intervention. If, in any way, the admin (
+    administrative or the central systems team) has made changes and
+    intervened in this process, the reason for this action must be clearly
+    stated in this field.
 
-    --------------------------
-    درباره AdminActionReason: سیستم, مخصوصا  سیستم ثبت / لغو و تغییر سفارش
-    به گونه ای طراحی شده است تا نیازی به دخالت ادمین در این روند نباشد. در
-    صورتی که به هر طریقی ادمین (اداری و یا تیم سامانه های ستادی) در این
-    روند تغییری ایجاد کرده و یابه نحوی دخالت کنند باید دلیل این امر به صورت
-    شفاف در این فیلد ذکر شود
-
-    نکته مهم درباره فیلد AdminActionReason این است که  اجبار برای مقدار گرفتن
-    این فیلد در سطح دیتابیس صورت نمی گیرد(null=True) و توسعه دهنده باید آن را
-    هندل کند(هر جا که ادمین در حال اعمال تغییر بود باید این فیلد required شود)
-
-    --------------------------
-    به صورت خلاصه کنار اکشن هایی که نیاز است در صورت تغییر آن توسط ادمین
-    دلیل آن نیز (AdminActionReason)ثبت شود نوشته REASON_REQUIRED کامنت شده است
+    An important note about the AdminActionReason field is that it is not
+    mandatory to have a value at the database level (null=True), and the
+    developer must handle it (whenever the admin is in the process of
+    making changes, this field must be required).
     """
 
     class LogManager(models.Manager):
@@ -489,7 +424,7 @@ class ActionLog(models.Model):
                 model=None,
                 record_id=None,
                 old_data: dict = None
-        ):
+                ):
             table_name = model._meta.model_name if model else None
             return self.create(
                 User=user,
@@ -498,7 +433,7 @@ class ActionLog(models.Model):
                 ActionType=action_type,
                 ActionDesc=log_msg,
                 OldData=old_data
-            )
+                )
 
     class ActionTypeChoices(models.TextChoices):
         CREATE = "C", "create"
@@ -508,14 +443,15 @@ class ActionLog(models.Model):
 
     ActionAt = models.DateTimeField(auto_now_add=True)
 
-    # در صورتی که سیستم به صورت خودکار اقدام به ثبت لاگ کرده باشد باید کاربر
-    # به صورت "SYSTEM" ثبت شود
+    # If the system automatically logs an action, the user should be
+    # recorded as  'SYSTEM'
     User = models.CharField(max_length=250)
     TableName = models.CharField(max_length=50, null=True)
     ReferencedRecordId = models.PositiveIntegerField(null=True)
-    ActionType = models.CharField(max_length=1, choices=ActionTypeChoices.choices)
+    ActionType = models.CharField(max_length=1,
+                                  choices=ActionTypeChoices.choices)
 
-    # summary of what happened in this log for system supporter
+    # Summary of what happened in this log for system supporter
     # (in the most human-readable word)
     ActionDesc = models.CharField(max_length=1000, null=True)
     OldData = models.JSONField(null=True)
@@ -525,17 +461,20 @@ class ActionLog(models.Model):
     class Meta:
         ordering = ["-ActionAt"]
 
+
 class PersonnelDailyReport(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
     Personnel = models.CharField(max_length=250)
     FirstName = models.CharField(max_length=250)
     LastName = models.CharField(max_length=250)
+
     TeamName = models.CharField(max_length=250)
     RoleName = models.CharField(max_length=250)
-    ItemName = models.CharField(max_length=500, verbose_name="نام ایتم")
+
+    ItemName = models.CharField(max_length=500)
     ItemId = models.IntegerField()
     Quantity = models.PositiveSmallIntegerField()
-    DeliveryDate = models.CharField(max_length=10, verbose_name="سفارش برای")
+    DeliveryDate = models.CharField(max_length=10)
 
     class Meta:
         managed = False
