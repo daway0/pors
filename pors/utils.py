@@ -26,7 +26,7 @@ def get_user_minimal_info(user: m.User) -> dict:
         "fullname": user.FullName,
         "profile": user.Profile,
         "is_admin": user.IsAdmin,
-        }
+    }
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -50,8 +50,7 @@ def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
 
 
 def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
-    """This function is responsible for calculating weekend holidays
-    """
+    """This function is responsible for calculating weekend holidays"""
 
     # Todo get last day of month in jalali date
     last_day_of_month = JalaliDate.days_in_month(month, year)
@@ -213,8 +212,8 @@ def generate_csv(queryset: QuerySet):
 
 
 def validate_request_based_on_schema(
-        schema: dict, data: dict
-        ) -> tuple[str, int]:
+    schema: dict, data: dict
+) -> tuple[str, int]:
     """
     This function is responsible for validating request data based on the
         provided schema.
@@ -240,11 +239,11 @@ def validate_request_based_on_schema(
 
 
 def get_submission_deadline(
-        meal_type: m.Item.MealTypeChoices = False,
-        ):
+    meal_type: m.Item.MealTypeChoices = None, weekday: int = 0
+):
     """
     Returning the submission's deadline based on the mealtype it has.
-    The deadline is fetched from SystemSetting table.
+    Deadline is fetched from db based on the weekday.
 
     If meal_type parameter is not specified, will return both deadlines
         from database, first is breakfast, second is launch.
@@ -257,39 +256,78 @@ def get_submission_deadline(
         tuple[int, int, int, int] | tuple[int, int]
     """
 
-    if not meal_type:
-        return (
-            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
-            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
-            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
-            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
-            )
+    if not meal_type and weekday:
+        return m.Deadlines.objects.all()
 
-    if meal_type == m.Item.MealTypeChoices.LAUNCH:
-        deadline = (
-            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
-            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
-            )
+    deadline = m.Deadlines.objects.filter(
+        MealType=meal_type, Weekday=weekday
+    ).latest()
 
-    elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
-        deadline = (
-            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
-            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
-            )
-
-    return deadline
+    return deadline.Days, deadline.Hour
 
 
 def generate_token_hash(
-        personnel: str, full_name: str, random_bit: int
-        ) -> str:
+    personnel: str, full_name: str, random_bit: int
+) -> str:
     packed_args = (
-            personnel.encode()
-            + full_name.encode()
-            + bytes(str(random_bit), "utf-8")
+        personnel.encode()
+        + full_name.encode()
+        + bytes(str(random_bit), "utf-8")
     )
     return sha256(packed_args).hexdigest()
 
 
 def get_personnel_from_token(token: str):
     return m.User.objects.filter(Token=token, IsActive=True).first()
+
+
+def create_jdate_object(date: str) -> jdatetime.date:
+    """
+    Creating Jalali Date object from provided date.
+
+    Args:
+        date (str): The date you want to create object from.
+
+    Returns:
+        jdatetime.date
+    """
+
+    day = split_dates(date, "day")
+    month = split_dates(date, "month")
+    year = split_dates(date, "year")
+    return jdatetime.date(year, month, day)
+
+
+# For type annotation only
+MealTypeDeadlines = dict[int, tuple[int, int], dict[int, tuple[int, int]]]
+
+
+def get_deadlines() -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
+    """
+    Fetching deadlines from database and forming 2 dicts from the data.
+    Dicts are formed based on the meal type, one for each type.
+    Dicts keys are the weekday nums, so we have 7 keys for each dict.
+
+    Returns:
+        tuple[MealTypeDeadlines, MealTypeDeadlines]:
+        - MealTypeDeadlines: The dict that contains the day and hour deadline
+            for each weekday number.
+
+    Examples:
+        breakfast_deadline[0] = (1, 12)
+        Here the [0] means the first day of week (Shanbe / Saturday),
+        and (1) is the Days deadline, (12) is Hour.
+
+    """
+
+    deadlines = m.Deadlines.objects.all()
+    breakfast_deadlines = {}
+    launch_deadlines = {}
+
+    for row in deadlines:
+        if row.MealType == m.MealTypeChoices.BREAKFAST:
+            breakfast_deadlines[row.WeekDay] = (row.Days, row.Hour)
+        else:
+            launch_deadlines[row.WeekDay] = (row.Days, row.Hour)
+
+    return breakfast_deadlines, launch_deadlines

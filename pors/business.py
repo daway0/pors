@@ -132,7 +132,9 @@ def is_date_valid_for_action(
 
 
 def get_first_orderable_date(
-    now: jdatetime.datetime, days_deadline: int, hours_deadline: int
+    now: jdatetime.datetime,
+    days_deadline: int,
+    hours_deadline: int,
 ):
     """
     Returning the first valid date for order submission based on deadline.
