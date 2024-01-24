@@ -2,6 +2,7 @@ import codecs
 import csv
 import json
 import re
+from collections import namedtuple
 from hashlib import sha256
 from typing import Optional
 
@@ -99,6 +100,22 @@ def split_dates(dates, mode: str):
             return int(dates.split("/")[0])
         for date in dates:
             new_dates.append(int(date.split("/")[0]))
+        return new_dates
+    elif mode == "all":
+        if not isinstance(dates, list):
+            return (
+                int(dates.split("/")[0]),
+                int(dates.split("/")[1]),
+                int(dates.split("/")[2]),
+            )
+        for date in dates:
+            new_dates.append(
+                (
+                    int(dates.split("/")[0]),
+                    int(dates.split("/")[1]),
+                    int(dates.split("/")[2]),
+                )
+            )
         return new_dates
 
 
@@ -238,9 +255,9 @@ def validate_request_based_on_schema(
             raise ValueError(f"Invalid {param} value.")
 
 
-def get_submission_deadline(
+def get_specific_deadline(
     meal_type: m.Item.MealTypeChoices = None, weekday: int = None
-) -> QuerySet | [int, int]:
+):
     """
     Returning the submission's deadline based on the mealtype it has.
     Deadline is fetched from db based on the weekday.
@@ -259,9 +276,7 @@ def get_submission_deadline(
     if not meal_type and weekday:
         return m.Deadlines.objects.all()
 
-    deadline = m.Deadlines.objects.filter(
-        MealType=meal_type, Weekday=weekday
-    ).latest()
+    deadline = m.Deadlines.objects.get(MealType=meal_type, WeekDay=weekday)
 
     return deadline.Days, deadline.Hour
 
@@ -302,7 +317,9 @@ def create_jdate_object(date: str) -> jdatetime.date:
 MealTypeDeadlines = dict[int, tuple[int, int], dict[int, tuple[int, int]]]
 
 
-def get_deadlines() -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
+def get_deadlines(
+    deadline: tuple,
+) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
     """
     Fetching deadlines from database and forming 2 dicts from the data.
     Dicts are formed based on the meal type, one for each type.
@@ -326,8 +343,8 @@ def get_deadlines() -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
 
     for row in deadlines:
         if row.MealType == m.MealTypeChoices.BREAKFAST:
-            breakfast_deadlines[row.WeekDay] = (row.Days, row.Hour)
+            breakfast_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
         else:
-            launch_deadlines[row.WeekDay] = (row.Days, row.Hour)
+            launch_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
 
     return breakfast_deadlines, launch_deadlines

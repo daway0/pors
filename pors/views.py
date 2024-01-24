@@ -33,6 +33,7 @@ from .models import (
     User,
 )
 from .serializers import (
+    Deadline,
     AllItemSerializer,
     CategorySerializer,
     FirstPageSerializer,
@@ -45,6 +46,7 @@ from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
     generate_token_hash,
+    get_deadlines,
     get_user_minimal_info,
     localnow,
     split_dates,
@@ -328,28 +330,29 @@ def first_page(request, user: User):
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
 
     now = localnow()
-    today_deadline = Deadlines.objects.filter(WeekDay=now.weekday())
-    if not today_deadline:
+    breakfast_deadlines, launch_deadlines = get_deadlines(Deadline)
+    if not breakfast_deadlines and launch_deadlines:
         return Response(
             "No deadline has been found for today's week number, Abort!",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    year, month, day = b.get_first_orderable_date(
+        now, breakfast_deadlines, launch_deadlines
+    )
+    # for row in today_deadline:
+    #     if row.MealType == MealTypeChoices.BREAKFAST:
+    #         breakfast_deadline = Deadline(row.Days, row.Hour)
+    #     else:
+    #         launch_deadline = Deadline(row.Days, row.Hour)
 
-    Deadline = namedtuple("Deadline", "Days Hour")
-    for row in today_deadline:
-        if row.MealType == MealTypeChoices.BREAKFAST:
-            breakfast_deadline = Deadline(row.Days, row.Hour)
-        else:
-            launch_deadline = Deadline(row.Days, row.Hour)
-
-    if breakfast_deadline.Days < launch_deadline.Days:
-        year, month, day = b.get_first_orderable_date(
-            now, breakfast_deadline.Days, breakfast_deadline.Hour
-        )
-    else:
-        year, month, day = b.get_first_orderable_date(
-            now, launch_deadline.Days, launch_deadline.Hour
-        )
+    # if breakfast_deadline.Days < launch_deadline.Days:
+    #     year, month, day = b.get_first_orderable_date(
+    #         now, breakfast_deadline.Days, breakfast_deadline.Hour
+    #     )
+    # else:
+    #     year, month, day = b.get_first_orderable_date(
+    #         now, launch_deadline.Days, launch_deadline.Hour
+    #     )
 
     first_orderable_date = {"year": year, "month": month, "day": day}
 

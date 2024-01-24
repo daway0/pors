@@ -10,10 +10,11 @@ from . import serializers as s
 from .utils import (
     execute_raw_sql_with_params,
     first_and_last_day_date,
-    get_submission_deadline,
+    get_specific_deadline,
     localnow,
     split_json_dates,
     validate_date,
+    split_dates,
 )
 
 
@@ -133,8 +134,8 @@ def is_date_valid_for_action(
 
 def get_first_orderable_date(
     now: jdatetime.datetime,
-    days_deadline: int,
-    hours_deadline: int,
+    breakfast_deadlines: dict[int, s.Deadline],
+    launch_deadlines: dict[int, s.Deadline],
 ):
     """
     Returning the first valid date for order submission based on deadline.
@@ -146,13 +147,44 @@ def get_first_orderable_date(
     Returns:
         Tuple of `year`, `month` and `day` values, don't forget the order :).
     """
-    if 24 > hours_deadline < 0:
-        raise ValueError("`hours_deadline` value must be between 0 and 24.")
+    # if 24 > hours_deadline < 0:
+    #     raise ValueError("`hours_deadline` value must be between 0 and 24.")
 
-    now += jdatetime.timedelta(days=days_deadline)
-    if now.hour >= hours_deadline:
-        now += jdatetime.timedelta(days=1)
-    return now.year, now.month, now.day
+    # now += jdatetime.timedelta(days=days_deadline)
+    # if now.hour >= hours_deadline:
+    #     now += jdatetime.timedelta(days=1)
+    # return now.year, now.month, now.day
+
+    passed_days = 0
+    weekday = now.weekday()
+    passed_weekday = weekday
+    while True:
+        breakfast_deadline = breakfast_deadlines[passed_weekday]
+        launch_deadline = launch_deadlines[passed_weekday]
+
+        if (
+            (
+                breakfast_deadline.Days == passed_days
+                and launch_deadline.Days == passed_days
+            )
+            and (
+                breakfast_deadline.Hour <= now.hour
+                and launch_deadline.Hour <= now.hour
+            )
+            or (
+                breakfast_deadline.Days > passed_days
+                and launch_deadline.Days > passed_days
+            )
+        ):
+            passed_days += 1
+            if passed_weekday != 6:
+                passed_weekday += 1
+            else:
+                passed_weekday = 0
+
+        else:
+            now += jdatetime.timedelta(days=passed_days)
+            return now.year, now.month, now.day
 
 
 class ValidateRemove:
@@ -237,8 +269,10 @@ class ValidateRemove:
 
         now = localnow()
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType, now.weekday()
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            self.item.MealType, date_obj.weekday()
         )
 
         is_date_valid_for_removal = is_date_valid_for_action(
@@ -383,8 +417,10 @@ class ValidateOrder:
 
         now = localnow()
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType, now.weekday()
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            self.item.MealType, date_obj.weekday()
         )
 
         is_valid = is_date_valid_for_action(
@@ -555,8 +591,11 @@ class ValidateBreakfast:
         """
 
         now = localnow()
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType, now.weekday()
+
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            self.item.MealType, date_obj.weekday()
         )
 
         is_valid_for_submission = is_date_valid_for_action(
@@ -724,8 +763,10 @@ class ValidateAddMenuItem:
         """
 
         now = localnow()
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType, now.weekday()
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            self.item.MealType, date_obj.weekday()
         )
 
         is_date_valid_for_add = is_date_valid_for_action(
