@@ -8,6 +8,7 @@ from . import utils as u
 
 Deadline = namedtuple("Deadline", "Days Hour")
 
+
 class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
@@ -224,8 +225,8 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        breakfast_deadlines.get(weekday)[0],  # hour deadline
-                        breakfast_deadlines.get(weekday)[1],  # day deadline
+                        breakfast_deadlines[weekday].Days,
+                        breakfast_deadlines[weekday].Hour,
                     )
                 )
                 current_date_obj["items"] = []

@@ -12,9 +12,9 @@ from .utils import (
     first_and_last_day_date,
     get_specific_deadline,
     localnow,
+    split_dates,
     split_json_dates,
     validate_date,
-    split_dates,
 )
 
 
@@ -139,21 +139,15 @@ def get_first_orderable_date(
 ):
     """
     Returning the first valid date for order submission based on deadline.
+    The deadline values must be a Deadline namedtuple.
 
     Args:
         now: Current datetime.
-        deadline: The deadline of the submissions.
-
+        breakfast_deadlines: Deadline for breakfast submissions.
+        launch_deadlines: Deadline for launch submissions.
     Returns:
         Tuple of `year`, `month` and `day` values, don't forget the order :).
     """
-    # if 24 > hours_deadline < 0:
-    #     raise ValueError("`hours_deadline` value must be between 0 and 24.")
-
-    # now += jdatetime.timedelta(days=days_deadline)
-    # if now.hour >= hours_deadline:
-    #     now += jdatetime.timedelta(days=1)
-    # return now.year, now.month, now.day
 
     passed_days = 0
     weekday = now.weekday()
@@ -177,7 +171,7 @@ def get_first_orderable_date(
             )
         ):
             passed_days += 1
-            if passed_weekday != 6:
+            if passed_weekday != 6:  # has 7 days only (starts with 0)
                 passed_weekday += 1
             else:
                 passed_weekday = 0

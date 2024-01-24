@@ -75,7 +75,7 @@ def split_dates(dates, mode: str):
 
     Args:
         dates: List of dates, or a single date to split.
-        mode: The section, choose between `year`, `month` and `day`.
+        mode: The section, choose between `year`, `month` and `day`, `all`.
 
     Returns:
         List or single integer.
