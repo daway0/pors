@@ -92,6 +92,8 @@ class Users(models.Model):
     Gender = models.BooleanField(default=False, verbose_name='جنسیت')
     LivingAddress = models.ForeignKey("PostalAddress", verbose_name="آدرس محل سکونت", on_delete=models.SET_NULL,
                                       null=True, blank=True)
+
+
     # is_staff = models.BooleanField(default=True)
     # is_active = models.BooleanField(default=True)
     # is_superuser = models.BooleanField(default=False)
@@ -165,6 +167,15 @@ class Users(models.Model):
     #         cursor.close()
     #
     #     return Group.objects.none()
+
+    LastBuilding = models.ForeignKey(to="ConstValue",
+                                     related_name="UsersBuilding",
+                                     on_delete=models.SET_NULL, null=True,
+                                     blank=True)
+    LastFloor = models.ForeignKey(to="ConstValue", related_name="UsersFloor",
+                                  on_delete=models.SET_NULL, null=True,
+                                  blank=True)
+
 
     def __str__(self):
         return self.FirstName + ' ' + self.LastName

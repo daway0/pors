@@ -82,7 +82,7 @@ def personnel_financial_report(request, current_user):
     )
 
     result = orders.values(
-        "Personnel", "FirstName", "LastName", "TeamName", "RoleName"
+        "Personnel", "FirstName", "LastName"
     ).annotate(
         TotalOrders=Count("Id"),
         TotalPrice=Sum("TotalPrice"),
@@ -135,8 +135,6 @@ def item_ordering_personnel_list_report(request, current_user):
         "Personnel",
         "FirstName",
         "LastName",
-        "TeamName",
-        "RoleName",
         "ItemName",
         "Quantity",
         "DeliveryDate",

@@ -91,6 +91,18 @@ class User(models.Model):
     # todo
     IsActive = models.BooleanField(default=True)
 
+    # HR ConstValue Table Code (For Cache purposes)
+    LastDeliveryBuilding = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+        )
+    LastDeliveryFloor = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+        )
+
     def __str__(self) -> str:
         return self.Personnel
 
@@ -294,11 +306,13 @@ class Order(models.Model):
     Personnel = models.CharField(max_length=250)
     FirstName = models.CharField(max_length=250)
     LastName = models.CharField(max_length=250)
-    TeamName = models.CharField(max_length=250)
-    RoleName = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
     SubsidyCap = models.PositiveIntegerField()
     TotalPrice = models.PositiveIntegerField()
+
+    # HR ConstValue Table Code
+    DeliveryBuilding = models.CharField(max_length=250)
+    DeliveryFloor = models.CharField(max_length=250)
 
     # PersonnelDebt = TotalPrice - SubsidyCap
     # Note that PersonnelDebt will never be negative
@@ -321,6 +335,10 @@ class OrderItem(Logger):
     DeliveryDate = models.CharField(max_length=10)
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     Quantity = models.PositiveSmallIntegerField(default=1)
+
+    # HR ConstValue Table Code
+    DeliveryBuilding = models.CharField(max_length=250)
+    DeliveryFloor = models.CharField(max_length=250)
 
     # Taken from the current item price (Item/CurrentPrice) and entered here.
     # Technical redundancy
@@ -468,10 +486,6 @@ class PersonnelDailyReport(models.Model):
     Personnel = models.CharField(max_length=250)
     FirstName = models.CharField(max_length=250)
     LastName = models.CharField(max_length=250)
-
-    TeamName = models.CharField(max_length=250)
-    RoleName = models.CharField(max_length=250)
-
     ItemName = models.CharField(max_length=500)
     ItemId = models.IntegerField()
     Quantity = models.PositiveSmallIntegerField()
