@@ -151,10 +151,9 @@ def get_first_orderable_date(
 
     passed_days = 0
     weekday = now.weekday()
-    passed_weekday = weekday
     while True:
-        breakfast_deadline = breakfast_deadlines[passed_weekday]
-        launch_deadline = launch_deadlines[passed_weekday]
+        breakfast_deadline = breakfast_deadlines[weekday]
+        launch_deadline = launch_deadlines[weekday]
 
         if (
             (
@@ -171,10 +170,10 @@ def get_first_orderable_date(
             )
         ):
             passed_days += 1
-            if passed_weekday != 6:  # has 7 days only (starts with 0)
-                passed_weekday += 1
+            if weekday != 6:  # has 7 days only (starts with 0)
+                weekday += 1
             else:
-                passed_weekday = 0
+                weekday = 0
 
         else:
             now += jdatetime.timedelta(days=passed_days)
