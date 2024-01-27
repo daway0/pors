@@ -1,4 +1,7 @@
-SELECT Row_number()                                                         OVER (ORDER BY PersonnelService.dbo.pors_orderitem.deliverydate) AS Id, HR.dbo.Users.FirstName,
+SELECT Row_number() OVER (ORDER BY PersonnelService.dbo.pors_orderitem
+.deliverydate) AS Id,
+       HR.dbo.Users.NationalCode,
+       HR.dbo.Users.FirstName,
        HR.dbo.Users.LastName,
        PersonnelService.dbo.pors_orderitem.Personnel                     as Personnel,
        PersonnelService.dbo.pors_orderitem.DeliveryDate                  as DeliveryDate,

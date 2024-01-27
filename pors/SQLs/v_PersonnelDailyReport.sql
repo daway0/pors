@@ -1,4 +1,5 @@
 SELECT row_number() over (order by (select null)) as Id, orders.Personnel,
+       users.NationalCode,
        users.FirstName,
        users.LastName,
        item.ItemName,
