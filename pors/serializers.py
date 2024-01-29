@@ -164,6 +164,9 @@ class FirstPageSerializer(serializers.Serializer):
     isOpenForPersonnel = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
+    buildings = serializers.DictField()
+    latestBuilding = serializers.CharField()
+    latestFloor = serializers.CharField()
     firstOrderableDate = serializers.DictField()
     totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
 
