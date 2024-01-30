@@ -869,7 +869,7 @@ class ValidateDeliveryBuilding:
         self.new_delivery_building: str = ""
         self.new_delivery_floor: str = ""
         self.available_buildings: dict[str, list[str]] = buildings
-        self.order: QuerySet[m.Order] = m.Order.objects.none()
+        self.order: m.Order = m.Order.objects.none()
 
     def is_valid(self):
         """
@@ -957,9 +957,6 @@ class ValidateDeliveryBuilding:
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
         ).first()
-        if not current_order:
-            self.message = "در تاریخ داده شده سفارشی ثبث نشده است."
-            raise ValueError("No items have been ordered on this date.")
 
         if (
             current_order.DeliveryBuilding == self.new_delivery_building

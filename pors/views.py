@@ -601,7 +601,7 @@ def change_delivery_building(request, user: User):
     if validator.is_valid():
         validator.change_delivary_place()
         message.add_message(
-            "ساختمان تحویل سفارش با موفقیت تغییر یافت.", Message.INFO
+            "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
