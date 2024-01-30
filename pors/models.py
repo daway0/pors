@@ -93,15 +93,9 @@ class User(models.Model):
 
     # HR ConstValue Table Code (For Cache purposes)
     LastDeliveryBuilding = models.CharField(
-        max_length=250,
-        null=True,
-        blank=True
-        )
-    LastDeliveryFloor = models.CharField(
-        max_length=250,
-        null=True,
-        blank=True
-        )
+        max_length=250, null=True, blank=True
+    )
+    LastDeliveryFloor = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.Personnel

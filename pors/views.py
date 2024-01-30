@@ -359,7 +359,7 @@ def first_page(request, user: User):
             "isOpenForPersonnel": open_for_personnel,
             "fullName": user.FullName,
             "profile": user.Profile,
-            "buidlings": buildings,
+            "buildings": buildings,
             "latestBuilding": user.LastDeliveryBuilding,
             "latestFloor": user.LastDeliveryFloor,
             "firstOrderableDate": first_orderable_date,

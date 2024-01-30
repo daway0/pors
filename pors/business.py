@@ -705,6 +705,8 @@ class ValidateBreakfast:
         m.OrderItem(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
+            DeliveryBuilding=self.user.LastDeliveryBuilding,
+            DeliveryFloor=self.user.LastDeliveryFloor,
             Item=self.item,
             PricePerOne=self.item.CurrentPrice,
         ).save(
@@ -844,7 +846,7 @@ class ValidateAddMenuItem:
 class ValidateDeliveryBuilding:
     """
     This class is responsible for validating 'change delivery building' api.
-    If the data was valid, the user can change their delivery building and 
+    If the data was valid, the user can change their delivery building and
         floor via 'change_delivary_place' interface.
 
     Attributes:
@@ -864,7 +866,7 @@ class ValidateDeliveryBuilding:
         self.error: str = ""
         self.message: str = ""
         self.date: str = ""
-        self.new_delivery_buidling: str = ""
+        self.new_delivery_building: str = ""
         self.new_delivery_floor: str = ""
         self.available_buildings: dict[str, list[str]] = buildings
         self.order: QuerySet[m.Order] = m.Order.objects.none()
@@ -878,7 +880,7 @@ class ValidateDeliveryBuilding:
         Returns:
             bool: was the request data valid or not.
         """
-                
+
         try:
             self._validate_request()
             self._validate_building()
@@ -909,7 +911,7 @@ class ValidateDeliveryBuilding:
                 " parameters must specified."
             )
 
-        self.new_delivery_buidling = new_delivery_building
+        self.new_delivery_building = new_delivery_building
         self.new_delivery_floor = new_delivery_floor
         self.date = validate_date(date)
         if not self.date:
@@ -925,7 +927,7 @@ class ValidateDeliveryBuilding:
 
         valid = False
         for building, floors in self.available_buildings.items():
-            if self.new_delivery_buidling != building:
+            if self.new_delivery_building != building:
                 continue
 
             elif self.new_delivery_floor not in floors:
@@ -960,7 +962,7 @@ class ValidateDeliveryBuilding:
             raise ValueError("No items have been ordered on this date.")
 
         if (
-            current_order.DeliveryBuilding == self.new_delivery_buidling
+            current_order.DeliveryBuilding == self.new_delivery_building
             and current_order.DeliveryFloor == self.new_delivery_floor
         ):
             self.message = (
@@ -1000,20 +1002,33 @@ class ValidateDeliveryBuilding:
     def change_delivary_place(self):
         """
         Changing personnel's 'DeliveryBuilding' and 'DeliveryFloor' value
-            in requested date.
+        in requested date, also logging the action.
 
         Will also change the cached data in 'User' table.
         """
 
+        personnel = self.data.get("personnel")
         m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
         ).update(
-            DeliveryBuilding=self.new_delivery_buidling,
+            DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,
         )
 
-        user = m.User.objects.get(Personnel=self.data.get("personnel"))
-        user.LastDeliveryBuilding = self.new_delivery_buidling
+        m.ActionLog.objects.log(
+            m.ActionLog.ActionTypeChoices.UPDATE,
+            personnel,
+            f"Delivery place has changed for date {self.date}",
+            m.OrderItem,
+            None,
+            dict(
+                DeliveryBuilding=self.order.DeliveryBuilding,
+                DeliveryFloor=self.order.DeliveryFloor,
+            ),
+        )
+
+        user = m.User.objects.get(Personnel=personnel)
+        user.LastDeliveryBuilding = self.new_delivery_building
         user.LastDeliveryFloor = self.new_delivery_floor
         user.save()
