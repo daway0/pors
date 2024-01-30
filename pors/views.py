@@ -377,7 +377,7 @@ def create_order_item(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateOrder(request.data)
+    validator = b.ValidateOrder(request.data, user)
     if validator.is_valid(create=True):
         validator.create_order()
         message.add_message(
@@ -586,7 +586,7 @@ def change_delivery_building(request, user: User):
     available_buildings = dict()
     available_buildings["abdollah"] = ["1", "2", "3"]
     available_buildings["nasrollah"] = ["1", "2", "3", "4"]
-    
+
     validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
     if validator.is_valid():
         validator.change_delivary_place()
