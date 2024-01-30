@@ -73,7 +73,97 @@ let allItems = undefined
 let orderableBreakFastItemCount = undefined
 let orders = undefined
 let orderSubsidy = undefined
+let latestBuilding = null
+let latestFloor = null
+let deliveryPlaces = {}
+let tempNewBuilding = undefined
+let tempNewFloor = undefined
 
+function getDeliveryPlaceTitleByCode(code) {
+    for (const building of deliveryPlaces) {
+        if (building.code === code) {
+            return building.title;
+        }
+        for (const floor of building.floors) {
+            if (floor.code === code) {
+                return floor.title;
+            }
+        }
+    }
+    return "Unknown";
+}
+
+function makeDeliveryBuildingModal() {
+    let counter = 0
+    let buildingChoicesHTML = ""
+    for (const building of deliveryPlaces) {
+        buildingChoicesHTML += `<li>
+        <input type="radio" id="bld-${counter}" name="bld" value="bld-${counter}"
+               class="hidden peer" data-place-code="${building.code}" data-place-type="BLD" required>
+            <label for="bld-${counter}"
+                   class="inline-flex items-center justify-between w-full p-5 text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer  peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-900 hover:bg-gray-100 ">
+                <div class="block">
+                    <div class="w-full text-base font-semibold">
+                        ${convertToPersianNumber(building.title)}
+                    </div>
+                </div>
+                <svg class="w-4 h-4 ms-3 rtl:rotate-180 text-gray-500 "
+                     aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 14 10">
+                    <path stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                </svg>
+            </label>
+    </li>`
+        counter++
+    }
+    $("#building-choices-modal").text("")
+    $("#building-choices-modal").append(buildingChoicesHTML)
+
+}
+
+function makeDeliveryFloorModal(buildingCode) {
+    let counter = 0
+    let buildingChoicesHTML = ""
+    for (const building of deliveryPlaces) {
+        if (building.code !== buildingCode) continue
+        for (const floor of building.floors){
+            buildingChoicesHTML +=
+                `<li>
+                    <input type="radio" id="flr-${counter}" name="flr"
+                           value="flr-${counter}"
+                           class="hidden peer" data-place-code="${floor.code}"
+                           data-place-type="FLR" required>
+                        <label for="flr-${counter}"
+                               class="inline-flex items-center justify-between w-full p-5 text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer  peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-900 hover:bg-gray-100 ">
+                            <div class="block">
+                                <div class="w-full text-base font-semibold">
+                                   ${convertToPersianNumber(floor.title)}
+                                </div>
+                            </div>
+                            <svg
+                                class="w-4 h-4 ms-3 rtl:rotate-180 text-gray-500 "
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 14 10">
+                                <path stroke="currentColor"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M1 5h12m0 0L9 1m4 4L9 9"/>
+                            </svg>
+                        </label>
+                </li>`
+        counter++
+        }
+
+    }
+    $("#floor-choices-modal").text("")
+    $("#floor-choices-modal").append(buildingChoicesHTML)
+
+}
 function insertCommas(str) {
 
     // برای خوانا تر شدن رقم ها
@@ -155,14 +245,6 @@ function toObjectFormat(shamsiDate) {
     };
 }
 
-function changeVisibilityAddMenuItemDropDown(hidden) {
-    let addItemContainer = $("#dropdown-menu-container")
-    if (hidden) {
-        addItemContainer.addClass("hidden")
-    } else {
-        addItemContainer.removeClass("hidden")
-    }
-}
 
 function zfill(number, width) {
     let numberString = number.toString();
@@ -533,6 +615,30 @@ function getSubsidy() {
     });
 }
 
+function canPersonnelChangeDeliveryPlace(dateObj) {
+    let day = menuItems.find(function (orderObj) {
+        return orderObj["date"] === toShamsiFormat(dateObj)
+    })
+    if (day === undefined) return false
+    return day.openForLaunch && day.openForBreakfast
+}
+function orderDeliveryPlace(dateObj) {
+    let order = orders.find(function (orderObj) {
+        return orderObj.orderDate === toShamsiFormat(dateObj)
+    })
+    if (order === undefined) {
+        if (latestFloor != null && latestBuilding != null) {
+            return getDeliveryPlaceTitleByCode(latestBuilding) +
+                " " +
+                getDeliveryPlaceTitleByCode(latestFloor)
+        } else return "مشخص نشده"
+    }
+    let deliveryBuilding = getDeliveryPlaceTitleByCode(order["deliveryBuilding"])
+    let deliveryFloor = getDeliveryPlaceTitleByCode(order["deliveryFloor"])
+
+    return deliveryBuilding + " " + deliveryFloor
+}
+
 function billDisplay(show) {
     let thereIsNoOrderForDay = $("#no-order-for-today")
     let billDetail = $("#day-bill")
@@ -549,6 +655,14 @@ function updateOrderBillDetail() {
     let total = 0
     let fanavaran = orderSubsidy
     let debt = 0
+    let deliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate))
+
+    if (!canPersonnelChangeDeliveryPlace(selectedDate)){
+        $("#location-modal-trigger").addClass("hidden")
+    } else {
+        $("#location-modal-trigger").removeClass("hidden")
+
+    }
 
     if (orderItems.length === 0) {
         billDisplay(false)
@@ -570,6 +684,8 @@ function updateOrderBillDetail() {
     $(".total-amount").text(insertCommas(convertToPersianNumber(total)))
     $(".subsidy-amount").text(insertCommas(convertToPersianNumber(fanavaran)))
     $(".debt-amount").text(insertCommas(convertToPersianNumber(debt)))
+
+    $("#delivery-place").text(deliveryPlace)
 
 }
 
@@ -678,6 +794,7 @@ function updateOrders(month, year) {
     $.ajax({
         url: addPrefixTo(`calendar/?year=${year}&month=${month}`),
         method: 'GET',
+        async: false,
         dataType: 'json',
         success: function (data) {
             menuItems = data["menuItems"]
@@ -831,6 +948,11 @@ $(document).ready(function () {
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
             currentDate.year = data["firstOrderableDate"]["year"]
+            latestBuilding = data["latestBuilding"]
+            latestFloor = data["latestFloor"]
+            deliveryPlaces = data["buildings"]
+
+            makeDeliveryBuildingModal()
 
             selectedDate = currentDate
 
@@ -1095,5 +1217,66 @@ $(document).ready(function () {
                 catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
             }
         });
+    })
+
+    // دکمه ویرایش مکان تحویل سفارش
+    $(document).on('click', '#location-modal-trigger', function () {
+        $("#building-place-modal").click()
+    })
+
+    //دکمه انتخاب یکی از ساختمان ها
+    $(document).on('change', '#building-choices-modal input', function () {
+        tempNewBuilding = $(this).parent().find("input").attr("data-place-code")
+
+        // for closing building modal
+        $("#building-place-modal").click()
+
+        // for remove the latest user input choice in UI
+        makeDeliveryBuildingModal()
+
+        // making appropriate floor modal based on building choice
+        makeDeliveryFloorModal(tempNewBuilding)
+
+        //opening floor modal
+        $("#floor-place-modal").click()
+    })
+
+    //دکمه انتخاب یکی از طبقه ها
+    $(document).on('change', '#floor-choices-modal input', function () {
+        tempNewFloor = $(this).parent().find("input").attr("data-place-code")
+
+        $.ajax({
+            url: addPrefixTo(`change_order_delivery_place/`),
+            method: 'POST',
+            contentType: 'application/json',
+            async: true,
+            data: JSON.stringify(
+                {
+                    "newDeliveryBuilding": tempNewBuilding,
+                    "newDeliveryFloor": tempNewFloor,
+                    "date": toShamsiFormat(selectedDate)
+                }
+            ),
+            statusCode:{
+                200: function (data) {
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    updateOrderBillDetail()
+                    latestBuilding = tempNewBuilding
+                    latestFloor = tempNewFloor
+                    catchResponseMessagesToDisplay(data.messages)
+                    tempNewBuilding = undefined
+                    tempNewFloor = undefined
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Delivery place manipulation not applied!', status, 'and' +
+                    ' error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+            }
+        });
+
+        // for closing floor modal
+        $("#floor-place-modal").click()
     })
 });

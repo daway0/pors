@@ -1,4 +1,13 @@
 {
-    "item":1,
-    "date":"1402/11/11"
+    "buildings": [
+        {
+            "code": null,
+            "title": null,
+            "floors": [
+                {"code": null,
+                "title": null
+                }
+            ]
+        }
+    ]
 }

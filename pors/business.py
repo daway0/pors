@@ -958,7 +958,7 @@ class ValidateDeliveryBuilding:
             DeliveryDate=self.date,
         ).first()
 
-        if (
+        if current_order and (
             current_order.DeliveryBuilding == self.new_delivery_building
             and current_order.DeliveryFloor == self.new_delivery_floor
         ):

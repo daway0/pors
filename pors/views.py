@@ -341,13 +341,28 @@ def first_page(request, user: User):
     first_orderable_date = {"year": year, "month": month, "day": day}
 
     # fetching available buildings and floors from HR data source.
-    floor1 = dict(code="FLR1", title="FLOOR 1")
-    floor2 = dict(code="FLR2", title="FLOOR 2")
-    floors = [floor1, floor2]
+    floor01 = dict(code="Floor_Padidar_P1", title="P1")
+    floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
+    floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
+    floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
+    floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
+    floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
+    floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
+
+
+
+    floors0 = [floor01,floor02,floor03,floor04,floor05,floor06,floor07]
+    floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
+    floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
+    floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
+    floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
+    floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
+
+    floors1 = [floor11, floor12, floor13, floor14, floor15]
     building1: dict[str, list[str]] = dict(
-        code="BLG1", title="BUILDING 1", floors=floors
+        code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
     )
-    building2 = dict(code="BLG2", title="BUILDING 2", floors=floors)
+    building2 = dict(code="Building_Gandi", title="ساختمان گاندی", floors=floors1)
     buildings = BuildingSerializer(
         data=[building1, building2], many=True
     ).initial_data
@@ -592,17 +607,28 @@ def auth_gateway(request):
 @check([is_open_for_personnel])
 @authenticate()
 def change_delivery_building(request, user: User):
+
     # fetching buildings from HR services somehow
     available_buildings = dict()
-    available_buildings["abdollah"] = ["1", "2", "3"]
-    available_buildings["nasrollah"] = ["1", "2", "3", "4"]
+    available_buildings["Building_Padidar"] = ["Floor_Padidar_P1",
+                                               "Floor_Padidar_Lobby",
+                                               "Floor_Padidar_1",
+                                               "Floor_Padidar_2",
+                                               "Floor_Padidar_3",
+                                               "Floor_Padidar_4",
+                                               "Floor_Padidar_5"]
+    available_buildings["Building_Gandi"] = ["Floor_Gandi_Lobby",
+                                             "Floor_Gandi_1",
+                                             "Floor_Gandi_2",
+                                             "Floor_Gandi_3",
+                                             "Floor_Gandi_4"]
 
     validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
     if validator.is_valid():
         validator.change_delivary_place()
         message.add_message(
             "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
-        )
+            )
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
     message.add_message(validator.message, Message.ERROR)
