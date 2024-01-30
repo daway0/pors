@@ -442,7 +442,7 @@ def create_breakfast_order(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateBreakfast(request.data)
+    validator = b.ValidateBreakfast(request.data, user)
     if validator.is_valid():
         validator.create_breakfast_order()
         message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
