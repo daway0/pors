@@ -842,6 +842,23 @@ class ValidateAddMenuItem:
 
 
 class ValidateDeliveryBuilding:
+    """
+    This class is responsible for validating 'change delivery building' api.
+    If the data was valid, the user can change their delivery building and 
+        floor via 'change_delivary_place' interface.
+
+    Attributes:
+        data: Raw request data.
+        error: Catched error message which was caused by validation violations,
+            NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
+        date: User provided date after validation.
+        available_buildings: Valid buildings which must fetched from HR.
+        order: Related order object.
+    """
+
     def __init__(self, request_data, buildings: dict[str, list[str]]) -> None:
         self.data: dict = request_data
         self.error: str = ""
@@ -853,6 +870,15 @@ class ValidateDeliveryBuilding:
         self.order: QuerySet[m.Order] = m.Order.objects.none()
 
     def is_valid(self):
+        """
+        Applying validations to the request data.
+        if the request was not valid, will return false and
+        store error result inside `self.error`.
+
+        Returns:
+            bool: was the request data valid or not.
+        """
+                
         try:
             self._validate_request()
             self._validate_building()
@@ -865,6 +891,15 @@ class ValidateDeliveryBuilding:
         return True
 
     def _validate_request(self):
+        """
+        Validating request data must contains:
+          - date: Date which user wants to change their building on.
+          - newDeliveryBuilding: Valid building.
+          - newDeliveryFloor: Valid floor.
+
+        After validation, data will get store on their applicable attr.
+        """
+
         date = self.data.get("date")
         new_delivery_building = self.data.get("newDeliveryBuilding")
         new_delivery_floor = self.data.get("newDeliveryFloor")
@@ -881,6 +916,10 @@ class ValidateDeliveryBuilding:
             raise ValueError("Invalid 'date' value.")
 
     def _validate_building(self):
+        """
+        Validating provided building and floor via 'available_buildings'.
+        """
+
         if not self.available_buildings:
             raise ValueError("'buildings' parameter is empty!")
 
@@ -905,6 +944,13 @@ class ValidateDeliveryBuilding:
             )
 
     def _validate_order_items(self):
+        """
+        Checking if the user has submitted an order in provided date,
+        then checking if the requested building is not the same.
+
+        Will store order object in 'self.order' after validation.
+        """
+
         current_order = m.Order.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
@@ -928,6 +974,10 @@ class ValidateDeliveryBuilding:
         self.order = current_order
 
     def _validate_date(self):
+        """
+        Checking if the requested date is valid for action.
+        """
+
         date_obj = create_jdate_object(self.date)
         deadlines: dict[str, s.Deadline] = get_specific_deadline(
             weekday=date_obj.weekday(), deadline=s.Deadline
@@ -948,6 +998,13 @@ class ValidateDeliveryBuilding:
                 )
 
     def change_delivary_place(self):
+        """
+        Changing personnel's 'DeliveryBuilding' and 'DeliveryFloor' value
+            in requested date.
+
+        Will also change the cached data in 'User' table.
+        """
+
         m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,

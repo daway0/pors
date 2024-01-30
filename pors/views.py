@@ -329,7 +329,7 @@ def first_page(request, user: User):
 
     now = localnow()
     breakfast_deadlines, launch_deadlines = get_deadlines(Deadline)
-    if not breakfast_deadlines and launch_deadlines:
+    if not (breakfast_deadlines and launch_deadlines):
         return Response(
             "No deadline has been found for today's week number, Abort!",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -422,7 +422,7 @@ def remove_order_item(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateOrder(request.data)
+    validator = b.ValidateOrder(request.data, user)
     if validator.is_valid(remove=True):
         validator.remove_order()
         message.add_message(
