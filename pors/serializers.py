@@ -239,3 +239,14 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                 result.append(current_date_obj)
 
         return result
+
+
+class FloorSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    title = serializers.CharField()
+
+
+class BuildingSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    title = serializers.CharField()
+    floors = FloorSerializer()

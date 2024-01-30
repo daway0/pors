@@ -31,6 +31,7 @@ from .models import (
 )
 from .serializers import (
     AllItemSerializer,
+    BuildingSerializer,
     CategorySerializer,
     Deadline,
     FirstPageSerializer,
@@ -339,9 +340,18 @@ def first_page(request, user: User):
 
     first_orderable_date = {"year": year, "month": month, "day": day}
 
-    buildings: dict[str, list[str]] = dict(
-        dastekhar=["1", "2", "3"]
-    )  # fetching available buildings and floors from HR data source.
+    # fetching available buildings and floors from HR data source.
+    floor1 = dict(code="FLR1", title="FLOOR 1")
+    floor2 = dict(code="FLR2", title="FLOOR 2")
+    floors = [floor1, floor2]
+    building1: dict[str, list[str]] = dict(
+        code="BLG1", title="BUILDING 1", floors=floors
+    )
+    building2 = dict(code="BLG2", title="BUILDING 2", floors=floors)
+    buildings = BuildingSerializer(
+        data=[building1, building2], many=True
+    ).initial_data
+    # END
 
     serializer = FirstPageSerializer(
         data={
