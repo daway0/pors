@@ -82,6 +82,7 @@ def split_dates(dates, mode: str):
         int | list[int]
     """
     new_dates = []
+    mode = mode.lower()
 
     if mode == "day":
         if not isinstance(dates, list):
@@ -228,9 +229,7 @@ def generate_csv(queryset: QuerySet):
     return response
 
 
-def validate_request_based_on_schema(
-    schema: dict, data: dict
-) -> tuple[str, int]:
+def validate_request_based_on_schema(schema: dict, data: dict):
     """
     This function is responsible for validating request data based on the
         provided schema.
@@ -256,29 +255,39 @@ def validate_request_based_on_schema(
 
 
 def get_specific_deadline(
-    meal_type: m.Item.MealTypeChoices = None, weekday: int = None
+    weekday: int,
+    meal_type: m.Item.MealTypeChoices = None,
+    deadline: tuple = None,
 ):
     """
     Returning the submission's deadline based on the mealtype it has.
     Deadline is fetched from db based on the weekday.
 
-    If meal_type parameter is not specified, will all deadlines available in
-        Deadlines table.
+    If meal_type parameter is not specified, all deadlines related to that
+        weekday will get returned instead.
     Args:
         meal_type: The submission's deadline.
         weekday: Number of weekday (due to dynamic deadline logic).
+        deadline: named tuple for deadline that has Days and Hour args.
 
     Returns:
-        Queryset of all deadlines | Days and hour value.
-        Queryset | tuple[int, int]
+        Dict of specific weekday deadlines | Days and hour value.
+        Dict[str, namedtuple[Days, Hour]] | tuple[int, int]
     """
 
-    if not meal_type and weekday:
-        return m.Deadlines.objects.all()
+    if not meal_type and deadline:
+        qs = m.Deadlines.objects.filter(WeekDay=weekday)
+        deadlines = {}
+        for row in qs:
+            if row.MealType == m.MealTypeChoices.BREAKFAST:
+                deadlines["breakfast"] = deadline(row.Days, row.Hour)
+            else:
+                deadlines["launch"] = deadline(row.Days, row.Hour)
+        return deadlines
 
-    deadline = m.Deadlines.objects.get(MealType=meal_type, WeekDay=weekday)
+    qs = m.Deadlines.objects.get(MealType=meal_type, WeekDay=weekday)
 
-    return deadline.Days, deadline.Hour
+    return qs.Days, qs.Hour
 
 
 def generate_token_hash(
@@ -307,9 +316,7 @@ def create_jdate_object(date: str) -> jdatetime.date:
         jdatetime.date
     """
 
-    day = split_dates(date, "day")
-    month = split_dates(date, "month")
-    year = split_dates(date, "year")
+    year, month, day = split_dates(date, mode="all")
     return jdatetime.date(year, month, day)
 
 

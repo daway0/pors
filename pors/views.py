@@ -1,4 +1,3 @@
-from collections import namedtuple
 from random import getrandbits
 
 from django.db.models import Q
@@ -23,19 +22,17 @@ from .messages import Message
 from .models import (
     Category,
     DailyMenuItem,
-    Deadlines,
     Item,
     ItemsOrdersPerDay,
-    MealTypeChoices,
     Order,
     Subsidy,
     SystemSetting,
     User,
 )
 from .serializers import (
-    Deadline,
     AllItemSerializer,
     CategorySerializer,
+    Deadline,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
@@ -339,22 +336,12 @@ def first_page(request, user: User):
     year, month, day = b.get_first_orderable_date(
         now, breakfast_deadlines, launch_deadlines
     )
-    # for row in today_deadline:
-    #     if row.MealType == MealTypeChoices.BREAKFAST:
-    #         breakfast_deadline = Deadline(row.Days, row.Hour)
-    #     else:
-    #         launch_deadline = Deadline(row.Days, row.Hour)
-
-    # if breakfast_deadline.Days < launch_deadline.Days:
-    #     year, month, day = b.get_first_orderable_date(
-    #         now, breakfast_deadline.Days, breakfast_deadline.Hour
-    #     )
-    # else:
-    #     year, month, day = b.get_first_orderable_date(
-    #         now, launch_deadline.Days, launch_deadline.Hour
-    #     )
 
     first_orderable_date = {"year": year, "month": month, "day": day}
+
+    buildings: dict[str, list[str]] = dict(
+        dastekhar=["1", "2", "3"]
+    )  # fetching available buildings and floors from HR data source.
 
     serializer = FirstPageSerializer(
         data={
@@ -362,6 +349,9 @@ def first_page(request, user: User):
             "isOpenForPersonnel": open_for_personnel,
             "fullName": user.FullName,
             "profile": user.Profile,
+            "buidlings": buildings,
+            "latestBuilding": user.LastDeliveryBuilding,
+            "latestFloor": user.LastDeliveryFloor,
             "firstOrderableDate": first_orderable_date,
             "totalItemsCanOrderedForBreakfastByPersonnel": (
                 system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
@@ -586,3 +576,27 @@ def auth_gateway(request):
         )
 
     return response
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def change_delivery_building(request, user: User):
+    # fetching buildings from HR services somehow
+    available_buildings = dict()
+    available_buildings["abdollah"] = ["1", "2", "3"]
+    available_buildings["nasrollah"] = ["1", "2", "3", "4"]
+    
+    validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
+    if validator.is_valid():
+        validator.change_delivary_place()
+        message.add_message(
+            "ساختمان تحویل سفارش با موفقیت تغییر یافت.", Message.INFO
+        )
+        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+
+    message.add_message(validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )

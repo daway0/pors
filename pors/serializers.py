@@ -97,8 +97,8 @@ class MenuItemSerializer(serializers.Serializer):
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        launch_deadlines[weekday].Days,
-                        launch_deadlines[weekday].Hour,
+                        breakfast_deadlines[weekday].Days,
+                        breakfast_deadlines[weekday].Hour,
                     )
                 )
                 current_date_obj["items"] = []
@@ -138,6 +138,8 @@ class OrderSerializer(serializers.Serializer):
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
+            schema["deliveryBuilding"] = object["DeliveryBuilding"]
+            schema["deliveryFloor"] = object["DeliveryFloor"]
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
@@ -164,6 +166,9 @@ class FirstPageSerializer(serializers.Serializer):
     isOpenForPersonnel = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
+    buildings = serializers.DictField()
+    latestBuilding = serializers.CharField()
+    latestFloor = serializers.CharField()
     firstOrderableDate = serializers.DictField()
     totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
 
