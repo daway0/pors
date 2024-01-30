@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 from . import models as m
 from . import serializers as s
 from .utils import (
+    create_jdate_object,
     execute_raw_sql_with_params,
     first_and_last_day_date,
     get_specific_deadline,
@@ -265,7 +266,7 @@ class ValidateRemove:
         year, month, day = split_dates(self.date, mode="all")
         date_obj = jdatetime.datetime(year, month, day)
         days_deadline, hours_deadline = get_specific_deadline(
-            self.item.MealType, date_obj.weekday()
+            date_obj.weekday(), self.item.MealType
         )
 
         is_date_valid_for_removal = is_date_valid_for_action(
@@ -432,7 +433,7 @@ class ValidateOrder:
         year, month, day = split_dates(self.date, mode="all")
         date_obj = jdatetime.datetime(year, month, day)
         days_deadline, hours_deadline = get_specific_deadline(
-            self.item.MealType, date_obj.weekday()
+            date_obj.weekday(), self.item.MealType
         )
 
         is_valid = is_date_valid_for_action(
@@ -628,7 +629,7 @@ class ValidateBreakfast:
         year, month, day = split_dates(self.date, mode="all")
         date_obj = jdatetime.datetime(year, month, day)
         days_deadline, hours_deadline = get_specific_deadline(
-            self.item.MealType, date_obj.weekday()
+            date_obj.weekday(), self.item.MealType
         )
 
         is_valid_for_submission = is_date_valid_for_action(
@@ -800,7 +801,7 @@ class ValidateAddMenuItem:
         year, month, day = split_dates(self.date, mode="all")
         date_obj = jdatetime.datetime(year, month, day)
         days_deadline, hours_deadline = get_specific_deadline(
-            self.item.MealType, date_obj.weekday()
+            date_obj.weekday(), self.item.MealType
         )
 
         is_date_valid_for_add = is_date_valid_for_action(
@@ -840,20 +841,19 @@ class ValidateAddMenuItem:
 
 
 class ValidateDeliveryBuilding:
-    def __init__(self, request_data) -> None:
+    def __init__(self, request_data, buildings: dict[str, list[str]]) -> None:
         self.data: dict = request_data
         self.error: str = ""
         self.message: str = ""
         self.date: str = ""
         self.new_delivery_buidling: str = ""
         self.new_delivery_floor: str = ""
-        self.available_buildings: dict[str, list[str]] = {}
+        self.available_buildings: dict[str, list[str]] = buildings
         self.order: QuerySet[m.Order] = m.Order.objects.none()
 
     def is_valid(self):
         try:
             self._validate_request()
-            self._fetch_available_buildings()
             self._validate_building()
             self._validate_order_items()
             self._validate_date()
@@ -879,19 +879,14 @@ class ValidateDeliveryBuilding:
         if not self.date:
             raise ValueError("Invalid 'date' value.")
 
-    def _fetch_available_buildings(self):
-        # fetching buildings from HR services somehow
-        self.available_buildings["abdollah"] = ["1", "2", "3"]
-        self.available_buildings["nasrollah"] = ["1", "2", "3", "4"]
-
     def _validate_building(self):
+        if not self.available_buildings:
+            raise ValueError("'buildings' parameter is empty!")
+
+        valid = False
         for building, floors in self.available_buildings.items():
             if self.new_delivery_buidling != building:
-                self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
-                raise ValueError(
-                    "'newDeliveryBuilding' value does not exists in available"
-                    " choices."
-                )
+                continue
 
             elif self.new_delivery_floor not in floors:
                 self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
@@ -899,6 +894,14 @@ class ValidateDeliveryBuilding:
                     "'newDeliveryFloor' value does not exists in available"
                     " choices."
                 )
+            valid = True
+
+        if not valid:
+            self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
+            raise ValueError(
+                "'newDeliveryBuilding' value does not exists in available"
+                " choices."
+            )
 
     def _validate_order_items(self):
         current_order = m.Order.objects.filter(
@@ -909,7 +912,10 @@ class ValidateDeliveryBuilding:
             self.message = "در تاریخ داده شده سفارشی ثبث نشده است."
             raise ValueError("No items have been ordered on this date.")
 
-        if current_order.DeliveryDate == self.new_delivery_buidling:
+        if (
+            current_order.DeliveryBuilding == self.new_delivery_buidling
+            and current_order.DeliveryFloor == self.new_delivery_floor
+        ):
             self.message = (
                 "سفارش روز مورد نظر با ساختمان داده شده یکسان است و نیازی به"
                 " تغییر نیست."
@@ -921,8 +927,7 @@ class ValidateDeliveryBuilding:
         self.order = current_order
 
     def _validate_date(self):
-        year, month, day = split_dates(self.date, mode="all")
-        date_obj = jdatetime.date(year, month, day)
+        date_obj = create_jdate_object(self.date)
         deadlines: dict[str, s.Deadline] = get_specific_deadline(
             weekday=date_obj.weekday(), deadline=s.Deadline
         )
@@ -945,7 +950,10 @@ class ValidateDeliveryBuilding:
         m.OrderItem.objects.filter(
             Personnel=self.data.get("personnel"),
             DeliveryDate=self.date,
-        ).update(DeliveryBuilding=self.new_delivery_buidling)
+        ).update(
+            DeliveryBuilding=self.new_delivery_buidling,
+            DeliveryFloor=self.new_delivery_floor,
+        )
 
         user = m.User.objects.get(Personnel=self.data.get("personnel"))
         user.LastDeliveryBuilding = self.new_delivery_buidling

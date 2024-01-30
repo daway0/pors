@@ -1,4 +1,3 @@
-from collections import namedtuple
 from random import getrandbits
 
 from django.db.models import Q
@@ -23,10 +22,8 @@ from .messages import Message
 from .models import (
     Category,
     DailyMenuItem,
-    Deadlines,
     Item,
     ItemsOrdersPerDay,
-    MealTypeChoices,
     Order,
     Subsidy,
     SystemSetting,
@@ -342,8 +339,8 @@ def first_page(request, user: User):
 
     first_orderable_date = {"year": year, "month": month, "day": day}
 
-    buildings: dict[str, list[str]] = (
-        ...
+    buildings: dict[str, list[str]] = dict(
+        dastekhar=["1", "2", "3"]
     )  # fetching available buildings and floors from HR data source.
 
     serializer = FirstPageSerializer(
@@ -582,10 +579,15 @@ def auth_gateway(request):
 
 
 @api_view(["POST"])
-@check(is_open_for_personnel)
+@check([is_open_for_personnel])
 @authenticate()
 def change_delivery_building(request, user: User):
-    validator = b.ValidateDeliveryBuilding(request.data)
+    # fetching buildings from HR services somehow
+    available_buildings = dict()
+    available_buildings["abdollah"] = ["1", "2", "3"]
+    available_buildings["nasrollah"] = ["1", "2", "3", "4"]
+    
+    validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
     if validator.is_valid():
         validator.change_delivary_place()
         message.add_message(

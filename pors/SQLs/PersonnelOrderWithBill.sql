@@ -1,4 +1,4 @@
-SELECT oi.DeliveryDate, oi.Quantity, oi.PricePerOne,
+SELECT oi.DeliveryDate, oi.DeliveryBuilding, oi.DeliveryFloor, oi.Quantity, oi.PricePerOne,
            i.id, i.ItemName, i.Image, i.CurrentPrice,
            i.Category_id, i.ItemDesc, oi.Personnel,
            o.SubsidyCap, o.PersonnelDebt, o.TotalPrice
