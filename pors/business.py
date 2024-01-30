@@ -538,6 +538,7 @@ class ValidateBreakfast:
 
     Attributes:
         data: Raw data retrieved from request.
+        user: User object.
         item: Item id that has been requested to remove,
             available AFTER validation.
         date: The corresponding menu date, available AFTER validation.
@@ -552,8 +553,9 @@ class ValidateBreakfast:
         date: The corresponding menu date.
     """
 
-    def __init__(self, request_data: dict) -> None:
+    def __init__(self, request_data: dict, user: m.User) -> None:
         self.data = request_data
+        self.user = user
         self.error = ""
         self.message = ""
 
@@ -570,6 +572,7 @@ class ValidateBreakfast:
         try:
             self.date, self.item = validate_request(self.data)
             self._validate_item()
+            self._validate_default_delivery_building()
             self._validate_date()
             self._validate_order()
         except ValueError as e:
@@ -597,26 +600,23 @@ class ValidateBreakfast:
             self.message = "آیتم مورد نظر فعال نمی‌باشد."
             raise ValueError("Item is not valid.")
 
-        # place = self.data.get("deliveryPlace")
-        # available_places = m.DeliveryPlaceChoices.values
-        # if place not in available_places:
-        #     raise ValueError("Invalid 'deliveryPlace' value.")
-
-        # current_order = m.Order.objects.filter(
-        #     Personnel=self.data.get("personnel"), DeliveryDate=self.date
-        # ).first()
-        # if current_order and current_order.DeliveryPlace != place:
-        #     self.message = (
-        #         "ساختمان انتخاب شده سفارش حال حاضر شما با ساختمان انتخاب شده"
-        #         " کنونی متفاوت است."
-        #     )
-        #     raise ValueError(
-        #         "Your current order's delivery place if different from the"
-        #         " provided one."
-        #     )
-
         self.item = m.Item.objects.filter(pk=self.item).first()
-        # self.place = place
+
+    def _validate_default_delivery_building(self):
+        """
+        Checking user's default delivery building and floor value in db.
+        Either one or both of them is null, it raise ValueError.
+        """
+
+        delivery_building = self.user.LastDeliveryBuilding
+        delivery_floor = self.user.LastDeliveryFloor
+        if not (delivery_building and delivery_floor):
+            self.message = (
+                "لطفا پیش از ثبت سفارش محل تحویل سفارش خود را انتخاب کنید."
+            )
+            raise ValueError(
+                "User does not have default value for buidling and floor."
+            )
 
     def _validate_date(self):
         """
@@ -655,7 +655,8 @@ class ValidateBreakfast:
             m.OrderItem.objects.filter(
                 Personnel=self.data.get("personnel"),
                 DeliveryDate=self.date,
-                # DeliveryPlace=self.place,
+                DeliveryBuilding=self.user.LastDeliveryBuilding,
+                DeliveryFloor=self.user.LastDeliveryFloor,
                 Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
             )
             .values("Quantity")
