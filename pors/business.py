@@ -1022,7 +1022,7 @@ class ValidateDeliveryBuilding:
             dict(
                 DeliveryBuilding=self.order.DeliveryBuilding,
                 DeliveryFloor=self.order.DeliveryFloor,
-            ),
+            ) if self.order else None
         )
 
         user = m.User.objects.get(Personnel=personnel)

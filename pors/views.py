@@ -349,9 +349,7 @@ def first_page(request, user: User):
     floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
     floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
 
-
-
-    floors0 = [floor01,floor02,floor03,floor04,floor05,floor06,floor07]
+    floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
     floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
     floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
     floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
@@ -362,7 +360,9 @@ def first_page(request, user: User):
     building1: dict[str, list[str]] = dict(
         code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
     )
-    building2 = dict(code="Building_Gandi", title="ساختمان گاندی", floors=floors1)
+    building2 = dict(
+        code="Building_Gandi", title="ساختمان گاندی", floors=floors1
+    )
     buildings = BuildingSerializer(
         data=[building1, building2], many=True
     ).initial_data
@@ -570,7 +570,7 @@ def auth_gateway(request):
             IsActive=True,
         )
 
-        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        response.set_cookie("token", token, path=cookies_path, max_age=max_age, samesite="lax")
         return response
 
     elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
@@ -583,7 +583,9 @@ def auth_gateway(request):
         personnel_user_record.ExpiredAt = cookies_expire_time
         personnel_user_record.save()
 
-        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        response.set_cookie(
+            "token", token, path=cookies_path, max_age=max_age, samesite="lax"
+        )
         return response
 
     elif not request_token or request_token != personnel_user_record.Token:
@@ -598,6 +600,7 @@ def auth_gateway(request):
             personnel_user_record.Token,
             path=cookies_path,
             max_age=max_age,
+            samesite="lax",
         )
 
     return response
@@ -610,25 +613,29 @@ def change_delivery_building(request, user: User):
 
     # fetching buildings from HR services somehow
     available_buildings = dict()
-    available_buildings["Building_Padidar"] = ["Floor_Padidar_P1",
-                                               "Floor_Padidar_Lobby",
-                                               "Floor_Padidar_1",
-                                               "Floor_Padidar_2",
-                                               "Floor_Padidar_3",
-                                               "Floor_Padidar_4",
-                                               "Floor_Padidar_5"]
-    available_buildings["Building_Gandi"] = ["Floor_Gandi_Lobby",
-                                             "Floor_Gandi_1",
-                                             "Floor_Gandi_2",
-                                             "Floor_Gandi_3",
-                                             "Floor_Gandi_4"]
+    available_buildings["Building_Padidar"] = [
+        "Floor_Padidar_P1",
+        "Floor_Padidar_Lobby",
+        "Floor_Padidar_1",
+        "Floor_Padidar_2",
+        "Floor_Padidar_3",
+        "Floor_Padidar_4",
+        "Floor_Padidar_5",
+    ]
+    available_buildings["Building_Gandi"] = [
+        "Floor_Gandi_Lobby",
+        "Floor_Gandi_1",
+        "Floor_Gandi_2",
+        "Floor_Gandi_3",
+        "Floor_Gandi_4",
+    ]
 
     validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
     if validator.is_valid():
         validator.change_delivary_place()
         message.add_message(
             "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
-            )
+        )
         return Response({"messages": message.messages()}, status.HTTP_200_OK)
 
     message.add_message(validator.message, Message.ERROR)
