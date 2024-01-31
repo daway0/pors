@@ -65,8 +65,9 @@ message = Message()
 
 @authenticate()
 def ui(request, user):
+
     return render(
-        request, "personnelMainPanel.html", get_user_minimal_info(user)
+        request, "personnelMainPanel.html"
     )
 
 
@@ -74,8 +75,7 @@ def ui(request, user):
 def uiadmin(request, user):
     return render(
         request,
-        "administrativeMainPanel.html",
-        get_user_minimal_info(user),
+        "administrativeMainPanel.html"
     )
 
 
@@ -372,6 +372,8 @@ def first_page(request, user: User):
         data={
             "isOpenForAdmins": open_for_admins,
             "isOpenForPersonnel": open_for_personnel,
+            "userName": user.Personnel,
+            "isAdmin": user.IsAdmin,
             "fullName": user.FullName,
             "profile": user.Profile,
             "buildings": buildings,

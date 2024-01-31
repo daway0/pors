@@ -164,6 +164,8 @@ class GeneralCalendarSerializer(serializers.Serializer):
 class FirstPageSerializer(serializers.Serializer):
     isOpenForAdmins = serializers.BooleanField()
     isOpenForPersonnel = serializers.BooleanField()
+    userName = serializers.CharField()
+    isAdmin = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
     buildings = serializers.DictField()

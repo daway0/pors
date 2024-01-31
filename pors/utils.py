@@ -23,10 +23,11 @@ def localnow() -> jdatetime.datetime:
 
 
 def get_user_minimal_info(user: m.User) -> dict:
+    return {}
     return {
         "fullname": user.FullName,
         "profile": user.Profile,
-        "is_admin": user.IsAdmin,
+        "is_admin": user.IsAdmin
     }
 
 

@@ -61,8 +61,8 @@ let currentDate = {
     day: undefined
 }
 let selectedDate = undefined
-let personnelFullName = undefined
-let personnelProfileImg = undefined
+let userFullName = undefined
+let userProfileImg = undefined
 let firstDayOfWeek = undefined
 let lastDayOfMonth = undefined
 let holidays = undefined
@@ -697,8 +697,13 @@ function checkErrorRelatedToAuth(errorCode) {
     if (errorCode === 403) redirectToGateway()
 }
 
+function loadUserBasicInfo() {
+    $("#user-profile").attr("src", userProfileImg)
+    $("#user-fullname").text(userFullName)
+}
+
+
 function imgError(image) {
-    image.onerror = "";
     image.src = DEFAULTITEMIMAGE;
     return true;
 }
@@ -721,6 +726,10 @@ $(document).ready(function () {
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
             currentDate.year = data["firstOrderableDate"]["year"]
+            userFullName = data["fullName"]
+            userProfileImg = data["profile"]
+
+            loadUserBasicInfo()
 
             selectedDate = currentDate
 

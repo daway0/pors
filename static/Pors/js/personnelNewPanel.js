@@ -60,8 +60,10 @@ let currentDate = {
     day: undefined
 }
 let selectedDate = undefined
-let personnelFullName = undefined
-let personnelProfileImg = undefined
+let userFullName = undefined
+let userProfileImg = undefined
+let userName = undefined
+let isAdmin = undefined
 let firstDayOfWeek = undefined
 let lastDayOfMonth = undefined
 let holidays = undefined
@@ -923,8 +925,16 @@ function checkErrorRelatedToAuth(errorCode) {
     if (errorCode === 403) redirectToGateway()
 }
 
+function loadUserBasicInfo() {
+    $("#user-profile").attr("src", userProfileImg)
+    $("#user-fullname").text(userFullName)
+}
+
+function displayAdminButtonToAdminPersonnel() {
+    $("#go-to-admin-button").removeClass("hidden")
+}
+
 function imgError(image) {
-    image.onerror = "";
     image.src = DEFAULTITEMIMAGE;
     return true;
 }
@@ -951,7 +961,13 @@ $(document).ready(function () {
             latestBuilding = data["latestBuilding"]
             latestFloor = data["latestFloor"]
             deliveryPlaces = data["buildings"]
+            userFullName = data["fullName"]
+            userProfileImg = data["profile"]
+            userName = data["userName"]
+            isAdmin = data["isAdmin"]
 
+            loadUserBasicInfo()
+            displayAdminButtonToAdminPersonnel()
             makeDeliveryBuildingModal()
 
             selectedDate = currentDate
