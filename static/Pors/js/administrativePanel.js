@@ -720,13 +720,13 @@ function makeUserDropdownChoices() {
                     choicesHTML += `<li class="hidden">
                         <div class="flex items-center ps-2 rounded 
                 hover:bg-gray-100 ">
-                            <a href=${addPrefixTo(nextURL)} 
-                            class="flex items-center justify-between w-full py-2
+                            <a target="_blank" href=${addPrefixTo(nextURL)} 
+                            class="user-choice-a flex items-center justify-between w-full py-2
                             text-xs
                            text-gray-900 rounded ">
                                 <span class="user-in-search">${userObj.FullName}</span>
                                 <span class="flex gap-1">
-                            <span class="user-in-search">${userObj.Personnel}</span>
+                            <span class="user-in-search" data-username="${userObj.Personnel}">${userObj.Personnel}</span>
                             <svg class="h-3 w-3" fill="#000000"
                                  width="800px"
                                  height="800px"
@@ -1101,5 +1101,11 @@ $(document).ready(function () {
             }
         });
     });
+
+    $(document).on('click', '.user-choice-a', function () {
+        let username = $(this).find(".user-in-search[data-username]").text()
+        localStorage.setItem("nextUsername", username)
+    })
+
 });
 

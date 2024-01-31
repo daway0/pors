@@ -946,9 +946,16 @@ $(document).ready(function () {
     /* وقتی که صفحه به صورت کامل لود شد کار های زیر را به ترتیب انجام می دهیم
     */
 
-
+    let targetURL = undefined
+    let overrideUser = localStorage.getItem("nextUsername")
+    if (overrideUser) {
+        targetURL = addPrefixTo(`panel/?override_username=${userName}`)
+        localStorage.removeItem("nextUsername")
+    } else {
+        targetURL = addPrefixTo(`panel/`)
+    }
     $.ajax({
-        url: addPrefixTo(`panel/?override_username=${userName}`),
+        url: targetURL,
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -1039,7 +1046,7 @@ $(document).ready(function () {
                 },
                 error: function (xhr, status, error) {
                     let em = "EXECUTION ERROR: Default calendar load failed!"
-                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
+                    displayDismiss(DISMISSLEVELS.ERROR, em, DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
@@ -1048,7 +1055,7 @@ $(document).ready(function () {
         },
         error: function (xhr, status, error) {
             let em = "EXECUTION ERROR: Personnel panel is Unreachable"
-            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
+            displayDismiss(DISMISSLEVELS.ERROR, em, DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
@@ -1294,4 +1301,6 @@ $(document).ready(function () {
         // for closing floor modal
         $("#floor-place-modal").click()
     })
+
+
 });
