@@ -949,7 +949,7 @@ $(document).ready(function () {
     let targetURL = undefined
     let overrideUser = localStorage.getItem("nextUsername")
     if (overrideUser) {
-        targetURL = addPrefixTo(`panel/?override_username=${userName}`)
+        targetURL = addPrefixTo(`panel/?override_username=${overrideUser}`)
         localStorage.removeItem("nextUsername")
     } else {
         targetURL = addPrefixTo(`panel/`)

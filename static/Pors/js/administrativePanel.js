@@ -717,7 +717,7 @@ function makeUserDropdownChoices() {
                 let choicesHTML = ""
                 data.forEach(function(userObj) {
                     let nextURL = `?override_username=${userObj.Personnel}`
-                    choicesHTML += `<li class="hidden">
+                    choicesHTML += `<li class="">
                         <div class="flex items-center ps-2 rounded 
                 hover:bg-gray-100 ">
                             <a target="_blank" href=${addPrefixTo(nextURL)} 

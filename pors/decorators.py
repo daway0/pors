@@ -103,13 +103,24 @@ def authenticate(privileged_users: bool = False):
                     "You are not authorized to access this api with current"
                     " privilege ;)."
                 )
-
             try:
-                request.data["personnel"] = user.Personnel
+                override_username = request.query_params.get(
+                    "override_username"
+                )
             except AttributeError:
-                request.data = {"personnel": user.Personnel}
+                return view(request, user, None, *args, **kwargs)
 
-            return view(request, user, *args, **kwargs)
+            same_user = user.Personnel == override_username
+            if override_username:
+                if not user.IsAdmin and not same_user:
+                    return HttpResponseForbidden(
+                        "You are not authorized to access this feature"
+                        " cutie ;)."
+                    )
+            override_user = m.User.objects.filter(
+                Personnel=override_username
+            ).first() if not same_user else None
+            return view(request, user, override_user, *args, **kwargs)
 
         return wrapper
 

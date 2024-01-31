@@ -39,7 +39,7 @@ from .serializers import (
     MenuItemSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
-    UserSerializer
+    UserSerializer,
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -65,25 +65,19 @@ message = Message()
 
 
 @authenticate()
-def ui(request, user):
-
-    return render(
-        request, "personnelMainPanel.html"
-    )
+def ui(request, user, override_user: User):
+    return render(request, "personnelMainPanel.html")
 
 
 @authenticate(privileged_users=True)
-def uiadmin(request, user):
-    return render(
-        request,
-        "administrativeMainPanel.html"
-    )
+def uiadmin(request, user, override_user: User):
+    return render(request, "administrativeMainPanel.html")
 
 
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def add_item_to_menu(request, user: User):
+def add_item_to_menu(request, user: User, override_user: User):
     """
     Adding items to menu.
     Data will pass several validations in order to add item in menu.
@@ -115,7 +109,7 @@ def add_item_to_menu(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def remove_item_from_menu(request, user: User):
+def remove_item_from_menu(request, user: User, override_user: User):
     """
     Removing items from menu.
     Data will pass several validations in order to remove item.
@@ -161,7 +155,7 @@ class Categories(ListAPIView):
 @api_view(["GET"])
 @check([is_open_for_personnel])
 @authenticate()
-def personnel_calendar(request, user: User):
+def personnel_calendar(request, user: User, override_user: User):
     """
     Personnel's calendar which have enough information
         to generate the calendar from them.
@@ -192,7 +186,9 @@ def personnel_calendar(request, user: User):
     year = int(request.query_params.get("year"))
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
-    personnel = user.Personnel
+    personnel = (
+        user.Personnel if not override_user else override_user.Personnel
+    )
 
     general_calendar = GeneralCalendar(year, month)
 
@@ -218,7 +214,9 @@ def personnel_calendar(request, user: User):
         .order_by("AvailableDate", "Item_id")
         .values("AvailableDate", "Item_id")
     )
-    menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
+    menu_items_serialized_data = PersonnelMenuItemSerializer(
+        menu_items, context={"god_mode": True if override_user else False}
+    ).data
 
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
@@ -260,7 +258,7 @@ def personnel_calendar(request, user: User):
 @api_view(["GET"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def edari_calendar(request, user: User):
+def edari_calendar(request, user: User, override_user: User):
     """
     Admin's calendar which have more detailed information about menus, orders.
 
@@ -311,7 +309,7 @@ def edari_calendar(request, user: User):
 
 @api_view(["GET"])
 @authenticate()
-def first_page(request, user: User):
+def first_page(request, user: User, override_user: User):
     """
     First page information.
     will pass authentication first.
@@ -323,6 +321,8 @@ def first_page(request, user: User):
         profile: User's profile picture
         firstOrderableDate: First valid date for order submission.
     """
+    if override_user:
+        user = override_user
 
     system_settings = SystemSetting.objects.last()
     open_for_admins = system_settings.IsSystemOpenForAdmin
@@ -393,7 +393,7 @@ def first_page(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_order_item(request, user: User):
+def create_order_item(request, user: User, override_user: User):
     """
     Responsible for submitting orders.
     The data will pass several validations in order to submit.
@@ -405,7 +405,7 @@ def create_order_item(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateOrder(request.data, user)
+    validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
         validator.create_order()
         message.add_message(
@@ -429,7 +429,7 @@ def create_order_item(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def remove_order_item(request, user: User):
+def remove_order_item(request, user: User, override_user: User):
     """
     This view will remove an item from specific order.
     Check `ValidateOrder` docs for more information about validators.
@@ -440,7 +440,7 @@ def remove_order_item(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateOrder(request.data, user)
+    validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
         message.add_message(
@@ -458,7 +458,7 @@ def remove_order_item(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_breakfast_order(request, user: User):
+def create_breakfast_order(request, user: User, override_user: User):
     """
     Responsible for submitting breakfast orders.
     The data will pass several validations in order to submit.
@@ -470,7 +470,7 @@ def create_breakfast_order(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateBreakfast(request.data, user)
+    validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
         validator.create_breakfast_order()
         message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
@@ -531,7 +531,7 @@ def auth_gateway(request):
     #
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
-    personnel = "m.noruzi@eit"
+    personnel = "m.norouzi@eit"
     full_name = "mikaeil norouzi"
     is_admin = False
 
@@ -573,7 +573,9 @@ def auth_gateway(request):
             IsActive=True,
         )
 
-        response.set_cookie("token", token, path=cookies_path, max_age=max_age, samesite="lax")
+        response.set_cookie(
+            "token", token, path=cookies_path, max_age=max_age, samesite="lax"
+        )
         return response
 
     elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
@@ -612,7 +614,7 @@ def auth_gateway(request):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def change_delivery_building(request, user: User):
+def change_delivery_building(request, user: User, override_user: User):
 
     # fetching buildings from HR services somehow
     available_buildings = dict()
@@ -633,7 +635,9 @@ def change_delivery_building(request, user: User):
         "Floor_Gandi_4",
     ]
 
-    validator = b.ValidateDeliveryBuilding(request.data, available_buildings)
+    validator = b.ValidateDeliveryBuilding(
+        request.data, available_buildings, user, override_user
+    )
     if validator.is_valid():
         validator.change_delivary_place()
         message.add_message(
@@ -647,9 +651,10 @@ def change_delivery_building(request, user: User):
         status.HTTP_400_BAD_REQUEST,
     )
 
+
 @api_view(["GET"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def available_users(request, user):
+def available_users(request, user, override_user):
     qs = User.objects.all()
     return Response(data=UserSerializer(qs, many=True).data, status=200)
