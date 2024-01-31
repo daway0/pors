@@ -39,6 +39,7 @@ from .serializers import (
     MenuItemSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
+    UserSerializer
 )
 from .utils import (
     execute_raw_sql_with_params,
@@ -645,3 +646,10 @@ def change_delivery_building(request, user: User):
         {"messages": message.messages(), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
+
+@api_view(["GET"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def available_users(request, user):
+    qs = User.objects.all()
+    return Response(data=UserSerializer(qs, many=True).data, status=200)

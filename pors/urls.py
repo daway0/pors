@@ -54,4 +54,5 @@ urlpatterns = [
     path("auth-gateway/", views.auth_gateway, name="gateway"),
     path("admin/", views.uiadmin, name="admin_panel"),
     path("", views.ui, name="personnel_panel"),
+    path("available-users/", views.available_users, name="available_users")
 ]

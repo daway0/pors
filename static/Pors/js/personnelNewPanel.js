@@ -794,7 +794,7 @@ function updateSelectedDate(shamsiDate) {
 
 function updateOrders(month, year) {
     $.ajax({
-        url: addPrefixTo(`calendar/?year=${year}&month=${month}`),
+        url: addPrefixTo(`calendar/?year=${year}&month=${month}&override_username=${userName}`),
         method: 'GET',
         async: false,
         dataType: 'json',
@@ -948,7 +948,7 @@ $(document).ready(function () {
 
 
     $.ajax({
-        url: addPrefixTo(`panel/`),
+        url: addPrefixTo(`panel/?override_username=${userName}`),
         method: 'GET',
         dataType: 'json',
         async: false,
@@ -985,7 +985,7 @@ $(document).ready(function () {
             }
 
             $.ajax({
-                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}&override_username=${userName}`),
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
@@ -1061,9 +1061,9 @@ $(document).ready(function () {
 
         let url = undefined
         if ($(this).parent().parent().parent().parent().attr("data-item-serve-time")==="BRF"){
-            url = addPrefixTo("create-breakfast-order/")
+            url = addPrefixTo(`create-breakfast-order/?override_username=${userName}`)
         }else {
-            url = addPrefixTo("create-order/")
+            url = addPrefixTo(`create-order/?override_username=${userName}`)
         }
         let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
         let can = canAddNewItem(id)
@@ -1114,7 +1114,7 @@ $(document).ready(function () {
 
 
         $.ajax({
-            url: addPrefixTo(`remove-item-from-order/`),
+            url: addPrefixTo(`remove-item-from-order/?override_username=${userName}`),
             method: 'POST',
             contentType: 'application/json',
             async: false,
@@ -1152,7 +1152,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
+                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}&override_username=${userName}`),
                 method: 'GET',
                 dataType: 'json',
 
@@ -1204,7 +1204,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${monthNumber}`),
+            url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${monthNumber}&override_username=${userName}`),
             method: 'GET',
             dataType: 'json',
 
@@ -1262,10 +1262,9 @@ $(document).ready(function () {
         tempNewFloor = $(this).parent().find("input").attr("data-place-code")
 
         $.ajax({
-            url: addPrefixTo(`change_order_delivery_place/`),
+            url: addPrefixTo(`change_order_delivery_place/?override_username=${userName}`),
             method: 'POST',
             contentType: 'application/json',
-            async: true,
             data: JSON.stringify(
                 {
                     "newDeliveryBuilding": tempNewBuilding,
