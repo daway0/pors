@@ -1259,10 +1259,10 @@ $(document).ready(function () {
             ),
             statusCode:{
                 200: function (data) {
-                    updateOrders(selectedDate.month, selectedDate.year)
-                    updateOrderBillDetail()
                     latestBuilding = tempNewBuilding
                     latestFloor = tempNewFloor
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    updateOrderBillDetail()
                     catchResponseMessagesToDisplay(data.messages)
                     tempNewBuilding = undefined
                     tempNewFloor = undefined
