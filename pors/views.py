@@ -87,7 +87,7 @@ def add_item_to_menu(request, user: User, override_user: User):
         -  'item' (str): The item which you want to add.
     """
 
-    validator = b.ValidateAddMenuItem(request.data)
+    validator = b.ValidateAddMenuItem(request.data, user)
     if validator.is_valid():
         validator.add_item()
 
@@ -122,7 +122,7 @@ def remove_item_from_menu(request, user: User, override_user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateRemove(request.data)
+    validator = b.ValidateRemove(request.data, user)
     if validator.is_valid():
         validator.remove_item()
         message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
