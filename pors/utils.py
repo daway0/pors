@@ -22,15 +22,6 @@ def localnow() -> jdatetime.datetime:
     return utc_now.astimezone(local_timezone)
 
 
-def get_user_minimal_info(user: m.User) -> dict:
-    return {}
-    return {
-        "fullname": user.FullName,
-        "profile": user.Profile,
-        "is_admin": user.IsAdmin
-    }
-
-
 def get_str(date: jdatetime.date) -> str:
     """Converting a Jalali date object to a string
     yyyy/mm/dd

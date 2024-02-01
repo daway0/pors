@@ -69,9 +69,13 @@ def check(what_to_check: list[Callable]):
 
 def authenticate(privileged_users: bool = False):
     """
-    Authenticating users based on the `key` token.
+    Authenticating users based on the `token` cookie.
     If the authentication fails, the personnel will get redirected
-        to the authentication gateway.
+    to the authentication gateway.
+
+    Admin users can use 'override_username' query parameter to do actions
+    on behalf of the users and access their panels, they can fully
+    view their calendar without any date limitations.
 
     If the `privileged_users` is set, will also check the personnel's role
         in database via `IsAdmin` field.
@@ -117,9 +121,11 @@ def authenticate(privileged_users: bool = False):
                         "You are not authorized to access this feature"
                         " cutie ;)."
                     )
-            override_user = m.User.objects.filter(
-                Personnel=override_username
-            ).first() if not same_user else None
+            override_user = (
+                m.User.objects.filter(Personnel=override_username).first()
+                if not same_user
+                else None
+            )
             return view(request, user, override_user, *args, **kwargs)
 
         return wrapper

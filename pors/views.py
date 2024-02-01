@@ -46,7 +46,6 @@ from .utils import (
     first_and_last_day_date,
     generate_token_hash,
     get_deadlines,
-    get_user_minimal_info,
     localnow,
     split_dates,
 )
@@ -215,7 +214,8 @@ def personnel_calendar(request, user: User, override_user: User):
         .values("AvailableDate", "Item_id")
     )
     menu_items_serialized_data = PersonnelMenuItemSerializer(
-        menu_items, context={"god_mode": True if override_user else False}
+        menu_items,
+        context={"bypass_date_limitations": True if override_user else False},
     ).data
 
     orders = Order.objects.filter(
@@ -531,8 +531,8 @@ def auth_gateway(request):
     #
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
-    personnel = "m.norouzi@eit"
-    full_name = "mikaeil norouzi"
+    personnel = "e.rezaee@eit"
+    full_name = "erfan rezaee"
     is_admin = False
 
     personnel_user_record = User.objects.filter(

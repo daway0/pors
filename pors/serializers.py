@@ -216,7 +216,7 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
         # Its set to true if user is admin and accessing another
         # user's panel from his/her side.
         # True means all days are viable for add/remove/changing order.
-        god_mode = self.context.get("god_mode")
+        bypass_date_limitations = self.context.get("bypass_date_limitations")
 
         for object in obj:
             serializer = MenuItems(object).data
@@ -235,7 +235,7 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                         launch_deadlines[weekday].Days,
                         launch_deadlines[weekday].Hour,
                     )
-                    if god_mode is False
+                    if not bypass_date_limitations
                     else True
                 )
                 current_date_obj["openForBreakfast"] = (
@@ -247,7 +247,7 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                             breakfast_deadlines[weekday].Hour,
                         )
                     )
-                    if god_mode is False
+                    if not bypass_date_limitations
                     else True
                 )
                 current_date_obj["items"] = []

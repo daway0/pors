@@ -182,13 +182,25 @@ def get_first_orderable_date(
 
 
 class OverrideUserValidator:
-    def __init__(
-        self, request_data: dict, user: m.User, override_user: m.User
-    ) -> None:
-        self.data = request_data
+    """
+    Abstract class for classes that allow admins to manipulate/create/delete
+    user's orders.
+    All classes that are inheriting from this class, will allow admins to
+    do actions on behalf of the personnel, without any DATE related
+    limitations.
+
+    If 'override_user' arg is provided, then 'user' will be the
+    'override_user', and the 'user' attribute will be the 'admin' user.
+    If not, then the 'user' is personnel and admin is None.
+
+    Args:
+        user: Personnel's user object.
+        admin_user: Admin's user object.
+    """
+
+    def __init__(self, user: m.User, override_user: m.User) -> None:
         self.user = user if not override_user else override_user
         self.admin_user = user if override_user else m.User.objects.none()
-        self.message: str = ""
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -342,9 +354,11 @@ class ValidateOrder(OverrideUserValidator):
     """
 
     def __init__(
-        self, request_data, user: m.User, override_user: m.User
+        self, request_data: dict, user: m.User, override_user: m.User
     ) -> None:
-        super().__init__(request_data, user, override_user)
+        super().__init__(user, override_user)
+        self.data = request_data
+        self.message: str = ""
         self.error = ""
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
@@ -577,7 +591,9 @@ class ValidateBreakfast(OverrideUserValidator):
     def __init__(
         self, request_data: dict, user: m.User, override_user: m.User
     ) -> None:
-        super().__init__(request_data, user, override_user)
+        super().__init__(user, override_user)
+        self.data = request_data
+        self.message: str = ""
         self.error: str = ""
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
@@ -768,7 +784,8 @@ class ValidateAddMenuItem:
     def __init__(self, request_data: dict, user: m.User) -> None:
         self.data = request_data
         self.user = user
-        self.error = ""
+        self.message: str = ""
+        self.error: str = ""
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
 
@@ -891,13 +908,15 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
 
     def __init__(
         self,
-        request_data,
+        request_data: dict,
         buildings: dict[str, list[str]],
         user: m.User,
         override_user: m.User,
     ) -> None:
-        super().__init__(request_data, user, override_user)
+        super().__init__(user, override_user)
         self.available_buildings: dict[str, list[str]] = buildings
+        self.data = request_data
+        self.message: str = ""
         self.error: str = ""
         self.date: str = ""
         self.new_delivery_building: str = ""
