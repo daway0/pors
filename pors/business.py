@@ -200,7 +200,7 @@ class OverrideUserValidator:
 
     def __init__(self, user: m.User, override_user: m.User) -> None:
         self.user = user if not override_user else override_user
-        self.admin_user = user if override_user else m.User.objects.none()
+        self.admin_user = user.Personnel if override_user else None
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -510,6 +510,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" increased by 1 for {self.date}"
                 ),
                 user=self.user.Personnel,
+                admin=self.admin_user
             )
             return
 
@@ -527,6 +528,7 @@ class ValidateOrder(OverrideUserValidator):
                 f" {self.date}"
             ),
             user=self.user.Personnel,
+            admin=self.admin_user
         )
 
     def remove_order(self):
@@ -554,6 +556,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" for {self.date}"
                 ),
                 user=self.user.Personnel,
+                admin=self.admin_user
             )
         else:
             self.order_item.delete(
@@ -562,6 +565,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" {self.date}"
                 ),
                 user=self.user.Personnel,
+                admin=self.admin_user
             )
 
 
@@ -741,6 +745,7 @@ class ValidateBreakfast(OverrideUserValidator):
                     f" increased by 1 for {self.date}"
                 ),
                 user=self.user.Personnel,
+                admin=self.admin_user
             )
             return
 
@@ -757,6 +762,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 f" for {self.date}"
             ),
             user=self.user.Personnel,
+            admin=self.admin_user
         )
 
 
@@ -1066,10 +1072,13 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             DeliveryFloor=self.new_delivery_floor,
         )
 
+        # manual log insertion
+        # todo doc
         m.ActionLog.objects.log(
             m.ActionLog.ActionTypeChoices.UPDATE,
             personnel,
-            f"Delivery place has changed for date {self.date}",
+            f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor}"
+            f"for {self.date}",
             m.OrderItem,
             None,
             (
@@ -1080,6 +1089,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 if self.order
                 else None
             ),
+            self.admin_user,
         )
 
         user = m.User.objects.get(Personnel=personnel)
