@@ -384,6 +384,7 @@ def first_page(request, user: User, override_user: User):
             "totalItemsCanOrderedForBreakfastByPersonnel": (
                 system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
             ),
+            "godMode": True if override_user else False
         }
     ).initial_data
 

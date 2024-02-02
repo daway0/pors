@@ -174,6 +174,7 @@ class FirstPageSerializer(serializers.Serializer):
     latestFloor = serializers.CharField()
     firstOrderableDate = serializers.DictField()
     totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
+    godMode = serializers.BooleanField()
 
 
 class DayWithMenuSerializer(serializers.Serializer):
