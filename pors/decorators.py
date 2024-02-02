@@ -108,9 +108,16 @@ def authenticate(privileged_users: bool = False):
                     " privilege ;)."
                 )
             try:
-                override_username = request.query_params.get(
-                    "override_username"
-                )
+                if hasattr(request, "query_params"):
+                    # django requests
+                    override_username = request.query_params.get(
+                        "override_username"
+                        )
+                elif hasattr(request, "GET"):
+                    # drf requests
+                    override_username = request.GET.get(
+                        "override_username"
+                        )
             except AttributeError:
                 return view(request, user, None, *args, **kwargs)
 
