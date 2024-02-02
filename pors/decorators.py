@@ -114,18 +114,15 @@ def authenticate(privileged_users: bool = False):
             except AttributeError:
                 return view(request, user, None, *args, **kwargs)
 
-            same_user = user.Personnel == override_username
             if override_username:
-                if not user.IsAdmin and not same_user:
+                if not user.IsAdmin:
                     return HttpResponseForbidden(
                         "You are not authorized to access this feature"
                         " cutie ;)."
                     )
-            override_user = (
-                m.User.objects.filter(Personnel=override_username).first()
-                if not same_user
-                else None
-            )
+            override_user = m.User.objects.filter(
+                Personnel=override_username
+            ).first()
             return view(request, user, override_user, *args, **kwargs)
 
         return wrapper
