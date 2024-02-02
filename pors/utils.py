@@ -2,18 +2,26 @@ import codecs
 import csv
 import json
 import re
+from urllib.parse import urlunparse
 from collections import namedtuple
 from hashlib import sha256
 from typing import Optional
 
 import jdatetime
 import pytz
+
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
-
+from .serializers import BuildingSerializer
 from . import models as m
+
+import requests
+
+HR_SCHEME = "http"
+HR_HOST = "192.168.20.81"
+HR_PORT = "14000"
 
 
 def localnow() -> jdatetime.datetime:
@@ -100,15 +108,15 @@ def split_dates(dates, mode: str):
                 int(dates.split("/")[0]),
                 int(dates.split("/")[1]),
                 int(dates.split("/")[2]),
-            )
+                )
         for date in dates:
             new_dates.append(
                 (
                     int(dates.split("/")[0]),
                     int(dates.split("/")[1]),
                     int(dates.split("/")[2]),
+                    )
                 )
-            )
         return new_dates
 
 
@@ -247,10 +255,10 @@ def validate_request_based_on_schema(schema: dict, data: dict):
 
 
 def get_specific_deadline(
-    weekday: int,
-    meal_type: m.Item.MealTypeChoices = None,
-    deadline: tuple = None,
-):
+        weekday: int,
+        meal_type: m.Item.MealTypeChoices = None,
+        deadline: tuple = None,
+        ):
     """
     Returning the submission's deadline based on the mealtype it has.
     Deadline is fetched from db based on the weekday.
@@ -283,12 +291,12 @@ def get_specific_deadline(
 
 
 def generate_token_hash(
-    personnel: str, full_name: str, random_bit: int
-) -> str:
+        personnel: str, full_name: str, random_bit: int
+        ) -> str:
     packed_args = (
-        personnel.encode()
-        + full_name.encode()
-        + bytes(str(random_bit), "utf-8")
+            personnel.encode()
+            + full_name.encode()
+            + bytes(str(random_bit), "utf-8")
     )
     return sha256(packed_args).hexdigest()
 
@@ -317,8 +325,8 @@ MealTypeDeadlines = dict[int, tuple[int, int], dict[int, tuple[int, int]]]
 
 
 def get_deadlines(
-    deadline: tuple,
-) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
+        deadline: tuple,
+        ) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
     """
     Fetching deadlines from database and forming 2 dicts from the data.
     Dicts are formed based on the meal type, one for each type.
@@ -347,3 +355,42 @@ def get_deadlines(
             launch_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
 
     return breakfast_deadlines, launch_deadlines
+
+
+def fetch_available_location():
+    """fetch available location (building and floors from HR)"""
+    # todo shipment
+    path = "HR/api/v1/locations/"
+    url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    response = requests.get(url)
+
+    # when im out of production
+    # floor01 = dict(code="Floor_Padidar_P1", title="P1")
+    # floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
+    # floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
+    # floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
+    # floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
+    # floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
+    # floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
+    #
+    # floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
+    # floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
+    # floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
+    # floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
+    # floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
+    # floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
+    #
+    # floors1 = [floor11, floor12, floor13, floor14, floor15]
+    # building1: dict[str, list[str]] = dict(
+    #     code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
+    #     )
+    # building2 = dict(
+    #     code="Building_Gandi", title="ساختمان گاندی", floors=floors1
+    #     )
+    # buildings = BuildingSerializer(
+    #     data=[building1, building2], many=True
+    #     ).initial_data
+    # return buildings
+    # END
+
+    return response.json()

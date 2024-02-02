@@ -1055,7 +1055,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                     "Deadline for changing delivery building is over."
                 )
 
-    def change_delivary_place(self):
+    def change_delivery_place(self):
         """
         Changing personnel's 'DeliveryBuilding' and 'DeliveryFloor' value
         in requested date, also logging the action.
