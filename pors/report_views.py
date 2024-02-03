@@ -165,7 +165,7 @@ def item_ordering_personnel_list_report(
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
-        f"Item Orders report generated for item {res['ItemName']} for {date}",
+        f"Item Orders report generated for item {item_id} for {date}",
         m.PersonnelDailyReport
         )
     response = HttpResponse(
