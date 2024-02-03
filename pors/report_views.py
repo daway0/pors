@@ -34,7 +34,17 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
 
     date = u.validate_date(request.data.get("date"))
 
-    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date)
+    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date).values(
+        "NationalCode",
+        "Personnel",
+        "FirstName",
+        "LastName",
+        "ItemName",
+        "Quantity",
+        "DeliveryDate",
+        "DeliveryBuilding",
+        "DeliveryFloor",
+    )
     if not queryset:
         u.raise_report_notfound(message, request)
 
@@ -123,6 +133,7 @@ def item_ordering_personnel_list_report(
     personnel = m.PersonnelDailyReport.objects.filter(
         DeliveryDate=date, ItemId=item_id
     ).values(
+        "NationalCode",
         "Personnel",
         "FirstName",
         "LastName",
@@ -155,7 +166,19 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
     month = serializer.validated_data.get("month")
     year = serializer.validated_data.get("year")
     first_date, last_date = u.first_and_last_day_date(month, year)
-    qs = m.OrderItem.objects.filter(DeliveryDate__in=[first_date, last_date])
+    qs = m.PersonnelDailyReport.objects.filter(
+        DeliveryDate__in=[first_date, last_date]
+    ).values(
+        "NationalCode",
+        "Personnel",
+        "FirstName",
+        "LastName",
+        "ItemName",
+        "Quantity",
+        "DeliveryDate",
+        "DeliveryBuilding",
+        "DeliveryFloor",
+    )
     if not qs:
         u.raise_report_notfound(message, request)
 

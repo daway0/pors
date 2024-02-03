@@ -492,6 +492,7 @@ class ActionLog(models.Model):
 
 class PersonnelDailyReport(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
+    NationalCode = models.CharField(max_length=10)
     Personnel = models.CharField(max_length=250)
     FirstName = models.CharField(max_length=250)
     LastName = models.CharField(max_length=250)
