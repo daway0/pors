@@ -2,11 +2,11 @@ const URL_PREFIX = "/PersonnelService/Pors/"
 const STATIC_PREFIX = "/static/Pors/"
 
 function addPrefixTo(str) {
-    return URL_PREFIX+str
+    return URL_PREFIX + str
 }
 
 function addStaticFilePrefixTo(str) {
-    return STATIC_PREFIX+str
+    return STATIC_PREFIX + str
 }
 
 
@@ -60,8 +60,11 @@ let currentDate = {
     day: undefined
 }
 let selectedDate = undefined
-let personnelFullName = undefined
-let personnelProfileImg = undefined
+let userFullName = undefined
+let userProfileImg = undefined
+let userName = undefined
+let isAdmin = undefined
+let godMode = undefined
 let firstDayOfWeek = undefined
 let lastDayOfMonth = undefined
 let holidays = undefined
@@ -129,7 +132,7 @@ function makeDeliveryFloorModal(buildingCode) {
     let buildingChoicesHTML = ""
     for (const building of deliveryPlaces) {
         if (building.code !== buildingCode) continue
-        for (const floor of building.floors){
+        for (const floor of building.floors) {
             buildingChoicesHTML +=
                 `<li>
                     <input type="radio" id="flr-${counter}" name="flr"
@@ -156,7 +159,7 @@ function makeDeliveryFloorModal(buildingCode) {
                             </svg>
                         </label>
                 </li>`
-        counter++
+            counter++
         }
 
     }
@@ -164,19 +167,20 @@ function makeDeliveryFloorModal(buildingCode) {
     $("#floor-choices-modal").append(buildingChoicesHTML)
 
 }
+
 function insertCommas(str) {
 
     // برای خوانا تر شدن رقم ها
     // برای مثال عدد 192000 به 192,000 تبدیل می شود
-  let result = '';
+    let result = '';
 
-  for (let i = str.length - 1; i >= 0; i--) {
-    result = str[i] + result;
-    if ((str.length - i) % 3 === 0 && i !== 0) {
-      result = ',' + result;
+    for (let i = str.length - 1; i >= 0; i--) {
+        result = str[i] + result;
+        if ((str.length - i) % 3 === 0 && i !== 0) {
+            result = ',' + result;
+        }
     }
-  }
-  return result
+    return result
 }
 
 function convertToPersianNumber(englishNumber) {
@@ -352,7 +356,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                 />
 
                 <div class="w-8/12 cursor-default">
-                    <div><h3 class="text-sm text-gray-900">${itemName} ${serveTime==="BRF" ? breakfastLabel : ""}</h3>
+                    <div><h3 class="text-sm text-gray-900">${itemName} ${serveTime === "BRF" ? breakfastLabel : ""}</h3>
 
                         <dl class="mt-1 space-y-px text-xs text-gray-600">
                             <div>
@@ -622,6 +626,7 @@ function canPersonnelChangeDeliveryPlace(dateObj) {
     if (day === undefined) return false
     return day.openForLaunch && day.openForBreakfast
 }
+
 function orderDeliveryPlace(dateObj) {
     let order = orders.find(function (orderObj) {
         return orderObj.orderDate === toShamsiFormat(dateObj)
@@ -642,7 +647,7 @@ function orderDeliveryPlace(dateObj) {
 function billDisplay(show) {
     let thereIsNoOrderForDay = $("#no-order-for-today")
     let billDetail = $("#day-bill")
-    if (show){
+    if (show) {
         thereIsNoOrderForDay.addClass("hidden")
         billDetail.removeClass("hidden")
         return
@@ -650,6 +655,7 @@ function billDisplay(show) {
     thereIsNoOrderForDay.removeClass("hidden")
     billDetail.addClass("hidden")
 }
+
 function updateOrderBillDetail() {
     let orderItems = $(`#menu-items-container li`)
     let total = 0
@@ -657,7 +663,7 @@ function updateOrderBillDetail() {
     let debt = 0
     let deliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate))
 
-    if (!canPersonnelChangeDeliveryPlace(selectedDate)){
+    if (!canPersonnelChangeDeliveryPlace(selectedDate)) {
         $("#location-modal-trigger").addClass("hidden")
     } else {
         $("#location-modal-trigger").removeClass("hidden")
@@ -790,9 +796,21 @@ function updateSelectedDate(shamsiDate) {
     selectedDate = toObjectFormat(shamsiDate)
 }
 
+function addOverrideUsernameIfIsAdmin(url, username) {
+    return godMode ? addQueryParamToPath(url, "override_username", username) : url;
+}
+
+function addQueryParamToPath(path, paramName, paramValue) {
+    const urlObject = new URL(`http://dummyhost/${path}`);
+    urlObject.searchParams.append(paramName, paramValue);
+    let fullPath = urlObject.pathname + urlObject.search
+    return fullPath.substring(1);
+}
+
 function updateOrders(month, year) {
+
     $.ajax({
-        url: addPrefixTo(`calendar/?year=${year}&month=${month}`),
+        url: addPrefixTo(addOverrideUsernameIfIsAdmin(`calendar/?year=${year}&month=${month}`, userName)),
         method: 'GET',
         async: false,
         dataType: 'json',
@@ -915,7 +933,7 @@ function getSelectedCalendarMonthDropdown() {
     return $("#calSelectedMonth option:selected").attr("value")
 }
 
-function redirectToGateway(){
+function redirectToGateway() {
     window.location.replace(addPrefixTo("auth-gateway/"))
 }
 
@@ -923,8 +941,22 @@ function checkErrorRelatedToAuth(errorCode) {
     if (errorCode === 403) redirectToGateway()
 }
 
+function loadUserBasicInfo() {
+    $("#user-profile").attr("src", userProfileImg)
+    $("#user-fullname").text(userFullName)
+    if (!godMode){
+        $("#god-mode").addClass("hidden")
+    }
+}
+
+function displayAdminButtonToAdminPersonnel() {
+    if (isAdmin) $("#go-to-admin-button").removeClass("hidden")
+
+
+
+}
+
 function imgError(image) {
-    image.onerror = "";
     image.src = DEFAULTITEMIMAGE;
     return true;
 }
@@ -936,13 +968,25 @@ $(document).ready(function () {
     /* وقتی که صفحه به صورت کامل لود شد کار های زیر را به ترتیب انجام می دهیم
     */
 
+    let targetURL = undefined
+    let overrideUser = localStorage.getItem("nextUsername")
+    if (overrideUser) {
+        targetURL = addPrefixTo(`panel/?override_username=${overrideUser}`)
+        displayDismiss(DISMISSLEVELS.WARNING,
+            "ورود به حالت دسترسی بدون محدودیت ادمین",
+            DISMISSDURATIONS.DISPLAY_TIME_PARAMENT)
 
+        localStorage.removeItem("nextUsername")
+    } else {
+        targetURL = addPrefixTo(`panel/`)
+    }
     $.ajax({
-        url: addPrefixTo(`panel/`),
+        url: targetURL,
         method: 'GET',
         dataType: 'json',
         async: false,
         success: function (data) {
+            console.log(data)
             isSystemOpen = data["isOpenForPersonnel"]
             orderableBreakFastItemCount = data["totalItemsCanOrderedForBreakfastByPersonnel"]
             currentDate.day = data["firstOrderableDate"]["day"]
@@ -951,7 +995,14 @@ $(document).ready(function () {
             latestBuilding = data["latestBuilding"]
             latestFloor = data["latestFloor"]
             deliveryPlaces = data["buildings"]
+            userFullName = data["fullName"]
+            userProfileImg = data["profile"]
+            userName = data["userName"]
+            isAdmin = data["isAdmin"]
+            godMode = data["godMode"]
 
+            loadUserBasicInfo()
+            displayAdminButtonToAdminPersonnel()
             makeDeliveryBuildingModal()
 
             selectedDate = currentDate
@@ -969,10 +1020,15 @@ $(document).ready(function () {
             }
 
             $.ajax({
-                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
+                url: addPrefixTo(
+                    addOverrideUsernameIfIsAdmin(
+                        `calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                        userName
+                    )),
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
+                    console.log(data)
                     firstDayOfWeek = data["firstDayOfWeek"]
                     lastDayOfMonth = data["lastDayOfMonth"]
                     holidays = data["holidays"]
@@ -1023,7 +1079,7 @@ $(document).ready(function () {
                 },
                 error: function (xhr, status, error) {
                     let em = "EXECUTION ERROR: Default calendar load failed!"
-                    displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
+                    displayDismiss(DISMISSLEVELS.ERROR, em, DISMISSDURATIONS.DISPLAY_TIME_LONG)
                     catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
                 }
             });
@@ -1032,7 +1088,7 @@ $(document).ready(function () {
         },
         error: function (xhr, status, error) {
             let em = "EXECUTION ERROR: Personnel panel is Unreachable"
-            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_LONG)
+            displayDismiss(DISMISSLEVELS.ERROR, em, DISMISSDURATIONS.DISPLAY_TIME_LONG)
             catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
         }
     });
@@ -1042,12 +1098,11 @@ $(document).ready(function () {
         // اضافه کردن غذا به منو
 
 
-
         let url = undefined
-        if ($(this).parent().parent().parent().parent().attr("data-item-serve-time")==="BRF"){
-            url = addPrefixTo("create-breakfast-order/")
-        }else {
-            url = addPrefixTo("create-order/")
+        if ($(this).parent().parent().parent().parent().attr("data-item-serve-time") === "BRF") {
+            url = addPrefixTo(addOverrideUsernameIfIsAdmin(`create-breakfast-order/`, userName))
+        } else {
+            url = addPrefixTo(addOverrideUsernameIfIsAdmin(`create-order/`, userName))
         }
         let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
         let can = canAddNewItem(id)
@@ -1070,7 +1125,7 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            statusCode:{
+            statusCode: {
                 201: function (data) {
                     addNewItemToMenu(id)
                     updateOrders(selectedDate.month, selectedDate.year)
@@ -1098,7 +1153,7 @@ $(document).ready(function () {
 
 
         $.ajax({
-            url: addPrefixTo(`remove-item-from-order/`),
+            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`remove-item-from-order/`, userName)),
             method: 'POST',
             contentType: 'application/json',
             async: false,
@@ -1108,7 +1163,7 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            statusCode:{
+            statusCode: {
                 200: function (data) {
                     removeItemFromMenu(id)
                     updateOrders(selectedDate.month, selectedDate.year)
@@ -1136,7 +1191,7 @@ $(document).ready(function () {
 
         if (currentDate.month !== currentCalendarMonthNumber) {
             $.ajax({
-                url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${currentDate.month}`),
+                url: addPrefixTo(addOverrideUsernameIfIsAdmin(`calendar/?year=${currentDate.year}&month=${currentDate.month}`, userName)),
                 method: 'GET',
                 dataType: 'json',
 
@@ -1188,7 +1243,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: addPrefixTo(`calendar/?year=${currentDate.year}&month=${monthNumber}`),
+            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`calendar/?year=${currentDate.year}&month=${monthNumber}`,userName)),
             method: 'GET',
             dataType: 'json',
 
@@ -1246,10 +1301,9 @@ $(document).ready(function () {
         tempNewFloor = $(this).parent().find("input").attr("data-place-code")
 
         $.ajax({
-            url: addPrefixTo(`change_order_delivery_place/`),
+            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`change_order_delivery_place/`, userName)),
             method: 'POST',
             contentType: 'application/json',
-            async: true,
             data: JSON.stringify(
                 {
                     "newDeliveryBuilding": tempNewBuilding,
@@ -1257,12 +1311,12 @@ $(document).ready(function () {
                     "date": toShamsiFormat(selectedDate)
                 }
             ),
-            statusCode:{
+            statusCode: {
                 200: function (data) {
-                    updateOrders(selectedDate.month, selectedDate.year)
-                    updateOrderBillDetail()
                     latestBuilding = tempNewBuilding
                     latestFloor = tempNewFloor
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    updateOrderBillDetail()
                     catchResponseMessagesToDisplay(data.messages)
                     tempNewBuilding = undefined
                     tempNewFloor = undefined
@@ -1279,4 +1333,6 @@ $(document).ready(function () {
         // for closing floor modal
         $("#floor-place-modal").click()
     })
+
+
 });

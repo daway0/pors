@@ -29,6 +29,8 @@ class Logger(models.Model):
     def save(self, *args, **kwargs):
         user = kwargs.pop("user", "SYSTEM")
         log_msg = kwargs.pop("log", None)
+        admin = kwargs.pop("admin", None)
+        reason = kwargs.pop("reason", None)
 
         if self._state.adding:
             action_type = ActionLog.ActionTypeChoices.CREATE
@@ -50,11 +52,15 @@ class Logger(models.Model):
             record_id=record_id,
             old_data=old_data,
             user=user,
-        )
+            admin=admin,
+            manipulation_reason=reason
+            )
 
     def delete(self, *args, **kwargs):
         user = kwargs.pop("user", "SYSTEM")
         log_msg = kwargs.pop("log", None)
+        admin = kwargs.pop("admin", None)
+        reason = kwargs.pop("reason", None)
         old_data = model_to_dict(self)
 
         record_id = self.id
@@ -69,7 +75,9 @@ class Logger(models.Model):
             record_id=record_id,
             old_data=old_data,
             user=user,
-        )
+            admin=admin,
+            manipulation_reason=reason
+            )
 
     class Meta:
         abstract = True
@@ -94,7 +102,7 @@ class User(models.Model):
     # HR ConstValue Table Code (For Cache purposes)
     LastDeliveryBuilding = models.CharField(
         max_length=250, null=True, blank=True
-    )
+        )
     LastDeliveryFloor = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self) -> str:
@@ -104,8 +112,8 @@ class User(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["Personnel"], name="unique_personnel"
-            )
-        ]
+                )
+            ]
 
 
 class SystemSetting(models.Model):
@@ -147,7 +155,7 @@ class SystemSetting(models.Model):
         models.PositiveSmallIntegerField(
             null=True,
             default=1,
-        )
+            )
     )
 
 
@@ -218,8 +226,8 @@ class Subsidy(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["UntilDate"], name="untildate_unique"
-            )
-        ]
+                )
+            ]
 
 
 class MealTypeChoices(models.TextChoices):
@@ -258,7 +266,7 @@ class Item(models.Model):
         choices=MealTypeChoices.choices,
         default=MealTypeChoices.BREAKFAST,
         max_length=3,
-    )
+        )
     ItemDesc = models.TextField(blank=True, null=True)
 
     # todo
@@ -269,7 +277,7 @@ class Item(models.Model):
         upload_to="media/items/",
         null=True,
         blank=True,
-    )
+        )
 
     # This field should not be modified by the admin or even the DBA.
     # Changes to this field should occur when adding a new record to the
@@ -287,10 +295,10 @@ class Deadlines(Logger):
     MealType = models.CharField(choices=MealTypeChoices.choices, max_length=3)
     Days = models.PositiveSmallIntegerField(
         default=0,
-    )
+        )
     Hour = models.PositiveSmallIntegerField(
         default=0,
-    )
+        )
 
 
 class Order(models.Model):
@@ -343,8 +351,8 @@ class OrderItem(Logger):
             models.UniqueConstraint(
                 fields=["Personnel", "DeliveryDate", "Item"],
                 name="unique_item_date_personnel",
-            ),
-        ]
+                ),
+            ]
 
 
 class ItemsOrdersPerDay(models.Model):
@@ -376,7 +384,7 @@ class ItemPriceHistory(models.Model):
 
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, null=False, blank=False
-    )
+        )
 
     Price = models.PositiveIntegerField()
     FromDate = models.CharField(max_length=10)
@@ -400,8 +408,8 @@ class DailyMenuItem(Logger):
             models.UniqueConstraint(
                 fields=["AvailableDate", "Item"],
                 name="unique_AvailableDate_Item",
-            )
-        ]
+                )
+            ]
 
 
 class ActionLog(models.Model):
@@ -429,14 +437,16 @@ class ActionLog(models.Model):
 
     class LogManager(models.Manager):
         def log(
-            self,
-            action_type,
-            user="SYSTEM",
-            log_msg=None,
-            model=None,
-            record_id=None,
-            old_data: dict = None,
-        ):
+                self,
+                action_type,
+                user="SYSTEM",
+                log_msg=None,
+                model=None,
+                record_id=None,
+                old_data: dict = None,
+                admin=None,
+                manipulation_reason=None,
+                ):
             table_name = model._meta.model_name if model else None
             return self.create(
                 User=user,
@@ -445,7 +455,9 @@ class ActionLog(models.Model):
                 ActionType=action_type,
                 ActionDesc=log_msg,
                 OldData=old_data,
-            )
+                Admin=admin,
+                ManipulationReason=manipulation_reason
+                )
 
     class ActionTypeChoices(models.TextChoices):
         CREATE = "C", "create"
@@ -462,12 +474,15 @@ class ActionLog(models.Model):
     ReferencedRecordId = models.PositiveIntegerField(null=True)
     ActionType = models.CharField(
         max_length=1, choices=ActionTypeChoices.choices
-    )
+        )
 
     # Summary of what happened in this log for system supporter
     # (in the most human-readable word)
     ActionDesc = models.CharField(max_length=1000, null=True)
     OldData = models.JSONField(null=True)
+
+    Admin = models.CharField(max_length=250, null=True)
+    ManipulationReason = models.CharField(max_length=250, null=True)
 
     objects = LogManager()
 
@@ -484,6 +499,8 @@ class PersonnelDailyReport(models.Model):
     ItemId = models.IntegerField()
     Quantity = models.PositiveSmallIntegerField()
     DeliveryDate = models.CharField(max_length=10)
+    DeliveryBuilding = models.CharField(max_length=250)
+    DeliveryFloor = models.CharField(max_length=250)
 
     class Meta:
         managed = False

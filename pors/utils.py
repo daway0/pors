@@ -2,12 +2,13 @@ import codecs
 import csv
 import json
 import re
-from collections import namedtuple
 from hashlib import sha256
 from typing import Optional
+from urllib.parse import urlunparse
 
 import jdatetime
 import pytz
+import requests
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -15,19 +16,15 @@ from persiantools.jdatetime import JalaliDate
 
 from . import models as m
 
+HR_SCHEME = "http"
+HR_HOST = "192.168.20.81"
+HR_PORT = "14000"
+
 
 def localnow() -> jdatetime.datetime:
     utc_now = jdatetime.datetime.now(tz=pytz.utc)
     local_timezone = pytz.timezone("Asia/Tehran")
     return utc_now.astimezone(local_timezone)
-
-
-def get_user_minimal_info(user: m.User) -> dict:
-    return {
-        "fullname": user.FullName,
-        "profile": user.Profile,
-        "is_admin": user.IsAdmin,
-    }
 
 
 def get_str(date: jdatetime.date) -> str:
@@ -110,13 +107,11 @@ def split_dates(dates, mode: str):
                 int(dates.split("/")[2]),
             )
         for date in dates:
-            new_dates.append(
-                (
-                    int(dates.split("/")[0]),
-                    int(dates.split("/")[1]),
-                    int(dates.split("/")[2]),
-                )
-            )
+            new_dates.append((
+                int(dates.split("/")[0]),
+                int(dates.split("/")[1]),
+                int(dates.split("/")[2]),
+            ))
         return new_dates
 
 
@@ -355,3 +350,65 @@ def get_deadlines(
             launch_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
 
     return breakfast_deadlines, launch_deadlines
+
+
+def fetch_available_location():
+    """fetch available location (building and floors from HR)"""
+    # todo shipment
+    path = "HR/api/v1/locations/"
+    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    # response = requests.get(url, 30)
+
+    # when im out of production
+    from .serializers import BuildingSerializer
+
+    floor01 = dict(code="Floor_Padidar_P1", title="P1")
+    floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
+    floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
+    floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
+    floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
+    floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
+    floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
+
+    floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
+    floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
+    floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
+    floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
+    floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
+    floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
+
+    floors1 = [floor11, floor12, floor13, floor14, floor15]
+    building1: dict[str, list[str]] = dict(
+        code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
+    )
+    building2 = dict(
+        code="Building_Gandi", title="ساختمان گاندی", floors=floors1
+    )
+    buildings = BuildingSerializer(
+        data=[building1, building2], many=True
+    ).initial_data
+    return buildings
+    # END
+
+    # return response.json()
+
+
+def sync_hr_delivery_place_with_pors(
+    latest_building: str, latest_floor: str, user: m.User
+):
+    # todo shipment
+
+    # path = f"/HR/api/v1/user-location/{user.Personnel}"
+    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    # res = requests.patch(
+    #     url,
+    #     {"latestBuilding": latest_building, "latestFloor": latest_floor},
+    #     timeout=30,
+    # )
+    # if not res.status_code == 200:
+    #     raise ValueError(
+    #         "Something went wrong when updating HR source with pors db."
+    #     )
+
+    # todo shipment
+    pass

@@ -16,7 +16,7 @@ message = Message()
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def personnel_daily_report(request, current_user):
+def personnel_daily_report(request, user: m.User, override_user: m.User):
     """
     Generating CSV based report for personnel's orders on each day.
 
@@ -51,7 +51,7 @@ def personnel_daily_report(request, current_user):
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def personnel_financial_report(request, current_user):
+def personnel_financial_report(request, user: m.User, override_user: m.User):
     """
     Returning monthly financial report for each personel on the provided date.
 
@@ -81,9 +81,7 @@ def personnel_financial_report(request, current_user):
         DeliveryDate__range=[first_date, last_date]
     )
 
-    result = orders.values(
-        "Personnel", "FirstName", "LastName"
-    ).annotate(
+    result = orders.values("Personnel", "FirstName", "LastName").annotate(
         TotalOrders=Count("Id"),
         TotalPrice=Sum("TotalPrice"),
         TotalSubsidySpent=Sum("SubsidySpent"),
@@ -105,7 +103,9 @@ def personnel_financial_report(request, current_user):
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def item_ordering_personnel_list_report(request, current_user):
+def item_ordering_personnel_list_report(
+    request, user: m.User, override_user: m.User
+):
     """
     This view is responsible for generating a csv file that contains
         personnel who have ordered a specific item on specific date.

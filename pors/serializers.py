@@ -5,6 +5,7 @@ from rest_framework import serializers
 from . import business as b
 from . import models as m
 from . import utils as u
+from .models import User
 
 Deadline = namedtuple("Deadline", "Days Hour")
 
@@ -164,6 +165,8 @@ class GeneralCalendarSerializer(serializers.Serializer):
 class FirstPageSerializer(serializers.Serializer):
     isOpenForAdmins = serializers.BooleanField()
     isOpenForPersonnel = serializers.BooleanField()
+    userName = serializers.CharField()
+    isAdmin = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
     buildings = serializers.DictField()
@@ -171,6 +174,7 @@ class FirstPageSerializer(serializers.Serializer):
     latestFloor = serializers.CharField()
     firstOrderableDate = serializers.DictField()
     totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
+    godMode = serializers.BooleanField()
 
 
 class DayWithMenuSerializer(serializers.Serializer):
@@ -210,6 +214,11 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
         launch_deadlines: dict[int, Deadline]
         now = u.localnow()
 
+        # Its set to true if user is admin and accessing another
+        # user's panel from his/her side.
+        # True means all days are viable for add/remove/changing order.
+        bypass_date_limitations = self.context.get("bypass_date_limitations")
+
         for object in obj:
             serializer = MenuItems(object).data
             if current_date_obj.get("date") == object.get("AvailableDate"):
@@ -220,19 +229,27 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
                 weekday = u.create_jdate_object(
                     object.get("AvailableDate")
                 ).weekday()
-                current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
-                    now,
-                    current_date_obj["date"],
-                    launch_deadlines[weekday].Days,
-                    launch_deadlines[weekday].Hour,
-                )
-                current_date_obj["openForBreakfast"] = (
+                current_date_obj["openForLaunch"] = (
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        breakfast_deadlines[weekday].Days,
-                        breakfast_deadlines[weekday].Hour,
+                        launch_deadlines[weekday].Days,
+                        launch_deadlines[weekday].Hour,
                     )
+                    if not bypass_date_limitations
+                    else True
+                )
+                current_date_obj["openForBreakfast"] = (
+                    (
+                        b.is_date_valid_for_action(
+                            now,
+                            current_date_obj["date"],
+                            breakfast_deadlines[weekday].Days,
+                            breakfast_deadlines[weekday].Hour,
+                        )
+                    )
+                    if not bypass_date_limitations
+                    else True
                 )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
@@ -250,3 +267,9 @@ class BuildingSerializer(serializers.Serializer):
     code = serializers.CharField()
     title = serializers.CharField()
     floors = FloorSerializer()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["Personnel", "FullName"]
