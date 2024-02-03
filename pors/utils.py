@@ -4,21 +4,15 @@ import json
 import re
 from hashlib import sha256
 from typing import Optional
-from urllib.parse import urlunparse
 
 import jdatetime
 import pytz
-import requests
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 
 from . import models as m
-
-HR_SCHEME = "http"
-HR_HOST = "192.168.20.81"
-HR_PORT = "14000"
 
 
 def localnow() -> jdatetime.datetime:
@@ -27,16 +21,33 @@ def localnow() -> jdatetime.datetime:
     return utc_now.astimezone(local_timezone)
 
 
+def get_user_minimal_info(user: m.User) -> dict:
+    return {
+        "fullname": user.FullName,
+        "profile": user.Profile,
+        "is_admin": user.IsAdmin,
+    }
+
+
 def get_str(date: jdatetime.date) -> str:
-    """Converting a Jalali date object to a string
+    """تبدیل کردن آبجکت دیت جلالی به رشته
     yyyy/mm/dd
     """
     return date.strftime("%Y/%m/%d")
 
 
 def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
-    """This function returns a Jalali date object from the start and end
-    dates provided
+    """
+    این تابع یک ابکجت دیت جلالی از روز اول و روز اخر تاریخ وارد شده
+    بر می‌گرداند.
+
+    ورودی ها:
+        year: سال
+        month: ماه
+    بازگشتی ها:
+        jalali_first_day_date: ابجکت روز اول
+        jalali_last_day_date: ابجکت روز اخر
+
     """
 
     # Todo convert year and month to gro
@@ -48,7 +59,15 @@ def first_and_last_day_date(month: int, year: int) -> tuple[str, str]:
 
 
 def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
-    """This function is responsible for calculating weekend holidays"""
+    """
+    این تابع مسئولیت حساب کردن تعطیلات اخر هفته را دارد.
+
+    ورودی ها:
+        year: سال
+        month: ماه
+    بازگشتی ها:
+        holidays: لیستی از تعطیلات اخر خفته
+    """
 
     # Todo get last day of month in jalali date
     last_day_of_month = JalaliDate.days_in_month(month, year)
@@ -61,7 +80,7 @@ def get_weekend_holidays(year: int, month: int) -> list[jdatetime.date]:
 
 
 def get_current_date() -> tuple[int, int, int]:
-    """Returning current date"""
+    "Returning current date"
     now = localnow()
     return now.year, now.month, now.day
 
@@ -72,14 +91,13 @@ def split_dates(dates, mode: str):
 
     Args:
         dates: List of dates, or a single date to split.
-        mode: The section, choose between `year`, `month` and `day`, `all`.
+        mode: The section, choose between `year`, `month` and `day`.
 
     Returns:
         List or single integer.
         int | list[int]
     """
     new_dates = []
-    mode = mode.lower()
 
     if mode == "day":
         if not isinstance(dates, list):
@@ -98,20 +116,6 @@ def split_dates(dates, mode: str):
             return int(dates.split("/")[0])
         for date in dates:
             new_dates.append(int(date.split("/")[0]))
-        return new_dates
-    elif mode == "all":
-        if not isinstance(dates, list):
-            return (
-                int(dates.split("/")[0]),
-                int(dates.split("/")[1]),
-                int(dates.split("/")[2]),
-            )
-        for date in dates:
-            new_dates.append((
-                int(dates.split("/")[0]),
-                int(dates.split("/")[1]),
-                int(dates.split("/")[2]),
-            ))
         return new_dates
 
 
@@ -224,7 +228,9 @@ def generate_csv(queryset: QuerySet):
     return response
 
 
-def validate_request_based_on_schema(schema: dict, data: dict):
+def validate_request_based_on_schema(
+    schema: dict, data: dict
+) -> tuple[str, int]:
     """
     This function is responsible for validating request data based on the
         provided schema.
@@ -249,40 +255,45 @@ def validate_request_based_on_schema(schema: dict, data: dict):
             raise ValueError(f"Invalid {param} value.")
 
 
-def get_specific_deadline(
-    weekday: int,
-    meal_type: m.Item.MealTypeChoices = None,
-    deadline: tuple = None,
+def get_submission_deadline(
+    meal_type: m.Item.MealTypeChoices = False,
 ):
     """
     Returning the submission's deadline based on the mealtype it has.
-    Deadline is fetched from db based on the weekday.
+    The deadline is fetched from SystemSetting table.
 
-    If meal_type parameter is not specified, all deadlines related to that
-        weekday will get returned instead.
+    If meal_type parameter is not specified, will return both deadlines
+        from database, first is breakfast, second is launch.
+
     Args:
         meal_type: The submission's deadline.
-        weekday: Number of weekday (due to dynamic deadline logic).
-        deadline: named tuple for deadline that has Days and Hour args.
 
     Returns:
-        Dict of specific weekday deadlines | Days and hour value.
-        Dict[str, namedtuple[Days, Hour]] | tuple[int, int]
+        The deadline value.
+        tuple[int, int, int, int] | tuple[int, int]
     """
 
-    if not meal_type and deadline:
-        qs = m.Deadlines.objects.filter(WeekDay=weekday)
-        deadlines = {}
-        for row in qs:
-            if row.MealType == m.MealTypeChoices.BREAKFAST:
-                deadlines["breakfast"] = deadline(row.Days, row.Hour)
-            else:
-                deadlines["launch"] = deadline(row.Days, row.Hour)
-        return deadlines
+    if not meal_type:
+        return (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
 
-    qs = m.Deadlines.objects.get(MealType=meal_type, WeekDay=weekday)
+    if meal_type == m.Item.MealTypeChoices.LAUNCH:
+        deadline = (
+            m.SystemSetting.objects.last().LaunchRegistrationWindowDays,
+            m.SystemSetting.objects.last().LaunchRegistrationWindowHours,
+        )
 
-    return qs.Days, qs.Hour
+    elif meal_type == m.Item.MealTypeChoices.BREAKFAST:
+        deadline = (
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowDays,
+            m.SystemSetting.objects.last().BreakfastRegistrationWindowHours,
+        )
+
+    return deadline
 
 
 def generate_token_hash(
@@ -298,117 +309,3 @@ def generate_token_hash(
 
 def get_personnel_from_token(token: str):
     return m.User.objects.filter(Token=token, IsActive=True).first()
-
-
-def create_jdate_object(date: str) -> jdatetime.date:
-    """
-    Creating Jalali Date object from provided date.
-
-    Args:
-        date (str): The date you want to create object from.
-
-    Returns:
-        jdatetime.date
-    """
-
-    year, month, day = split_dates(date, mode="all")
-    return jdatetime.date(year, month, day)
-
-
-# For type annotation only
-MealTypeDeadlines = dict[int, tuple[int, int], dict[int, tuple[int, int]]]
-
-
-def get_deadlines(
-    deadline: tuple,
-) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
-    """
-    Fetching deadlines from database and forming 2 dicts from the data.
-    Dicts are formed based on the meal type, one for each type.
-    Dicts keys are the weekday nums, so we have 7 keys for each dict.
-
-    Returns:
-        tuple[MealTypeDeadlines, MealTypeDeadlines]:
-        - MealTypeDeadlines: The dict that contains the day and hour deadline
-            for each weekday number.
-
-    Examples:
-        breakfast_deadline[0] = (1, 12)
-        Here the [0] means the first day of week (Shanbe / Saturday),
-        and (1) is the Days deadline, (12) is Hour.
-
-    """
-
-    deadlines = m.Deadlines.objects.all()
-    breakfast_deadlines = {}
-    launch_deadlines = {}
-
-    for row in deadlines:
-        if row.MealType == m.MealTypeChoices.BREAKFAST:
-            breakfast_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
-        else:
-            launch_deadlines[row.WeekDay] = deadline(row.Days, row.Hour)
-
-    return breakfast_deadlines, launch_deadlines
-
-
-def fetch_available_location():
-    """fetch available location (building and floors from HR)"""
-    # todo shipment
-    path = "HR/api/v1/locations/"
-    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    # response = requests.get(url, 30)
-
-    # when im out of production
-    from .serializers import BuildingSerializer
-
-    floor01 = dict(code="Floor_Padidar_P1", title="P1")
-    floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
-    floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
-    floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
-    floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
-    floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
-    floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
-
-    floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
-    floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
-    floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
-    floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
-    floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
-    floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
-
-    floors1 = [floor11, floor12, floor13, floor14, floor15]
-    building1: dict[str, list[str]] = dict(
-        code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
-    )
-    building2 = dict(
-        code="Building_Gandi", title="ساختمان گاندی", floors=floors1
-    )
-    buildings = BuildingSerializer(
-        data=[building1, building2], many=True
-    ).initial_data
-    return buildings
-    # END
-
-    # return response.json()
-
-
-def sync_hr_delivery_place_with_pors(
-    latest_building: str, latest_floor: str, user: m.User
-):
-    # todo shipment
-
-    # path = f"/HR/api/v1/user-location/{user.Personnel}"
-    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    # res = requests.patch(
-    #     url,
-    #     {"latestBuilding": latest_building, "latestFloor": latest_floor},
-    #     timeout=30,
-    # )
-    # if not res.status_code == 200:
-    #     raise ValueError(
-    #         "Something went wrong when updating HR source with pors db."
-    #     )
-
-    # todo shipment
-    pass

@@ -1,11 +1,12 @@
 {% load static %}
 <div class="group flex items-center">
-    <img id="user-profile" class="shrink-0 h-12 w-12 rounded-md"
-         onerror="imgError(this);"
-         src=""
+    <img class="shrink-0 h-12 w-12 rounded-md" onerror="imgError(this);"
+         {% with defaulting="/static/Pors/images/placeholder.png" %}
+         src="{{ profile|default:defaulting }}"
+         {% endwith %}
     >
     <div class="mr-3">
-        <p id="user-fullname" class="text-sm font-medium text-slate-900"></p>
+        <p class="text-sm font-medium text-slate-900">{{ fullname }}</p>
         <p class="text-sm font-medium text-slate-500">ادمین اداری</p>
     </div>
 </div>
@@ -14,72 +15,24 @@
     <div class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center">
         <a href="{% url 'pors:personnel_panel' %}">پنل سفارش گیری</a>
     </div>
-
-
-    {#    -------------------#}
-
-    <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch"
-            data-dropdown-placement="bottom"
-            class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center"
-            type="button">ورود به پنل پرسنل دیگر
-        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
-             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round"
-                  stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-        </svg>
-    </button>
-
-    <!-- Dropdown menu -->
-    <div id="dropdownSearch"
-         class="z-10 hidden bg-white rounded-lg shadow w-60 ">
-        <div class="p-3">
-            <label for="input-group-search" class="sr-only">Search</label>
-            <div class="relative">
-                <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-500 "
-                         aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                         fill="none" viewBox="0 0 20 20">
-                        <path stroke="currentColor" stroke-linecap="round"
-                              stroke-linejoin="round" stroke-width="2"
-                              d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                    </svg>
-                </div>
-                <input type="text" id="input-group-search"
-                       class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 "
-                       placeholder="جست جوی پرسنل">
-            </div>
-        </div>
-        <ul id="users-dropdown-list" class="max-h-[25rem] px-3 pb-3 
-        overflow-y-auto text-xs
-        text-gray-700 "
-            aria-labelledby="dropdownSearchButton">
-        </ul>
-    </div>
-
-
-    {#    -------------------#}
-
-
     <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown"
-            class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center"
-            type="button"> گزارش گیری
-        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
-             xmlns="http://www.w3.org/2000/svg" fill="none"
-             viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round"
-                  stroke-linejoin="round" stroke-width="2"
-                  d="m1 1 4 4 4-4"/>
-        </svg>
-    </button>
+                class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center"
+                type="button"> گزارش گیری
+            <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 10 6">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="m1 1 4 4 4-4"/>
+            </svg>
+        </button>
 
-    <!-- Dropdown menu -->
-    <div id="dropdown"
-         class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-64">
-        <ul id="report-wrapper" class="py-2 text-xs text-gray-700"
-            aria-labelledby="dropdownDefaultButton">
-        </ul>
-    </div>
+        <!-- Dropdown menu -->
+        <div id="dropdown"
+             class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-64" >
+            <ul id="report-wrapper" class="py-2 text-xs text-gray-700" aria-labelledby="dropdownDefaultButton">
+            </ul>
+        </div>
     <div class="cursor-pointer hidden">
         تغییر به سمت پرسنل
     </div>
 </div>
+

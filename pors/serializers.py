@@ -1,13 +1,8 @@
-from collections import namedtuple
-
 from rest_framework import serializers
 
 from . import business as b
 from . import models as m
 from . import utils as u
-from .models import User
-
-Deadline = namedtuple("Deadline", "Days Hour")
 
 
 class AllItemSerializer(serializers.ModelSerializer):
@@ -73,9 +68,12 @@ class MenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        breakfast_deadlines, launch_deadlines = u.get_deadlines(Deadline)
-        breakfast_deadlines: dict[int, Deadline]
-        launch_deadlines: dict[int, Deadline]
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
         now = u.localnow()
 
         for object in obj:
@@ -87,19 +85,18 @@ class MenuItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.Date
-                weekday = u.create_jdate_object(object.Date).weekday()
                 current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
                     now,
                     current_date_obj["date"],
-                    launch_deadlines[weekday].Days,
-                    launch_deadlines[weekday].Hour,
+                    days_launch_deadline,
+                    hours_launch_deadline,
                 )
                 current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        breakfast_deadlines[weekday].Days,
-                        breakfast_deadlines[weekday].Hour,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline,
                     )
                 )
                 current_date_obj["items"] = []
@@ -139,8 +136,6 @@ class OrderSerializer(serializers.Serializer):
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
-            schema["deliveryBuilding"] = object["DeliveryBuilding"]
-            schema["deliveryFloor"] = object["DeliveryFloor"]
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
@@ -165,16 +160,10 @@ class GeneralCalendarSerializer(serializers.Serializer):
 class FirstPageSerializer(serializers.Serializer):
     isOpenForAdmins = serializers.BooleanField()
     isOpenForPersonnel = serializers.BooleanField()
-    userName = serializers.CharField()
-    isAdmin = serializers.BooleanField()
     fullName = serializers.CharField()
     profile = serializers.ImageField()
-    buildings = serializers.DictField()
-    latestBuilding = serializers.CharField()
-    latestFloor = serializers.CharField()
     firstOrderableDate = serializers.DictField()
     totalItemsCanOrderedForBreakfastByPersonnel = serializers.IntegerField()
-    godMode = serializers.BooleanField()
 
 
 class DayWithMenuSerializer(serializers.Serializer):
@@ -209,15 +198,13 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
     def get_menuItems(self, obj):
         result = []
         current_date_obj = {}
-        breakfast_deadlines, launch_deadlines = u.get_deadlines(Deadline)
-        breakfast_deadlines: dict[int, Deadline]
-        launch_deadlines: dict[int, Deadline]
+        (
+            days_breakfast_deadline,
+            hours_breakfast_deadline,
+            days_launch_deadline,
+            hours_launch_deadline,
+        ) = u.get_submission_deadline()
         now = u.localnow()
-
-        # Its set to true if user is admin and accessing another
-        # user's panel from his/her side.
-        # True means all days are viable for add/remove/changing order.
-        bypass_date_limitations = self.context.get("bypass_date_limitations")
 
         for object in obj:
             serializer = MenuItems(object).data
@@ -226,50 +213,22 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
             else:
                 current_date_obj = {}
                 current_date_obj["date"] = object.get("AvailableDate")
-                weekday = u.create_jdate_object(
-                    object.get("AvailableDate")
-                ).weekday()
-                current_date_obj["openForLaunch"] = (
+                current_date_obj["openForLaunch"] = b.is_date_valid_for_action(
+                    now,
+                    current_date_obj["date"],
+                    days_launch_deadline,
+                    hours_launch_deadline
+                )
+                current_date_obj["openForBreakfast"] = (
                     b.is_date_valid_for_action(
                         now,
                         current_date_obj["date"],
-                        launch_deadlines[weekday].Days,
-                        launch_deadlines[weekday].Hour,
+                        days_breakfast_deadline,
+                        hours_breakfast_deadline
                     )
-                    if not bypass_date_limitations
-                    else True
-                )
-                current_date_obj["openForBreakfast"] = (
-                    (
-                        b.is_date_valid_for_action(
-                            now,
-                            current_date_obj["date"],
-                            breakfast_deadlines[weekday].Days,
-                            breakfast_deadlines[weekday].Hour,
-                        )
-                    )
-                    if not bypass_date_limitations
-                    else True
                 )
                 current_date_obj["items"] = []
                 current_date_obj["items"].append(serializer)
                 result.append(current_date_obj)
 
         return result
-
-
-class FloorSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    title = serializers.CharField()
-
-
-class BuildingSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    title = serializers.CharField()
-    floors = FloorSerializer()
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["Personnel", "FullName"]

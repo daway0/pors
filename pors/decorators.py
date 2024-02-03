@@ -69,13 +69,9 @@ def check(what_to_check: list[Callable]):
 
 def authenticate(privileged_users: bool = False):
     """
-    Authenticating users based on the `token` cookie.
+    Authenticating users based on the `key` token.
     If the authentication fails, the personnel will get redirected
-    to the authentication gateway.
-
-    Admin users can use 'override_username' query parameter to do actions
-    on behalf of the users and access their panels, they can fully
-    view their calendar without any date limitations.
+        to the authentication gateway.
 
     If the `privileged_users` is set, will also check the personnel's role
         in database via `IsAdmin` field.
@@ -107,29 +103,13 @@ def authenticate(privileged_users: bool = False):
                     "You are not authorized to access this api with current"
                     " privilege ;)."
                 )
-            if hasattr(request, "query_params"):
-                # django requests
-                override_username = request.query_params.get(
-                    "override_username"
-                    )
-            elif hasattr(request, "GET"):
-                # drf requests
-                override_username = request.GET.get(
-                    "override_username"
-                    )
-            else:
-                return view(request, user, None, *args, **kwargs)
 
-            if override_username and not user.IsAdmin:
-                return HttpResponseForbidden(
-                    "You are not authorized to access this feature"
-                    " cutie ;)."
-                )
-            
-            override_user = m.User.objects.filter(
-                Personnel=override_username
-            ).first()
-            return view(request, user, override_user, *args, **kwargs)
+            try:
+                request.data["personnel"] = user.Personnel
+            except AttributeError:
+                request.data = {"personnel": user.Personnel}
+
+            return view(request, user, *args, **kwargs)
 
         return wrapper
 
