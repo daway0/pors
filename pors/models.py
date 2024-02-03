@@ -499,6 +499,8 @@ class PersonnelDailyReport(models.Model):
     ItemId = models.IntegerField()
     Quantity = models.PositiveSmallIntegerField()
     DeliveryDate = models.CharField(max_length=10)
+    DeliveryBuilding = models.CharField(max_length=250)
+    DeliveryFloor = models.CharField(max_length=250)
 
     class Meta:
         managed = False
