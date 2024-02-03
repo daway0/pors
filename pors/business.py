@@ -510,7 +510,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" increased by 1 for {self.date}"
                 ),
                 user=self.user.Personnel,
-                admin=self.admin_user
+                admin=self.admin_user,
             )
             return
 
@@ -528,7 +528,7 @@ class ValidateOrder(OverrideUserValidator):
                 f" {self.date}"
             ),
             user=self.user.Personnel,
-            admin=self.admin_user
+            admin=self.admin_user,
         )
 
     def remove_order(self):
@@ -556,7 +556,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" for {self.date}"
                 ),
                 user=self.user.Personnel,
-                admin=self.admin_user
+                admin=self.admin_user,
             )
         else:
             self.order_item.delete(
@@ -565,7 +565,7 @@ class ValidateOrder(OverrideUserValidator):
                     f" {self.date}"
                 ),
                 user=self.user.Personnel,
-                admin=self.admin_user
+                admin=self.admin_user,
             )
 
 
@@ -745,7 +745,7 @@ class ValidateBreakfast(OverrideUserValidator):
                     f" increased by 1 for {self.date}"
                 ),
                 user=self.user.Personnel,
-                admin=self.admin_user
+                admin=self.admin_user,
             )
             return
 
@@ -762,7 +762,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 f" for {self.date}"
             ),
             user=self.user.Personnel,
-            admin=self.admin_user
+            admin=self.admin_user,
         )
 
 
@@ -1096,3 +1096,9 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         user.LastDeliveryBuilding = self.new_delivery_building
         user.LastDeliveryFloor = self.new_delivery_floor
         user.save()
+
+    def validated_data(self) -> dict[str, str]:
+        return dict(
+            delivery_building=self.new_delivery_building,
+            delivery_floor=self.new_delivery_floor,
+        )

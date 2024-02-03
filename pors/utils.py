@@ -2,22 +2,19 @@ import codecs
 import csv
 import json
 import re
-from urllib.parse import urlunparse
-from collections import namedtuple
 from hashlib import sha256
 from typing import Optional
+from urllib.parse import urlunparse
 
 import jdatetime
 import pytz
-
+import requests
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
-from .serializers import BuildingSerializer
-from . import models as m
 
-import requests
+from . import models as m
 
 HR_SCHEME = "http"
 HR_HOST = "192.168.20.81"
@@ -108,15 +105,13 @@ def split_dates(dates, mode: str):
                 int(dates.split("/")[0]),
                 int(dates.split("/")[1]),
                 int(dates.split("/")[2]),
-                )
+            )
         for date in dates:
-            new_dates.append(
-                (
-                    int(dates.split("/")[0]),
-                    int(dates.split("/")[1]),
-                    int(dates.split("/")[2]),
-                    )
-                )
+            new_dates.append((
+                int(dates.split("/")[0]),
+                int(dates.split("/")[1]),
+                int(dates.split("/")[2]),
+            ))
         return new_dates
 
 
@@ -255,10 +250,10 @@ def validate_request_based_on_schema(schema: dict, data: dict):
 
 
 def get_specific_deadline(
-        weekday: int,
-        meal_type: m.Item.MealTypeChoices = None,
-        deadline: tuple = None,
-        ):
+    weekday: int,
+    meal_type: m.Item.MealTypeChoices = None,
+    deadline: tuple = None,
+):
     """
     Returning the submission's deadline based on the mealtype it has.
     Deadline is fetched from db based on the weekday.
@@ -291,12 +286,12 @@ def get_specific_deadline(
 
 
 def generate_token_hash(
-        personnel: str, full_name: str, random_bit: int
-        ) -> str:
+    personnel: str, full_name: str, random_bit: int
+) -> str:
     packed_args = (
-            personnel.encode()
-            + full_name.encode()
-            + bytes(str(random_bit), "utf-8")
+        personnel.encode()
+        + full_name.encode()
+        + bytes(str(random_bit), "utf-8")
     )
     return sha256(packed_args).hexdigest()
 
@@ -325,8 +320,8 @@ MealTypeDeadlines = dict[int, tuple[int, int], dict[int, tuple[int, int]]]
 
 
 def get_deadlines(
-        deadline: tuple,
-        ) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
+    deadline: tuple,
+) -> tuple[MealTypeDeadlines, MealTypeDeadlines]:
     """
     Fetching deadlines from database and forming 2 dicts from the data.
     Dicts are formed based on the meal type, one for each type.
@@ -361,36 +356,59 @@ def fetch_available_location():
     """fetch available location (building and floors from HR)"""
     # todo shipment
     path = "HR/api/v1/locations/"
-    url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    response = requests.get(url)
+    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    # response = requests.get(url, 30)
 
     # when im out of production
-    # floor01 = dict(code="Floor_Padidar_P1", title="P1")
-    # floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
-    # floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
-    # floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
-    # floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
-    # floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
-    # floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
-    #
-    # floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
-    # floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
-    # floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
-    # floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
-    # floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
-    # floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
-    #
-    # floors1 = [floor11, floor12, floor13, floor14, floor15]
-    # building1: dict[str, list[str]] = dict(
-    #     code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
-    #     )
-    # building2 = dict(
-    #     code="Building_Gandi", title="ساختمان گاندی", floors=floors1
-    #     )
-    # buildings = BuildingSerializer(
-    #     data=[building1, building2], many=True
-    #     ).initial_data
-    # return buildings
+    from .serializers import BuildingSerializer
+
+    floor01 = dict(code="Floor_Padidar_P1", title="P1")
+    floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
+    floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
+    floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
+    floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
+    floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
+    floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
+
+    floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
+    floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
+    floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
+    floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
+    floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
+    floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
+
+    floors1 = [floor11, floor12, floor13, floor14, floor15]
+    building1: dict[str, list[str]] = dict(
+        code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
+    )
+    building2 = dict(
+        code="Building_Gandi", title="ساختمان گاندی", floors=floors1
+    )
+    buildings = BuildingSerializer(
+        data=[building1, building2], many=True
+    ).initial_data
+    return buildings
     # END
 
-    return response.json()
+    # return response.json()
+
+
+def sync_hr_delivery_place_with_pors(
+    latest_building: str, latest_floor: str, user: m.User
+):
+    # todo shipment
+
+    # path = f"/HR/api/v1/user-location/{user.Personnel}"
+    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    # res = requests.patch(
+    #     url,
+    #     {"latestBuilding": latest_building, "latestFloor": latest_floor},
+    #     timeout=30,
+    # )
+    # if not res.status_code == 200:
+    #     raise ValueError(
+    #         "Something went wrong when updating HR source with pors db."
+    #     )
+
+    # todo shipment
+    pass

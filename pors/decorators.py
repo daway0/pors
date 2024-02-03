@@ -107,26 +107,25 @@ def authenticate(privileged_users: bool = False):
                     "You are not authorized to access this api with current"
                     " privilege ;)."
                 )
-            try:
-                if hasattr(request, "query_params"):
-                    # django requests
-                    override_username = request.query_params.get(
-                        "override_username"
-                        )
-                elif hasattr(request, "GET"):
-                    # drf requests
-                    override_username = request.GET.get(
-                        "override_username"
-                        )
-            except AttributeError:
+            if hasattr(request, "query_params"):
+                # django requests
+                override_username = request.query_params.get(
+                    "override_username"
+                    )
+            elif hasattr(request, "GET"):
+                # drf requests
+                override_username = request.GET.get(
+                    "override_username"
+                    )
+            else:
                 return view(request, user, None, *args, **kwargs)
 
-            if override_username:
-                if not user.IsAdmin:
-                    return HttpResponseForbidden(
-                        "You are not authorized to access this feature"
-                        " cutie ;)."
-                    )
+            if override_username and not user.IsAdmin:
+                return HttpResponseForbidden(
+                    "You are not authorized to access this feature"
+                    " cutie ;)."
+                )
+            
             override_user = m.User.objects.filter(
                 Personnel=override_username
             ).first()
