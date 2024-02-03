@@ -18,7 +18,8 @@ class Message:
 
     Warnings:
 
-        * BE CAREFUL THAT AFTER CALLING THE messages() METHOD THE _messages ATTR GET FLUSHED.
+        * BE CAREFUL THAT AFTER CALLING THE messages() METHOD THE _messages
+        ATTR GET FLUSHED.
         * use messages() only in return statements
     """
 
@@ -36,19 +37,22 @@ class Message:
     DT_PARAMENT = "DISPLAY_TIME_PARAMENT"
 
     def __init__(self):
-        self._messages: list[dict[str, str]] = []
+        self._messages: dict[object, list[dict[str, str]]] = dict()
 
-    def add_message(self, message: str, level=INFO, display_duration=DT_SHORT):
-        self._messages.append(
-            {
-                "level": level,
-                "message": message,
-                "displayDuration": display_duration
-            }
-        )
+    def add_message(
+        self, request, message: str, level=INFO, display_duration=DT_SHORT
+    ):
 
-    def messages(self):
-        temp = self._messages
-        # clear the messages list
-        self._messages = []
+        if request not in self._messages:
+            self._messages[request] = []
+
+        self._messages[request].append({
+            "level": level,
+            "message": message,
+            "displayDuration": display_duration,
+        })
+
+    def messages(self, request):
+        temp = self._messages[request]
+        del self._messages[request]
         return temp

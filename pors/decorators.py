@@ -49,12 +49,12 @@ def check(what_to_check: list[Callable]):
         def wrapper(request, *args, **kwargs):
             for checker in what_to_check:
                 if not checker():
-                    messages.add_message(
+                    messages.add_message(request,
                         "سیستم در حال حاضر از دسترس خارج است.", Message.ERROR
                     )
                     return Response(
                         {
-                            "messages": messages.messages(),
+                            "messages": messages.messages(request),
                             "errors": "System is down!",
                         },
                         status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -69,9 +69,13 @@ def check(what_to_check: list[Callable]):
 
 def authenticate(privileged_users: bool = False):
     """
-    Authenticating users based on the `key` token.
+    Authenticating users based on the `token` cookie.
     If the authentication fails, the personnel will get redirected
-        to the authentication gateway.
+    to the authentication gateway.
+
+    Admin users can use 'override_username' query parameter to do actions
+    on behalf of the users and access their panels, they can fully
+    view their calendar without any date limitations.
 
     If the `privileged_users` is set, will also check the personnel's role
         in database via `IsAdmin` field.
@@ -103,13 +107,29 @@ def authenticate(privileged_users: bool = False):
                     "You are not authorized to access this api with current"
                     " privilege ;)."
                 )
+            if hasattr(request, "query_params"):
+                # django requests
+                override_username = request.query_params.get(
+                    "override_username"
+                    )
+            elif hasattr(request, "GET"):
+                # drf requests
+                override_username = request.GET.get(
+                    "override_username"
+                    )
+            else:
+                return view(request, user, None, *args, **kwargs)
 
-            try:
-                request.data["personnel"] = user.Personnel
-            except AttributeError:
-                request.data = {"personnel": user.Personnel}
-
-            return view(request, user, *args, **kwargs)
+            if override_username and not user.IsAdmin:
+                return HttpResponseForbidden(
+                    "You are not authorized to access this feature"
+                    " cutie ;)."
+                )
+            
+            override_user = m.User.objects.filter(
+                Personnel=override_username
+            ).first()
+            return view(request, user, override_user, *args, **kwargs)
 
         return wrapper
 

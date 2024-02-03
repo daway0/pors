@@ -1,8 +1,7 @@
-from hashlib import sha256
 from random import getrandbits
 
 from django.db.models import Q
-from django.http.response import HttpResponse, HttpResponseForbidden
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from jdatetime import timedelta
@@ -32,21 +31,25 @@ from .models import (
 )
 from .serializers import (
     AllItemSerializer,
+    BuildingSerializer,
     CategorySerializer,
+    Deadline,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
+    UserSerializer,
 )
 from .utils import (
     execute_raw_sql_with_params,
+    fetch_available_location,
     first_and_last_day_date,
     generate_token_hash,
-    get_submission_deadline,
-    get_user_minimal_info,
+    get_deadlines,
     localnow,
     split_dates,
+    sync_hr_delivery_place_with_pors,
 )
 
 # todo shipment
@@ -63,25 +66,19 @@ message = Message()
 
 
 @authenticate()
-def ui(request, user):
-    return render(
-        request, "personnelMainPanel.html", get_user_minimal_info(user)
-    )
+def ui(request, user, override_user: User):
+    return render(request, "personnelMainPanel.html")
 
 
 @authenticate(privileged_users=True)
-def uiadmin(request, user):
-    return render(
-        request,
-        "administrativeMainPanel.html",
-        get_user_minimal_info(user),
-    )
+def uiadmin(request, user, override_user: User):
+    return render(request, "administrativeMainPanel.html")
 
 
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def add_item_to_menu(request, user: User):
+def add_item_to_menu(request, user: User, override_user: User):
     """
     Adding items to menu.
     Data will pass several validations in order to add item in menu.
@@ -92,20 +89,20 @@ def add_item_to_menu(request, user: User):
         -  'item' (str): The item which you want to add.
     """
 
-    validator = b.ValidateAddMenuItem(request.data)
+    validator = b.ValidateAddMenuItem(request.data, user)
     if validator.is_valid():
         validator.add_item()
 
-        message.add_message(
+        message.add_message(request,
             "آیتم با موفقیت اضافه شد.",
             Message.SUCCESS,
         )
 
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -113,7 +110,7 @@ def add_item_to_menu(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def remove_item_from_menu(request, user: User):
+def remove_item_from_menu(request, user: User, override_user: User):
     """
     Removing items from menu.
     Data will pass several validations in order to remove item.
@@ -127,15 +124,15 @@ def remove_item_from_menu(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateRemove(request.data)
+    validator = b.ValidateRemove(request.data, user)
     if validator.is_valid():
         validator.remove_item()
-        message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        message.add_message(request,"آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -159,7 +156,7 @@ class Categories(ListAPIView):
 @api_view(["GET"])
 @check([is_open_for_personnel])
 @authenticate()
-def personnel_calendar(request, user: User):
+def personnel_calendar(request, user: User, override_user: User):
     """
     Personnel's calendar which have enough information
         to generate the calendar from them.
@@ -178,11 +175,11 @@ def personnel_calendar(request, user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(
+        message.add_message(request,
             "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": error_message},
+            {"messages": message.messages(request), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
 
@@ -190,7 +187,9 @@ def personnel_calendar(request, user: User):
     year = int(request.query_params.get("year"))
     first_day_date, last_day_date = first_and_last_day_date(month, year)
 
-    personnel = user.Personnel
+    personnel = (
+        user.Personnel if not override_user else override_user.Personnel
+    )
 
     general_calendar = GeneralCalendar(year, month)
 
@@ -216,7 +215,10 @@ def personnel_calendar(request, user: User):
         .order_by("AvailableDate", "Item_id")
         .values("AvailableDate", "Item_id")
     )
-    menu_items_serialized_data = PersonnelMenuItemSerializer(menu_items).data
+    menu_items_serialized_data = PersonnelMenuItemSerializer(
+        menu_items,
+        context={"bypass_date_limitations": True if override_user else False},
+    ).data
 
     orders = Order.objects.filter(
         DeliveryDate__range=(first_day_date, last_day_date),
@@ -258,7 +260,7 @@ def personnel_calendar(request, user: User):
 @api_view(["GET"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def edari_calendar(request, user: User):
+def edari_calendar(request, user: User, override_user: User):
     """
     Admin's calendar which have more detailed information about menus, orders.
 
@@ -275,11 +277,11 @@ def edari_calendar(request, user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(
+        message.add_message(request,
             "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": error_message},
+            {"messages": message.messages(request), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
     month = int(request.query_params.get("month"))
@@ -309,7 +311,7 @@ def edari_calendar(request, user: User):
 
 @api_view(["GET"])
 @authenticate()
-def first_page(request, user: User):
+def first_page(request, user: User, override_user: User):
     """
     First page information.
     will pass authentication first.
@@ -321,44 +323,44 @@ def first_page(request, user: User):
         profile: User's profile picture
         firstOrderableDate: First valid date for order submission.
     """
+    if override_user:
+        user = override_user
 
     system_settings = SystemSetting.objects.last()
     open_for_admins = system_settings.IsSystemOpenForAdmin
     open_for_personnel = system_settings.IsSystemOpenForPersonnel
 
-    (
-        days_breakfast_deadline,
-        hours_breakfast_deadline,
-        days_launch_deadline,
-        hours_launch_deadline,
-    ) = get_submission_deadline()
-
     now = localnow()
-
-    if (
-        system_settings.BreakfastRegistrationWindowDays
-        < system_settings.LaunchRegistrationWindowDays
-    ):
-        year, month, day = b.get_first_orderable_date(
-            now, days_breakfast_deadline, hours_breakfast_deadline
+    breakfast_deadlines, launch_deadlines = get_deadlines(Deadline)
+    if not (breakfast_deadlines and launch_deadlines):
+        return Response(
+            "No deadline has been found for today's week number, Abort!",
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    else:
-        year, month, day = b.get_first_orderable_date(
-            now, days_launch_deadline, hours_launch_deadline
-        )
+    year, month, day = b.get_first_orderable_date(
+        now, breakfast_deadlines, launch_deadlines
+    )
 
     first_orderable_date = {"year": year, "month": month, "day": day}
+
+    buildings = fetch_available_location()
 
     serializer = FirstPageSerializer(
         data={
             "isOpenForAdmins": open_for_admins,
             "isOpenForPersonnel": open_for_personnel,
+            "userName": user.Personnel,
+            "isAdmin": user.IsAdmin,
             "fullName": user.FullName,
             "profile": user.Profile,
+            "buildings": buildings,
+            "latestBuilding": user.LastDeliveryBuilding,
+            "latestFloor": user.LastDeliveryFloor,
             "firstOrderableDate": first_orderable_date,
             "totalItemsCanOrderedForBreakfastByPersonnel": (
                 system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
             ),
+            "godMode": True if override_user else False,
         }
     ).initial_data
 
@@ -368,7 +370,7 @@ def first_page(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_order_item(request, user: User):
+def create_order_item(request, user: User, override_user: User):
     """
     Responsible for submitting orders.
     The data will pass several validations in order to submit.
@@ -380,21 +382,21 @@ def create_order_item(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateOrder(request.data)
+    validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
         validator.create_order()
-        message.add_message(
+        message.add_message(request,
             "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
         )
         return Response(
-            {"messages": message.messages()},
+            {"messages": message.messages(request)},
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
         {
-            "messages": message.messages(),
+            "messages": message.messages(request),
             "errors": validator.error,
         },
         status.HTTP_400_BAD_REQUEST,
@@ -404,7 +406,7 @@ def create_order_item(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def remove_order_item(request, user: User):
+def remove_order_item(request, user: User, override_user: User):
     """
     This view will remove an item from specific order.
     Check `ValidateOrder` docs for more information about validators.
@@ -415,17 +417,18 @@ def remove_order_item(request, user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateOrder(request.data)
+    validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
-        message.add_message(
+        message.add_message(request,
             "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
         )
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages(request)},
+                        status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -433,7 +436,7 @@ def remove_order_item(request, user: User):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def create_breakfast_order(request, user: User):
+def create_breakfast_order(request, user: User, override_user: User):
     """
     Responsible for submitting breakfast orders.
     The data will pass several validations in order to submit.
@@ -445,17 +448,17 @@ def create_breakfast_order(request, user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateBreakfast(request.data)
+    validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
         validator.create_breakfast_order()
-        message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
+        message.add_message(request,"صبحانه با موفقیت ثبت شد.", message.SUCCESS)
         return Response(
-            {"messages": message.messages()}, status.HTTP_201_CREATED
+            {"messages": message.messages(request)}, status.HTTP_201_CREATED
         )
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -464,11 +467,11 @@ def create_breakfast_order(request, user: User):
 def get_subsidy(request):
     date = b.validate_date(request.query_params.get("date"))
     if not date:
-        message.add_message(
+        message.add_message(request,
             "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Invalid 'date' value."}
+            {"messages": message.messages(request), "errors": "Invalid 'date' value."}
         )
 
     subsidy = (
@@ -506,8 +509,8 @@ def auth_gateway(request):
     #
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
-    personnel = "m.noruzi@eit"
-    full_name = "mikaeil norouzi"
+    personnel = "e.rezaee@eit"
+    full_name = "erfan rezaee"
     is_admin = False
 
     personnel_user_record = User.objects.filter(
@@ -548,7 +551,9 @@ def auth_gateway(request):
             IsActive=True,
         )
 
-        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        response.set_cookie(
+            "token", token, path=cookies_path, max_age=max_age, samesite="lax"
+        )
         return response
 
     elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
@@ -561,7 +566,9 @@ def auth_gateway(request):
         personnel_user_record.ExpiredAt = cookies_expire_time
         personnel_user_record.save()
 
-        response.set_cookie("token", token, path=cookies_path, max_age=max_age)
+        response.set_cookie(
+            "token", token, path=cookies_path, max_age=max_age, samesite="lax"
+        )
         return response
 
     elif not request_token or request_token != personnel_user_record.Token:
@@ -576,6 +583,68 @@ def auth_gateway(request):
             personnel_user_record.Token,
             path=cookies_path,
             max_age=max_age,
+            samesite="lax",
         )
 
     return response
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def change_delivery_building(request, user: User, override_user: User):
+
+    # fetching buildings from HR services somehow
+    available_buildings = dict()
+
+    # todo shipment
+    # buildings_from_hr = fetch_available_location()
+    # for building in buildings_from_hr:
+    #     available_buildings[building["code"]] = list()
+    #     for floor in building["floors"]:
+    #         available_buildings[building["code"]].append(floor.code)
+
+    available_buildings["Building_Padidar"] = [
+        "Floor_Padidar_P1",
+        "Floor_Padidar_Lobby",
+        "Floor_Padidar_1",
+        "Floor_Padidar_2",
+        "Floor_Padidar_3",
+        "Floor_Padidar_4",
+        "Floor_Padidar_5",
+    ]
+    available_buildings["Building_Gandi"] = [
+        "Floor_Gandi_Lobby",
+        "Floor_Gandi_1",
+        "Floor_Gandi_2",
+        "Floor_Gandi_3",
+        "Floor_Gandi_4",
+    ]
+
+    validator = b.ValidateDeliveryBuilding(
+        request.data, available_buildings, user, override_user
+    )
+    if validator.is_valid():
+        validator.change_delivery_place()
+        data = validator.validated_data()
+        sync_hr_delivery_place_with_pors(
+            data.get("delivery_building"), data.get("delivery_floor"), user
+        )
+        message.add_message(request,
+            "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
+        )
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+
+    message.add_message(request,validator.message, Message.ERROR)
+    return Response(
+        {"messages": message.messages(request), "errors": validator.error},
+        status.HTTP_400_BAD_REQUEST,
+    )
+
+
+@api_view(["GET"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def available_users(request, user, override_user):
+    qs = User.objects.all()
+    return Response(data=UserSerializer(qs, many=True).data, status=200)
