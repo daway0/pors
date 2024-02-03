@@ -1,25 +1,29 @@
 {% load static %}
 {#            User profile#}
 <div class="group flex items-center">
-    <img id="personnel-image" class="shrink-0 h-12 w-12 rounded-md" onerror="imgError(this);"
-         {% with defaulting="/static/Pors/images/placeholder.png" %}
-         src="{{ profile|default:defaulting }}"
-         {% endwith %}
-         alt=""/>
+    <img id="user-profile" class="shrink-0 h-12 w-12 rounded-md" src=""
+         onerror="imgError(this);" alt=""/>
     <div class="mr-3">
-        <p class="text-sm font-medium text-slate-900">{{ fullname }}</p>
-        <p class="text-sm font-medium text-slate-500">پرسنل</p>
+        <p class="text-sm font-medium text-slate-900">
+            <span id="user-fullname" ></span>
+            <span id="god-mode" class="px-1 py-0 text-xs bg-red-200
+             rounded-full text-red-800"> دسترسی بدون محدودیت </span>
+        </p>
+        <p class="text-sm font-medium 
+        text-slate-500">پرسنل</p>
     </div>
 
 
 </div>
 {#          Left Options  #}
 <div class="flex flex-row gap-5 justify-end items-center">
-    {% if is_admin %}
-        <div class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center">
+    
+        <div id="go-to-admin-button" class="hidden text-gray-800 bg-blue-100 
+        hover:bg-blue-200 
+        focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center">
         <a href="{% url 'pors:admin_panel' %}">ورود به میز کار ادمین</a>
     </div>
-    {% endif %}
+    
     <div class=" hidden flex items-center gap-1.5">
         <img class="w-5 h-5" src="" alt="">
         <div class="gap-2 flex">

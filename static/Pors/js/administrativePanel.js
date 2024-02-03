@@ -61,8 +61,8 @@ let currentDate = {
     day: undefined
 }
 let selectedDate = undefined
-let personnelFullName = undefined
-let personnelProfileImg = undefined
+let userFullName = undefined
+let userProfileImg = undefined
 let firstDayOfWeek = undefined
 let lastDayOfMonth = undefined
 let holidays = undefined
@@ -697,10 +697,54 @@ function checkErrorRelatedToAuth(errorCode) {
     if (errorCode === 403) redirectToGateway()
 }
 
+function loadUserBasicInfo() {
+    $("#user-profile").attr("src", userProfileImg)
+    $("#user-fullname").text(userFullName)
+}
+
+
 function imgError(image) {
-    image.onerror = "";
     image.src = DEFAULTITEMIMAGE;
     return true;
+}
+
+function makeUserDropdownChoices() {
+        $.ajax({
+            url: addPrefixTo(`available-users/`),
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                let choicesHTML = ""
+                data.forEach(function(userObj) {
+                    let nextURL = `?override_username=${userObj.Personnel}`
+                    choicesHTML += `<li class="">
+                        <div class="flex items-center ps-2 rounded 
+                hover:bg-gray-100 ">
+                            <a target="_blank" href=${addPrefixTo(nextURL)} 
+                            class="user-choice-a flex items-center justify-between w-full py-2
+                            text-xs
+                           text-gray-900 rounded ">
+                                <span class="user-in-search">${userObj.FullName}</span>
+                                <span class="flex gap-1">
+                            <span class="user-in-search" data-username="${userObj.Personnel}">${userObj.Personnel}</span>
+                            <svg class="h-3 w-3" fill="#000000"
+                                 width="800px"
+                                 height="800px"
+                                 viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg"><path
+                                d="M12,1a11,11,0,0,0,0,22,1,1,0,0,0,0-2,9,9,0,1,1,9-9v2.857a1.857,1.857,0,0,1-3.714,0V7.714a1,1,0,1,0-2,0v.179A5.234,5.234,0,0,0,12,6.714a5.286,5.286,0,1,0,3.465,9.245A3.847,3.847,0,0,0,23,14.857V12A11.013,11.013,0,0,0,12,1Zm0,14.286A3.286,3.286,0,1,1,15.286,12,3.29,3.29,0,0,1,12,15.286Z"/></svg>
+                            </span>
+                            </a>
+                        </div>
+                    </li>`
+                })
+                $("#users-dropdown-list").append(choicesHTML)
+            },
+            error: function (xhr, status, error) {
+                console.error('ERROR During fetching all users data', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+            }
+        });
 }
 
 $(document).ready(function () {
@@ -721,6 +765,11 @@ $(document).ready(function () {
             currentDate.day = data["firstOrderableDate"]["day"]
             currentDate.month = data["firstOrderableDate"]["month"]
             currentDate.year = data["firstOrderableDate"]["year"]
+            userFullName = data["fullName"]
+            userProfileImg = data["profile"]
+
+            loadUserBasicInfo()
+            makeUserDropdownChoices()
 
             selectedDate = currentDate
 
@@ -1035,6 +1084,28 @@ $(document).ready(function () {
         });
     })
 
+    // user selection search dropdown by @ and normal form
+    $(document).on('input', '#input-group-search', function () {
+        $('.user-in-search').each(function () {
+            $(this).closest("li").addClass("hidden")
+        })
+
+        let searchText = $(this).val().trim().toLowerCase();
+        if (searchText === "") return
+
+        searchText = searchText.substring(searchText.indexOf('@') + 1);
+        $('.user-in-search').each(function () {
+            let userText = $(this).text().trim().toLowerCase();
+            if (userText.indexOf(searchText) !== -1) {
+                $(this).closest('li').removeClass('hidden');
+            }
+        });
+    });
+
+    $(document).on('click', '.user-choice-a', function () {
+        let username = $(this).find(".user-in-search[data-username]").text()
+        localStorage.setItem("nextUsername", username)
+    })
 
 });
 

@@ -40,6 +40,7 @@ urlpatterns = [
         name="remove_order_item",
     ),
     path("get-subsidy/", views.get_subsidy, name="get_subsidy"),
+    path("change_order_delivery_place/", views.change_delivery_building),
     path(
         "administrative/reports/daily-orders/",
         report_views.personnel_daily_report,
@@ -53,4 +54,5 @@ urlpatterns = [
     path("auth-gateway/", views.auth_gateway, name="gateway"),
     path("admin/", views.uiadmin, name="admin_panel"),
     path("", views.ui, name="personnel_panel"),
+    path("available-users/", views.available_users, name="available_users")
 ]

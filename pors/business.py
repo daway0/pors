@@ -8,10 +8,12 @@ from django.db.models.functions import Coalesce
 from . import models as m
 from . import serializers as s
 from .utils import (
+    create_jdate_object,
     execute_raw_sql_with_params,
     first_and_last_day_date,
-    get_submission_deadline,
+    get_specific_deadline,
     localnow,
+    split_dates,
     split_json_dates,
     validate_date,
 )
@@ -132,25 +134,78 @@ def is_date_valid_for_action(
 
 
 def get_first_orderable_date(
-    now: jdatetime.datetime, days_deadline: int, hours_deadline: int
+    now: jdatetime.datetime,
+    breakfast_deadlines: dict[int, s.Deadline],
+    launch_deadlines: dict[int, s.Deadline],
 ):
     """
     Returning the first valid date for order submission based on deadline.
+    The deadline values must be a Deadline namedtuple.
 
     Args:
         now: Current datetime.
-        deadline: The deadline of the submissions.
-
+        breakfast_deadlines: Deadline for breakfast submissions.
+        launch_deadlines: Deadline for launch submissions.
     Returns:
         Tuple of `year`, `month` and `day` values, don't forget the order :).
     """
-    if 24 > hours_deadline < 0:
-        raise ValueError("`hours_deadline` value must be between 0 and 24.")
 
-    now += jdatetime.timedelta(days=days_deadline)
-    if now.hour >= hours_deadline:
-        now += jdatetime.timedelta(days=1)
-    return now.year, now.month, now.day
+    passed_days = 0
+    weekday = now.weekday()
+    while True:
+        breakfast_deadline = breakfast_deadlines[weekday]
+        launch_deadline = launch_deadlines[weekday]
+
+        if (
+            (
+                breakfast_deadline.Days == passed_days
+                and launch_deadline.Days == passed_days
+            )
+            and (
+                breakfast_deadline.Hour <= now.hour
+                and launch_deadline.Hour <= now.hour
+            )
+            or (
+                breakfast_deadline.Days > passed_days
+                and launch_deadline.Days > passed_days
+            )
+        ):
+            passed_days += 1
+            if weekday != 6:  # has 7 days only (starts with 0)
+                weekday += 1
+            else:
+                weekday = 0
+
+        else:
+            now += jdatetime.timedelta(days=passed_days)
+            return now.year, now.month, now.day
+
+
+class OverrideUserValidator:
+    """
+    Abstract class for classes that allow admins to manipulate/create/delete
+    user's orders.
+    All classes that are inheriting from this class, will allow admins to
+    do actions on behalf of the personnel, without any DATE related
+    limitations.
+
+    If 'override_user' arg is provided, then 'user' will be the
+    'override_user', and the 'user' attribute will be the 'admin' user.
+    If not, then the 'user' is personnel and admin is None.
+
+    Args:
+        user: Personnel's user object.
+        admin_user: Admin's user object.
+    """
+
+    def __init__(self, user: m.User, override_user: m.User) -> None:
+        self.user = user if not override_user else override_user
+        self.admin_user = user.Personnel if override_user else None
+
+    def _is_admin(self) -> bool:
+        if not self.admin_user:
+            return False
+        return True
 
 
 class ValidateRemove:
@@ -174,10 +229,12 @@ class ValidateRemove:
         date: The corresponding menu date.
     """
 
-    def __init__(self, request_data: dict) -> None:
+    def __init__(self, request_data: dict, user: m.User) -> None:
         self.data = request_data
+        self.user = user
         self.error = ""
-        self.message = ""
+        self.date: str = ""
+        self.item: m.Item = m.Item.objects.none()
 
     def is_valid(self) -> bool:
         """
@@ -233,10 +290,13 @@ class ValidateRemove:
     def _validate_date(self):
         """Validating date based on `is_date_valid_for_action` logic."""
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            date_obj.weekday(), self.item.MealType
+        )
 
         is_date_valid_for_removal = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -267,17 +327,18 @@ class ValidateRemove:
                 f"Item {self.item.ItemName} just removed from menu for"
                 f" {self.date}"
             ),
-            user=self.data.get("personnel"),
+            user=self.user.Personnel,
         )
 
 
-class ValidateOrder:
+class ValidateOrder(OverrideUserValidator):
     """
     Validating order submission and submiting order if it's valid.
     The data will pass several validation before submission.
 
     Attributes:
         data: Raw data retrieved from request.
+        user: User object.
         item: The item which was requested by client,
             available AFTER validation.
         date: The order date, available AFTER validation.
@@ -292,10 +353,16 @@ class ValidateOrder:
         date: The corresponding menu date.
     """
 
-    def __init__(self, request_data) -> None:
-        self.data: dict = request_data
+    def __init__(
+        self, request_data: dict, user: m.User, override_user: m.User
+    ) -> None:
+        super().__init__(user, override_user)
+        self.data = request_data
+        self.message: str = ""
         self.error = ""
-        self.message = ""
+        self.date: str = ""
+        self.item: m.Item = m.Item.objects.none()
+        self.order_item: m.OrderItem = m.OrderItem.objects.none()
 
     def is_valid(self, create=False, remove=False):
         """
@@ -326,9 +393,11 @@ class ValidateOrder:
             self.date, self.item = validate_request(self.data)
             if create:
                 self._validate_item_submission()
+                self._validate_default_delivery_building()
             elif remove:
                 self._validate_item_removal()
-            self._validate_date()
+            if not self._is_admin():
+                self._validate_date()
         except ValueError as e:
             self.error = str(e)
             return False
@@ -354,6 +423,22 @@ class ValidateOrder:
 
         self.item = m.Item.objects.filter(pk=self.item).first()
 
+    def _validate_default_delivery_building(self):
+        """
+        Checking user's default delivery building and floor value in db.
+        Either one or both of them is null, it raise ValueError.
+        """
+
+        delivery_building = self.user.LastDeliveryBuilding
+        delivery_floor = self.user.LastDeliveryFloor
+        if not (delivery_building and delivery_floor):
+            self.message = (
+                "لطفا پیش از ثبت سفارش محل تحویل سفارش خود را انتخاب کنید."
+            )
+            raise ValueError(
+                "User does not have default value for buidling and floor."
+            )
+
     def _validate_item_removal(self):
         """
         Checking if the personnel has ordered the specified item
@@ -361,7 +446,7 @@ class ValidateOrder:
         """
 
         order_item = m.OrderItem.objects.filter(
-            Personnel=self.data.get("personnel"),
+            Personnel=self.user.Personnel,
             DeliveryDate=self.date,
             Item=self.item,
         ).first()
@@ -378,10 +463,13 @@ class ValidateOrder:
         and valid for submission | removal.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            date_obj.weekday(), self.item.MealType
+        )
 
         is_valid = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -410,7 +498,7 @@ class ValidateOrder:
             )
 
         instance = m.OrderItem.objects.filter(
-            Personnel=self.data.get("personnel"),
+            Personnel=self.user.Personnel,
             DeliveryDate=self.date,
             Item=self.item,
         ).first()
@@ -421,13 +509,16 @@ class ValidateOrder:
                     f"Launch Item {self.item.ItemName}'s Quantity just"
                     f" increased by 1 for {self.date}"
                 ),
-                user=self.data.get("personnel"),
+                user=self.user.Personnel,
+                admin=self.admin_user,
             )
             return
 
         m.OrderItem(
-            Personnel=self.data.get("personnel"),
+            Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            DeliveryBuilding=self.user.LastDeliveryBuilding,
+            DeliveryFloor=self.user.LastDeliveryFloor,
             Item=self.item,
             Quantity=1,
             PricePerOne=self.item.CurrentPrice,
@@ -436,7 +527,8 @@ class ValidateOrder:
                 f"Launch Item {self.item.ItemName} just added to order for"
                 f" {self.date}"
             ),
-            user=self.data.get("personnel"),
+            user=self.user.Personnel,
+            admin=self.admin_user,
         )
 
     def remove_order(self):
@@ -463,7 +555,8 @@ class ValidateOrder:
                     f"Item {self.item.ItemName}'s Quantity just decreased by 1"
                     f" for {self.date}"
                 ),
-                user=self.data.get("personnel"),
+                user=self.user.Personnel,
+                admin=self.admin_user,
             )
         else:
             self.order_item.delete(
@@ -471,11 +564,12 @@ class ValidateOrder:
                     f"Item {self.item.ItemName} removed from order for"
                     f" {self.date}"
                 ),
-                user=self.data.get("personnel"),
+                user=self.user.Personnel,
+                admin=self.admin_user,
             )
 
 
-class ValidateBreakfast:
+class ValidateBreakfast(OverrideUserValidator):
     """
     Validating breakfast order submission and submitting order
         if data was valid.
@@ -483,6 +577,7 @@ class ValidateBreakfast:
 
     Attributes:
         data: Raw data retrieved from request.
+        user: User object.
         item: Item id that has been requested to remove,
             available AFTER validation.
         date: The corresponding menu date, available AFTER validation.
@@ -497,10 +592,15 @@ class ValidateBreakfast:
         date: The corresponding menu date.
     """
 
-    def __init__(self, request_data: dict) -> None:
+    def __init__(
+        self, request_data: dict, user: m.User, override_user: m.User
+    ) -> None:
+        super().__init__(user, override_user)
         self.data = request_data
-        self.error = ""
-        self.message = ""
+        self.message: str = ""
+        self.error: str = ""
+        self.date: str = ""
+        self.item: m.Item = m.Item.objects.none()
 
     def is_valid(self):
         """
@@ -515,7 +615,9 @@ class ValidateBreakfast:
         try:
             self.date, self.item = validate_request(self.data)
             self._validate_item()
-            self._validate_date()
+            self._validate_default_delivery_building()
+            if not self._is_admin():
+                self._validate_date()
             self._validate_order()
         except ValueError as e:
             self.error = str(e)
@@ -544,16 +646,35 @@ class ValidateBreakfast:
 
         self.item = m.Item.objects.filter(pk=self.item).first()
 
+    def _validate_default_delivery_building(self):
+        """
+        Checking user's default delivery building and floor value in db.
+        Either one or both of them is null, it raise ValueError.
+        """
+
+        delivery_building = self.user.LastDeliveryBuilding
+        delivery_floor = self.user.LastDeliveryFloor
+        if not (delivery_building and delivery_floor):
+            self.message = (
+                "لطفا پیش از ثبت سفارش محل تحویل سفارش خود را انتخاب کنید."
+            )
+            raise ValueError(
+                "User does not have default value for buidling and floor."
+            )
+
     def _validate_date(self):
         """
         Validating date value.
         Personnel must submit breakfast orders 1 week sooner.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            date_obj.weekday(), self.item.MealType
+        )
 
         is_valid_for_submission = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -576,8 +697,10 @@ class ValidateBreakfast:
 
         total_breakfast_orders = (
             m.OrderItem.objects.filter(
-                Personnel=self.data.get("personnel"),
+                Personnel=self.user.Personnel,
                 DeliveryDate=self.date,
+                DeliveryBuilding=self.user.LastDeliveryBuilding,
+                DeliveryFloor=self.user.LastDeliveryFloor,
                 Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
             )
             .values("Quantity")
@@ -588,10 +711,12 @@ class ValidateBreakfast:
             m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
         )
         if total_breakfast_orders >= threshold:
-            self.message = "محدودیت ثبت سفارش صبحانه‌ای رد شده است."
+            self.message = (
+                f" امکان سفارش حداکثر{threshold} عدد آیتم صبحانه‌ای وجود دارد."
+            )
             raise ValueError(
-                "Personnel has already submitted a breakfast order on this"
-                " date."
+                f"Personnel cannot submit more than {threshold} breakfast"
+                " item(s)."
             )
 
     def create_breakfast_order(self):
@@ -608,7 +733,7 @@ class ValidateBreakfast:
             )
 
         instance = m.OrderItem.objects.filter(
-            Personnel=self.data.get("personnel"),
+            Personnel=self.user.Personnel,
             DeliveryDate=self.date,
             Item=self.item,
         ).first()
@@ -619,13 +744,16 @@ class ValidateBreakfast:
                     f"Breakfast Item {self.item.ItemName}'s Quantity just"
                     f" increased by 1 for {self.date}"
                 ),
-                user=self.data.get("personnel"),
+                user=self.user.Personnel,
+                admin=self.admin_user,
             )
             return
 
         m.OrderItem(
-            Personnel=self.data.get("personnel"),
+            Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            DeliveryBuilding=self.user.LastDeliveryBuilding,
+            DeliveryFloor=self.user.LastDeliveryFloor,
             Item=self.item,
             PricePerOne=self.item.CurrentPrice,
         ).save(
@@ -633,7 +761,8 @@ class ValidateBreakfast:
                 f"Breakfast Item {self.item.ItemName} just added to the order"
                 f" for {self.date}"
             ),
-            user=self.data.get("personnel"),
+            user=self.user.Personnel,
+            admin=self.admin_user,
         )
 
 
@@ -658,10 +787,13 @@ class ValidateAddMenuItem:
         ValueError: If the data violated any validations.
     """
 
-    def __init__(self, request_data: dict) -> None:
+    def __init__(self, request_data: dict, user: m.User) -> None:
         self.data = request_data
-        self.error = ""
-        self.message = ""
+        self.user = user
+        self.message: str = ""
+        self.error: str = ""
+        self.date: str = ""
+        self.item: m.Item = m.Item.objects.none()
 
     def is_valid(self):
         """
@@ -719,10 +851,12 @@ class ValidateAddMenuItem:
             -  If the deadline has passed for adding.
         """
 
-        days_deadline, hours_deadline = get_submission_deadline(
-            self.item.MealType
-        )
         now = localnow()
+        year, month, day = split_dates(self.date, mode="all")
+        date_obj = jdatetime.datetime(year, month, day)
+        days_deadline, hours_deadline = get_specific_deadline(
+            date_obj.weekday(), self.item.MealType
+        )
 
         is_date_valid_for_add = is_date_valid_for_action(
             now, self.date, days_deadline, hours_deadline
@@ -756,5 +890,215 @@ class ValidateAddMenuItem:
                 f"Item {self.item.ItemName} just added to the menu for"
                 f" {self.date}"
             ),
-            user=self.data.get("personnel"),
+            user=self.user.Personnel,
+        )
+
+
+class ValidateDeliveryBuilding(OverrideUserValidator):
+    """
+    This class is responsible for validating 'change delivery building' api.
+    If the data was valid, the user can change their delivery building and
+        floor via 'change_delivary_place' interface.
+
+    Attributes:
+        data: Raw request data.
+        error: Catched error message which was caused by validation violations,
+            NOT available if data was valid.
+        message: Personnel friendly error message that describes the reason
+            of violations, can be used in `messages` module,
+            NOT available if data was valid.
+        date: User provided date after validation.
+        available_buildings: Valid buildings which must fetched from HR.
+        order: Related order object.
+    """
+
+    def __init__(
+        self,
+        request_data: dict,
+        buildings: dict[str, list[str]],
+        user: m.User,
+        override_user: m.User,
+    ) -> None:
+        super().__init__(user, override_user)
+        self.available_buildings: dict[str, list[str]] = buildings
+        self.data = request_data
+        self.message: str = ""
+        self.error: str = ""
+        self.date: str = ""
+        self.new_delivery_building: str = ""
+        self.new_delivery_floor: str = ""
+        self.order: m.Order = m.Order.objects.none()
+
+    def is_valid(self):
+        """
+        Applying validations to the request data.
+        if the request was not valid, will return false and
+        store error result inside `self.error`.
+
+        Returns:
+            bool: was the request data valid or not.
+        """
+
+        try:
+            self._validate_request()
+            self._validate_building()
+            self._validate_order_items()
+            if not self._is_admin():
+                self._validate_date()
+        except ValueError as e:
+            self.error = str(e)
+            return False
+
+        return True
+
+    def _validate_request(self):
+        """
+        Validating request data must contains:
+          - date: Date which user wants to change their building on.
+          - newDeliveryBuilding: Valid building.
+          - newDeliveryFloor: Valid floor.
+
+        After validation, data will get store on their applicable attr.
+        """
+
+        date = self.data.get("date")
+        new_delivery_building = self.data.get("newDeliveryBuilding")
+        new_delivery_floor = self.data.get("newDeliveryFloor")
+        if not (date and new_delivery_building and new_delivery_floor):
+            raise ValueError(
+                "'date', 'newDeliveryBuilding' and 'newDeliveryFloor'"
+                " parameters must specified."
+            )
+
+        self.new_delivery_building = new_delivery_building
+        self.new_delivery_floor = new_delivery_floor
+        self.date = validate_date(date)
+        if not self.date:
+            raise ValueError("Invalid 'date' value.")
+
+    def _validate_building(self):
+        """
+        Validating provided building and floor via 'available_buildings'.
+        """
+
+        if not self.available_buildings:
+            raise ValueError("'buildings' parameter is empty!")
+
+        valid = False
+        for building, floors in self.available_buildings.items():
+            if self.new_delivery_building != building:
+                continue
+
+            elif self.new_delivery_floor not in floors:
+                self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
+                raise ValueError(
+                    "'newDeliveryFloor' value does not exists in available"
+                    " choices."
+                )
+            valid = True
+
+        if not valid:
+            self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
+            raise ValueError(
+                "'newDeliveryBuilding' value does not exists in available"
+                " choices."
+            )
+
+    def _validate_order_items(self):
+        """
+        Checking if the user has submitted an order in provided date,
+        then checking if the requested building is not the same.
+
+        Will store order object in 'self.order' after validation.
+        """
+
+        current_order = m.Order.objects.filter(
+            Personnel=self.user.Personnel,
+            DeliveryDate=self.date,
+        ).first()
+
+        if current_order and (
+            current_order.DeliveryBuilding == self.new_delivery_building
+            and current_order.DeliveryFloor == self.new_delivery_floor
+        ):
+            self.message = (
+                "سفارش روز مورد نظر با ساختمان داده شده یکسان است و نیازی به"
+                " تغییر نیست."
+            )
+            raise ValueError(
+                "Your order is already submitted with provided building."
+            )
+
+        self.order = current_order
+
+    def _validate_date(self):
+        """
+        Checking if the requested date is valid for action.
+        """
+
+        date_obj = create_jdate_object(self.date)
+        deadlines: dict[str, s.Deadline] = get_specific_deadline(
+            weekday=date_obj.weekday(), deadline=s.Deadline
+        )
+        now = localnow()
+
+        for deadline in deadlines.values():
+            is_valid = is_date_valid_for_action(
+                now, self.date, deadline.Days, deadline.Hour
+            )
+
+            if not is_valid:
+                self.message = (
+                    "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
+                )
+                raise ValueError(
+                    "Deadline for changing delivery building is over."
+                )
+
+    def change_delivery_place(self):
+        """
+        Changing personnel's 'DeliveryBuilding' and 'DeliveryFloor' value
+        in requested date, also logging the action.
+
+        Will also change the cached data in 'User' table.
+        """
+
+        personnel = self.user.Personnel
+        m.OrderItem.objects.filter(
+            Personnel=self.user.Personnel,
+            DeliveryDate=self.date,
+        ).update(
+            DeliveryBuilding=self.new_delivery_building,
+            DeliveryFloor=self.new_delivery_floor,
+        )
+
+        # manual log insertion
+        # todo doc
+        m.ActionLog.objects.log(
+            m.ActionLog.ActionTypeChoices.UPDATE,
+            personnel,
+            f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor}"
+            f"for {self.date}",
+            m.OrderItem,
+            None,
+            (
+                dict(
+                    DeliveryBuilding=self.order.DeliveryBuilding,
+                    DeliveryFloor=self.order.DeliveryFloor,
+                )
+                if self.order
+                else None
+            ),
+            self.admin_user,
+        )
+
+        user = m.User.objects.get(Personnel=personnel)
+        user.LastDeliveryBuilding = self.new_delivery_building
+        user.LastDeliveryFloor = self.new_delivery_floor
+        user.save()
+
+    def validated_data(self) -> dict[str, str]:
+        return dict(
+            delivery_building=self.new_delivery_building,
+            delivery_floor=self.new_delivery_floor,
         )
