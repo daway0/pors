@@ -35,11 +35,11 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
 
     queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date)
     if not queryset:
-        message.add_message(
+        message.add_message(request,
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            {"messages": message.messages(request), "errors": "Queryset is empty!"},
             status.HTTP_404_NOT_FOUND,
         )
 
@@ -88,11 +88,11 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         TotalPersonnelDebt=Sum("PersonnelDebt"),
     )
     if not result:
-        message.add_message(
+        message.add_message(request,
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            {"messages": message.messages(request), "errors": "Queryset is empty!"},
             status.HTTP_404_NOT_FOUND,
         )
 
@@ -120,11 +120,11 @@ def item_ordering_personnel_list_report(
     try:
         date, item_id = b.validate_request(request.data)
     except ValueError as err:
-        message.add_message(
+        message.add_message(request,
             "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": str(err)},
+            {"messages": message.messages(request), "errors": str(err)},
             status.HTTP_400_BAD_REQUEST,
         )
 
@@ -140,11 +140,11 @@ def item_ordering_personnel_list_report(
         "DeliveryDate",
     )
     if not personnel:
-        message.add_message(
+        message.add_message(request,
             "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Queryset is empty!"},
+            {"messages": message.messages(request), "errors": "Queryset is empty!"},
             status.HTTP_404_NOT_FOUND,
         )
 

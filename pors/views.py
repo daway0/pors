@@ -93,16 +93,16 @@ def add_item_to_menu(request, user: User, override_user: User):
     if validator.is_valid():
         validator.add_item()
 
-        message.add_message(
+        message.add_message(request,
             "آیتم با موفقیت اضافه شد.",
             Message.SUCCESS,
         )
 
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -127,12 +127,12 @@ def remove_item_from_menu(request, user: User, override_user: User):
     validator = b.ValidateRemove(request.data, user)
     if validator.is_valid():
         validator.remove_item()
-        message.add_message("آیتم با موفقیت حذف شد.", Message.SUCCESS)
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        message.add_message(request,"آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -175,11 +175,11 @@ def personnel_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(
+        message.add_message(request,
             "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": error_message},
+            {"messages": message.messages(request), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
 
@@ -277,11 +277,11 @@ def edari_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(
+        message.add_message(request,
             "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": error_message},
+            {"messages": message.messages(request), "errors": error_message},
             status.HTTP_400_BAD_REQUEST,
         )
     month = int(request.query_params.get("month"))
@@ -385,18 +385,18 @@ def create_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
         validator.create_order()
-        message.add_message(
+        message.add_message(request,
             "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
         )
         return Response(
-            {"messages": message.messages()},
+            {"messages": message.messages(request)},
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
         {
-            "messages": message.messages(),
+            "messages": message.messages(request),
             "errors": validator.error,
         },
         status.HTTP_400_BAD_REQUEST,
@@ -420,14 +420,15 @@ def remove_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
-        message.add_message(
+        message.add_message(request,
             "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
         )
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages(request)},
+                        status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -450,14 +451,14 @@ def create_breakfast_order(request, user: User, override_user: User):
     validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
         validator.create_breakfast_order()
-        message.add_message("صبحانه با موفقیت ثبت شد.", message.SUCCESS)
+        message.add_message(request,"صبحانه با موفقیت ثبت شد.", message.SUCCESS)
         return Response(
-            {"messages": message.messages()}, status.HTTP_201_CREATED
+            {"messages": message.messages(request)}, status.HTTP_201_CREATED
         )
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 
@@ -466,11 +467,11 @@ def create_breakfast_order(request, user: User, override_user: User):
 def get_subsidy(request):
     date = b.validate_date(request.query_params.get("date"))
     if not date:
-        message.add_message(
+        message.add_message(request,
             "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
         )
         return Response(
-            {"messages": message.messages(), "errors": "Invalid 'date' value."}
+            {"messages": message.messages(request), "errors": "Invalid 'date' value."}
         )
 
     subsidy = (
@@ -629,14 +630,14 @@ def change_delivery_building(request, user: User, override_user: User):
         sync_hr_delivery_place_with_pors(
             data.get("delivery_building"), data.get("delivery_floor"), user
         )
-        message.add_message(
+        message.add_message(request,
             "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
-        return Response({"messages": message.messages()}, status.HTTP_200_OK)
+        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(validator.message, Message.ERROR)
+    message.add_message(request,validator.message, Message.ERROR)
     return Response(
-        {"messages": message.messages(), "errors": validator.error},
+        {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
     )
 

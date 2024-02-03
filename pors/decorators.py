@@ -49,12 +49,12 @@ def check(what_to_check: list[Callable]):
         def wrapper(request, *args, **kwargs):
             for checker in what_to_check:
                 if not checker():
-                    messages.add_message(
+                    messages.add_message(request,
                         "سیستم در حال حاضر از دسترس خارج است.", Message.ERROR
                     )
                     return Response(
                         {
-                            "messages": messages.messages(),
+                            "messages": messages.messages(request),
                             "errors": "System is down!",
                         },
                         status.HTTP_500_INTERNAL_SERVER_ERROR,
