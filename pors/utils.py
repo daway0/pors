@@ -13,8 +13,12 @@ from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.request import Request
 
 from . import models as m
+from .messages import Message
 
 HR_SCHEME = "http"
 HR_HOST = "192.168.20.81"
@@ -355,7 +359,7 @@ def get_deadlines(
 def fetch_available_location():
     """fetch available location (building and floors from HR)"""
     # todo shipment
-    path = "HR/api/v1/locations/"
+    # path = "HR/api/v1/locations/"
     # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
     # response = requests.get(url, 30)
 
@@ -412,3 +416,16 @@ def sync_hr_delivery_place_with_pors(
 
     # todo shipment
     pass
+
+
+def raise_report_notfound(
+    message_obj: Message,
+    request: Request
+):
+    msg = "هیچ رکوردی بین بازه ارائه داده شده موجود نیست."
+    error = "Queryset is empty!"
+    message_obj.add_message(request, msg, Message.ERROR)
+    return Response(
+        {"messages": message_obj.messages(request), "errors": error},
+        status.HTTP_404_NOT_FOUND,
+    )

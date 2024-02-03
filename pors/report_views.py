@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from . import business as b
 from . import decorators as decs
 from . import models as m
+from . import serializers as s
 from . import utils as u
 from .messages import Message
 
@@ -33,17 +34,28 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
 
     date = u.validate_date(request.data.get("date"))
 
-    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date)
+    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date).values(
+        "NationalCode",
+        "Personnel",
+        "FirstName",
+        "LastName",
+        "ItemName",
+        "Quantity",
+        "DeliveryDate",
+        "DeliveryBuilding",
+        "DeliveryFloor",
+        )
     if not queryset:
-        message.add_message(request,
-            "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
-        )
-        return Response(
-            {"messages": message.messages(request), "errors": "Queryset is empty!"},
-            status.HTTP_404_NOT_FOUND,
-        )
+        u.raise_report_notfound(message, request)
 
     response = u.generate_csv(queryset)
+
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Daily Orders report generated for {date}",
+        m.PersonnelDailyReport
+        )
 
     return response
 
@@ -88,14 +100,15 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         TotalPersonnelDebt=Sum("PersonnelDebt"),
     )
     if not result:
-        message.add_message(request,
-            "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
-        )
-        return Response(
-            {"messages": message.messages(request), "errors": "Queryset is empty!"},
-            status.HTTP_404_NOT_FOUND,
-        )
+        u.raise_report_notfound(message, request)
 
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Monthly Financial report generated for year {year} and month "
+        f"{month}",
+        m.Order
+        )
     csv_content = u.generate_csv(result)
     return csv_content
 
@@ -120,8 +133,10 @@ def item_ordering_personnel_list_report(
     try:
         date, item_id = b.validate_request(request.data)
     except ValueError as err:
-        message.add_message(request,
-            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.",
+            Message.ERROR,
         )
         return Response(
             {"messages": message.messages(request), "errors": str(err)},
@@ -129,27 +144,72 @@ def item_ordering_personnel_list_report(
         )
 
     # query sets that are in report must have .values for specifying columns
-    personnel = m.PersonnelDailyReport.objects.filter(
+    res = m.PersonnelDailyReport.objects.filter(
         DeliveryDate=date, ItemId=item_id
     ).values(
+        "NationalCode",
         "Personnel",
         "FirstName",
         "LastName",
         "ItemName",
         "Quantity",
         "DeliveryDate",
+        "DeliveryBuilding",
+        "DeliveryFloor",
     )
-    if not personnel:
-        message.add_message(request,
-            "هیچ رکوردی بین بازه ارائه داده شده موجود نیست.", Message.ERROR
-        )
-        return Response(
-            {"messages": message.messages(request), "errors": "Queryset is empty!"},
-            status.HTTP_404_NOT_FOUND,
-        )
+    if not res:
+        u.raise_report_notfound(message)
 
-    csv_content = u.generate_csv(personnel)
+    csv_content = u.generate_csv(res)
 
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Item Orders report generated for item {res['ItemName']} for {date}",
+        m.PersonnelDailyReport
+        )
+    response = HttpResponse(
+        content=csv_content,
+        content_type="text/csv",
+    )
+
+    return response
+
+
+@api_view(["POST"])
+@decs.check([decs.is_open_for_admins])
+@decs.authenticate(privileged_users=True)
+def personnel_monthly_report(request, user: m.User, override_user: m.User):
+    serializer = s.PersonnelMonthlyReport(data=request.data)
+    if not serializer.is_valid():
+        return Response("Invalid request.", status.HTTP_400_BAD_REQUEST)
+
+    month = serializer.validated_data.get("month")
+    year = serializer.validated_data.get("year")
+    first_date, last_date = u.first_and_last_day_date(month, year)
+    qs = m.PersonnelDailyReport.objects.filter(
+        DeliveryDate__range=[first_date, last_date]
+    ).values(
+        "NationalCode",
+        "Personnel",
+        "FirstName",
+        "LastName",
+        "ItemName",
+        "Quantity",
+        "DeliveryDate",
+        "DeliveryBuilding",
+        "DeliveryFloor",
+    )
+    if not qs:
+        u.raise_report_notfound(message, request)
+
+    csv_content = u.generate_csv(qs)
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Monthly Orders report generated for year {year} and month {month}",
+        m.PersonnelDailyReport
+        )
     response = HttpResponse(
         content=csv_content,
         content_type="text/csv",

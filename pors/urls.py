@@ -47,6 +47,10 @@ urlpatterns = [
         name="personnel_daily_report",
     ),
     path(
+        "administrative/reports/monthly-orders/",
+        report_views.personnel_monthly_report,
+    ),
+    path(
         "administrative/reports/monthly-financial/",
         report_views.personnel_financial_report,
         name="personnel_financial_report",
@@ -54,5 +58,5 @@ urlpatterns = [
     path("auth-gateway/", views.auth_gateway, name="gateway"),
     path("admin/", views.uiadmin, name="admin_panel"),
     path("", views.ui, name="personnel_panel"),
-    path("available-users/", views.available_users, name="available_users")
+    path("available-users/", views.available_users, name="available_users"),
 ]

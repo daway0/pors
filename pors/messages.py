@@ -40,22 +40,17 @@ class Message:
         self._messages: dict[object, list[dict[str, str]]] = dict()
 
     def add_message(
-            self,
-            request,
-            message: str,
-            level=INFO,
-            display_duration=DT_SHORT):
+        self, request, message: str, level=INFO, display_duration=DT_SHORT
+    ):
 
         if request not in self._messages:
             self._messages[request] = []
 
-        self._messages[request].append(
-            {
-                "level": level,
-                "message": message,
-                "displayDuration": display_duration
-                }
-            )
+        self._messages[request].append({
+            "level": level,
+            "message": message,
+            "displayDuration": display_duration,
+        })
 
     def messages(self, request):
         temp = self._messages[request]
