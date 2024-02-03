@@ -158,7 +158,7 @@ def item_ordering_personnel_list_report(
         "DeliveryFloor",
     )
     if not res:
-        u.raise_report_notfound(message)
+        u.raise_report_notfound(message, request)
 
     csv_content = u.generate_csv(res)
 

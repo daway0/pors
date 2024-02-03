@@ -36,4 +36,5 @@ GROUP BY PersonnelService.dbo.pors_orderitem.personnel,
          HR.dbo.Users.FirstName,
          HR.dbo.Users.LastName,
          PersonnelService.dbo.pors_orderitem.DeliveryBuilding,
-         PersonnelService.dbo.pors_orderitem.DeliveryFloor
+         PersonnelService.dbo.pors_orderitem.DeliveryFloor,
+         HR.dbo.Users.NationalCode

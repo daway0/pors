@@ -602,7 +602,7 @@ def change_delivery_building(request, user: User, override_user: User):
     # for building in buildings_from_hr:
     #     available_buildings[building["code"]] = list()
     #     for floor in building["floors"]:
-    #         available_buildings[building["code"]].append(floor.code)
+    #         available_buildings[building["code"]].append(floor["code"])
 
     available_buildings["Building_Padidar"] = [
         "Floor_Padidar_P1",
@@ -628,7 +628,8 @@ def change_delivery_building(request, user: User, override_user: User):
         validator.change_delivery_place()
         data = validator.validated_data()
         sync_hr_delivery_place_with_pors(
-            data.get("delivery_building"), data.get("delivery_floor"), user
+            data.get("delivery_building"), data.get("delivery_floor"),
+            override_user or user
         )
         message.add_message(request,
             "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
