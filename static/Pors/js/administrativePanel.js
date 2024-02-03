@@ -77,18 +77,25 @@ let allItems = undefined
 const REPORTS = [
     {
         "id":1,
-        "title": "گزارش سفارش های امروز",
+        "title": "گزارش سفارش های روز جاری",
         "fileNameFunction":dailyOrdersReportFileName,
         "api": addPrefixTo("administrative/reports/daily-orders/"),
         "data": dailyOrdersReportRequestBody
     },
     {
         "id":2,
-        "title": "گزارش مالی این ماه",
-        "fileNameFunction":monthlyFinancialReportFileName,
-        "api": addPrefixTo("administrative/reports/monthly-financial/"),
-        "data": monthlyFinancialReportRequestBody,
-    }
+        "title": "گزارش سفارش های ماه جاری",
+        "fileNameFunction":monthlyOrdersReportFileName,
+        "api": addPrefixTo("administrative/reports/monthly-orders/"),
+        "data": monthlyOrdersReportRequestBody,
+    },
+    // {
+    //     "id":3,
+    //     "title": "گزارش مالی این ماه",
+    //     "fileNameFunction":monthlyFinancialReportFileName,
+    //     "api": addPrefixTo("administrative/reports/monthly-financial/"),
+    //     "data": monthlyFinancialReportRequestBody,
+    // }
 ]
 
 
@@ -639,6 +646,17 @@ function dailyOrdersReportFileName(dataNeededForFileName) {
 function dailyOrdersReportRequestBody() {
     return {
         "date" : toShamsiFormat(selectedDate)
+    }
+}
+
+function monthlyOrdersReportFileName(dataNeededForFileName) {
+    return `گزارش سفارش های ماه ${selectedDate.month}`
+}
+
+function monthlyOrdersReportRequestBody() {
+    return {
+        "year" : selectedDate.year,
+        "month" : selectedDate.month
     }
 }
 

@@ -44,11 +44,18 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
         "DeliveryDate",
         "DeliveryBuilding",
         "DeliveryFloor",
-    )
+        )
     if not queryset:
         u.raise_report_notfound(message, request)
 
     response = u.generate_csv(queryset)
+
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Daily Orders report generated for {date}",
+        m.PersonnelDailyReport
+        )
 
     return response
 
@@ -95,6 +102,13 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
     if not result:
         u.raise_report_notfound(message, request)
 
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Monthly Financial report generated for year {year} and month "
+        f"{month}",
+        m.Order
+        )
     csv_content = u.generate_csv(result)
     return csv_content
 
@@ -130,7 +144,7 @@ def item_ordering_personnel_list_report(
         )
 
     # query sets that are in report must have .values for specifying columns
-    personnel = m.PersonnelDailyReport.objects.filter(
+    res = m.PersonnelDailyReport.objects.filter(
         DeliveryDate=date, ItemId=item_id
     ).values(
         "NationalCode",
@@ -143,15 +157,22 @@ def item_ordering_personnel_list_report(
         "DeliveryBuilding",
         "DeliveryFloor",
     )
-    if not personnel:
+    if not res:
         u.raise_report_notfound(message)
 
-    csv_content = u.generate_csv(personnel)
+    csv_content = u.generate_csv(res)
 
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Item Orders report generated for item {res['ItemName']} for {date}",
+        m.PersonnelDailyReport
+        )
     response = HttpResponse(
         content=csv_content,
         content_type="text/csv",
     )
+
     return response
 
 
@@ -167,7 +188,7 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
     year = serializer.validated_data.get("year")
     first_date, last_date = u.first_and_last_day_date(month, year)
     qs = m.PersonnelDailyReport.objects.filter(
-        DeliveryDate__in=[first_date, last_date]
+        DeliveryDate__range=[first_date, last_date]
     ).values(
         "NationalCode",
         "Personnel",
@@ -183,6 +204,12 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
         u.raise_report_notfound(message, request)
 
     csv_content = u.generate_csv(qs)
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Monthly Orders report generated for year {year} and month {month}",
+        m.PersonnelDailyReport
+        )
     response = HttpResponse(
         content=csv_content,
         content_type="text/csv",
