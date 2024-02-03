@@ -361,7 +361,7 @@ def fetch_available_location():
     # todo shipment
     # path = "HR/api/v1/locations/"
     # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    # response = requests.get(url, 30)
+    # response = requests.get(url, timeout=30)
 
     # when im out of production
     from .serializers import BuildingSerializer

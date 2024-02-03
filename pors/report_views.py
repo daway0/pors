@@ -46,7 +46,7 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
         "DeliveryFloor",
         )
     if not queryset:
-        u.raise_report_notfound(message, request)
+        return u.raise_report_notfound(message, request)
 
     response = u.generate_csv(queryset)
 
@@ -100,7 +100,7 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         TotalPersonnelDebt=Sum("PersonnelDebt"),
     )
     if not result:
-        u.raise_report_notfound(message, request)
+        return u.raise_report_notfound(message, request)
 
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
@@ -158,7 +158,7 @@ def item_ordering_personnel_list_report(
         "DeliveryFloor",
     )
     if not res:
-        u.raise_report_notfound(message)
+        return u.raise_report_notfound(message, request)
 
     csv_content = u.generate_csv(res)
 
@@ -201,7 +201,7 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
         "DeliveryFloor",
     )
     if not qs:
-        u.raise_report_notfound(message, request)
+        return u.raise_report_notfound(message, request)
 
     csv_content = u.generate_csv(qs)
     m.ActionLog.objects.log(
