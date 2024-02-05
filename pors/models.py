@@ -289,7 +289,31 @@ class Item(models.Model):
 
 
 class Deadlines(Logger):
-    # todo doc
+    """Personnel have specific deadlines for ordering items. These
+    deadlines, set by the HR, may change occasionally. So, we use this
+    table to keep track of the deadlines. Each type of meal has its own
+    adjustable deadline per day.
+
+    Notice that, Weekdays start from 0(Saturday) to 6(Friday)
+
+    Let's see a few examples:
+
+    WeekDay, MealType, Days, Hour
+    -------------
+    6, BRF, 99, 9
+    0, LNC, 4, 9
+    0, BRF, 4, 9
+
+    For example, on Saturdays(weekday 0), for both breakfast and lunch,
+    employees have until 9:00 AM on Tuesday to place their orders.
+
+    You might wonder why we have the number 99 for Friday. The reason is
+    that for weekends, when ordering is not possible, we assign a large
+    number like 99(Days) to make it impossible for the system to allow
+    ordering(It just a trick! if you go back to 99 days earlier, you can
+    place order for weekends, but technically you cannot move 99 days back!
+    :) so keep calm).
+    """
 
     WeekDay = models.PositiveSmallIntegerField()
     MealType = models.CharField(choices=MealTypeChoices.choices, max_length=3)
