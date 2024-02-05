@@ -337,7 +337,14 @@ function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, 
                              src="${addStaticFilePrefixTo('images/add-circle.svg')}" alt="">
                     </div>
     `
-
+    let priceSection = `
+    <div class="flex justify-end">
+                <div class="">
+                                            <span class="text-sm">${insertCommas(convertToPersianNumber(price))}<span
+                                                    class="text-xs text-gray-600">تومان</span></span>
+                    <span class="text-xs"></span>
+                </div>
+            </div>`
     let breakfastLabel = `<span class="px-1 py-0 text-xs text-white font-bold bg-gray-800 italic rounded-full"> صبحونه </span>`
     return `
     <li data-item-id="${id}" 
@@ -382,16 +389,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                     
                 </div>
             </div>
-            <div class="flex justify-end">
-                <div class="">
-                                            <span class="text-sm">${insertCommas(convertToPersianNumber(price))}<span
-                                                    class="text-xs text-gray-600">تومان</span></span>
-                    <span class="text-xs"></span>
-
-                </div>
-            </div>
-
-
+            ${price === 0 ? "" : priceSection}
         </li>`
 
 }
