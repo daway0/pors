@@ -626,11 +626,13 @@ def change_delivery_building(request, user: User, override_user: User):
     )
     if validator.is_valid():
         validator.change_delivery_place()
-        data = validator.validated_data()
-        sync_hr_delivery_place_with_pors(
-            data.get("delivery_building"), data.get("delivery_floor"),
-            override_user or user
-        )
+        
+        # todo shipment
+        # data = validator.validated_data()
+        # sync_hr_delivery_place_with_pors(
+        #     data.get("delivery_building"), data.get("delivery_floor"),
+        #     override_user or user
+        # )
         message.add_message(request,
             "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
