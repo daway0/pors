@@ -23,3 +23,4 @@ typing_extensions==4.9.0
 tzdata==2023.3
 urllib3==2.2.0
 zipp==3.17.0
+XlsxWriter==3.2.0

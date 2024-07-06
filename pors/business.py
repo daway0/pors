@@ -1077,7 +1077,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         m.ActionLog.objects.log(
             m.ActionLog.ActionTypeChoices.UPDATE,
             personnel,
-            f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor}"
+            f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor} "
             f"for {self.date}",
             m.OrderItem,
             None,

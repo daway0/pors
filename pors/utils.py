@@ -1,5 +1,6 @@
 import codecs
 import csv
+import io
 import json
 import re
 from hashlib import sha256
@@ -9,13 +10,14 @@ from urllib.parse import urlunparse
 import jdatetime
 import pytz
 import requests
+import xlsxwriter
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.response import Response
 
 from . import models as m
 from .messages import Message
@@ -181,6 +183,62 @@ def execute_raw_sql_with_params(query: str, params: tuple) -> list:
         columns = [col[0] for col in cursor.description]
         result = [dict(zip(columns, row)) for row in cursor.fetchall()]
     return result
+
+
+def queryset_to_xlsx_response(queryset, persian_headers):
+    # Create an in-memory output file for the new workbook.
+    output = io.BytesIO()
+
+    # Create a new Excel workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    worksheet = workbook.add_worksheet()
+
+    # Define a format for the table that sets the font.
+    table_font = workbook.add_format({
+        'font_name': 'Tahoma',
+        'font_size': 10
+    })
+
+    # Add a bold format for headers.
+    header_format = workbook.add_format({
+        'bold': True,
+        'font_name': 'Tahoma',
+        'font_size': 10,
+        'bg_color': '#D7E4BC',  # Light green background for headers
+        'border': 1
+    })
+
+    # Write Persian headers to the first row.
+    for col_num, header in enumerate(persian_headers):
+        worksheet.write(0, col_num, header, header_format)
+
+    col_widths = [len(header) for header in persian_headers]
+
+    # Write data to the sheet.
+    for row_num, obj in enumerate(queryset, start=1):
+        for col_num, data in enumerate(obj.values()):
+            value = str(data)  # Ensure value is a string
+            worksheet.write_string(row_num, col_num, value, table_font)  # Write as text
+
+            # update col width
+            col_widths[col_num] = max(col_widths[col_num], len(value))
+
+    # Adjust col len
+    for col_num, width in enumerate(col_widths):
+        worksheet.set_column(col_num, col_num, width + 2)
+
+    # Close the workbook.
+    workbook.close()
+
+    # Rewind the buffer.
+    output.seek(0)
+
+    # Create an HTTP response with the appropriate content type and headers.
+    response = HttpResponse(output.read(),
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=report.xlsx'
+
+    return response
 
 
 def generate_csv(queryset: QuerySet):
@@ -365,7 +423,7 @@ def fetch_available_location():
 
     # when im out of production
     from .serializers import BuildingSerializer
-
+    
     floor01 = dict(code="Floor_Padidar_P1", title="P1")
     floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
     floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
@@ -373,14 +431,14 @@ def fetch_available_location():
     floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
     floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
     floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
-
+    
     floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
     floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
     floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
     floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
     floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
     floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
-
+    
     floors1 = [floor11, floor12, floor13, floor14, floor15]
     building1: dict[str, list[str]] = dict(
         code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
@@ -402,20 +460,20 @@ def sync_hr_delivery_place_with_pors(
 ):
     # todo shipment
 
-    # path = f"/HR/api/v1/user-location/{user.Personnel}"
-    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    # res = requests.patch(
-    #     url,
-    #     {"latestBuilding": latest_building, "latestFloor": latest_floor},
-    #     timeout=30,
-    # )
-    # if not res.status_code == 200:
-    #     raise ValueError(
-    #         "Something went wrong when updating HR source with pors db."
-    #     )
+    path = f"/HR/api/v1/user-location/{user.Personnel}"
+    url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+    res = requests.patch(
+        url,
+        {"latestBuilding": latest_building, "latestFloor": latest_floor},
+        timeout=30,
+    )
+    if not res.status_code == 200:
+        raise ValueError(
+            "Something went wrong when updating HR source with pors db."
+        )
 
     # todo shipment
-    pass
+    # pass
 
 
 def raise_report_notfound(

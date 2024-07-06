@@ -636,7 +636,7 @@ function oneItemOrderedByPersonnelReportFileName(dataNeededForFileName) {
             return obj.id===dataNeededForFileName.item
         })
         let farsiPrefix = "لیست سفارش دهنده های ایتم"
-        return `${farsiPrefix}-${cd}-${item.itemName}.csv`;
+        return `${farsiPrefix}-${cd}-${item.itemName}.xlsx`;
 }
 
 function dailyOrdersReportFileName(dataNeededForFileName) {
@@ -671,32 +671,32 @@ function monthlyFinancialReportRequestBody() {
         }
 }
 
-function startDownloadReport(fileName, csvData) {
-    // Create a Blob object from the CSV data
-        let blob = new Blob([csvData], {type: 'text/csv;charset=utf-8;'});
+function startDownloadReport(fileName, xlsxData) {
+    // Create a Blob object from the XLSX data
+    let blob = new Blob([xlsxData], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 
-        // Create a temporary link element
-        let link = document.createElement('a');
+    // Create a temporary link element
+    let link = document.createElement('a');
 
-        // Set the link's href to a data URL representing the Blob
-        link.href = window.URL.createObjectURL(blob);
+    // Set the link's href to a data URL representing the Blob
+    link.href = window.URL.createObjectURL(blob);
 
-        // Set the link's download attribute to specify the filename
-        link.download = fileName;
+    // Set the link's download attribute to specify the filename
+    link.download = fileName;
 
+    // Append the link to the document
+    document.body.appendChild(link);
 
-        // Append the link to the document
-        document.body.appendChild(link);
+    // Programmatically click the link to trigger the download
+    link.click();
 
-        // Programmatically click the link to trigger the download
-        link.click();
+    // Remove the link from the document
+    document.body.removeChild(link);
 
-        // Remove the link from the document
-        document.body.removeChild(link);
-
-        let dm = `دانلود ${link.download} شروع شد `
-        displayDismiss(DISMISSLEVELS.INFO,dm,DISMISSDURATIONS.DISPLAY_TIME_TEN)
+    let dm = `دانلود ${link.download} شروع شد `;
+    displayDismiss(DISMISSLEVELS.INFO, dm, DISMISSDURATIONS.DISPLAY_TIME_TEN);
 }
+
 
 function getCurrentCalendarMonth() {
     return $("#dayBlocksWrapper").attr("data-month")
@@ -917,6 +917,9 @@ $(document).ready(function () {
             url: addPrefixTo(`administrative/reports/specific-item/`),
             method: 'POST',
             contentType: 'application/json',
+            xhrFields: {
+                responseType: 'blob'
+            },
             data: JSON.stringify(
                 {
                     "item": id,
@@ -991,6 +994,9 @@ $(document).ready(function () {
         url: report.api,
         method: 'POST',
         contentType: 'application/json',
+        xhrFields: {
+            responseType: 'blob'
+        },
         data: JSON.stringify(report.data()),
         statusCode: {
             200: function (data) {
