@@ -158,18 +158,18 @@ def get_first_orderable_date(
 
         if (
             (
-                breakfast_deadline.Days == passed_days
-                and launch_deadline.Days == passed_days
+                (breakfast_deadline.Days == passed_days and breakfast_deadline.Hour <= now.hour)
+                or
+                (breakfast_deadline.Days > passed_days)
             )
-            and (
-                breakfast_deadline.Hour <= now.hour
-                and launch_deadline.Hour <= now.hour
-            )
-            or (
-                breakfast_deadline.Days > passed_days
-                and launch_deadline.Days > passed_days
+            and 
+            (
+                (launch_deadline.Days == passed_days and launch_deadline.Hour <= now.hour)
+                or
+                (launch_deadline.Days > passed_days)
             )
         ):
+
             passed_days += 1
             if weekday != 6:  # has 7 days only (starts with 0)
                 weekday += 1
