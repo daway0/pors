@@ -315,6 +315,8 @@ class Order(models.Model):
     # HR ConstValue Table Code
     DeliveryBuilding = models.CharField(max_length=250)
     DeliveryFloor = models.CharField(max_length=250)
+    DeliveryBuildingPersian = models.CharField(max_length=250)
+    DeliveryFloorPersian = models.CharField(max_length=250)
 
     # PersonnelDebt = TotalPrice - SubsidyCap
     # Note that PersonnelDebt will never be negative
@@ -502,6 +504,8 @@ class PersonnelDailyReport(models.Model):
     DeliveryDate = models.CharField(max_length=10)
     DeliveryBuilding = models.CharField(max_length=250)
     DeliveryFloor = models.CharField(max_length=250)
+    DeliveryBuildingPersian = models.CharField(max_length=250)
+    DeliveryFloorPersian = models.CharField(max_length=250)
 
     class Meta:
         managed = False
@@ -509,3 +513,24 @@ class PersonnelDailyReport(models.Model):
 
     def __str__(self) -> str:
         return self.Personnel
+
+
+class TempUsers(models.Model):
+    UserName = models.CharField(max_length=100, primary_key=True)
+    FirstName = models.CharField(max_length=200)
+    LastName = models.CharField(max_length=200)
+    NationalCode = models.CharField(max_length=10, null=True, blank=True)
+
+    class Meta:
+        db_table = "Users"
+
+
+class HR_constvalue(models.Model):
+    Caption = models.CharField(max_length=50)
+    Code = models.CharField(max_length=100)
+    IsActive = models.BooleanField(default=True)
+    OrderNumber = models.PositiveSmallIntegerField(null=True, blank=True, default=1)
+    ConstValue = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "HR_constvalue"

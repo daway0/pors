@@ -88,9 +88,9 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': 'PersonnelService',
         'USER': 'sa',
-        'PASSWORD': 'j2lQJM7FtQxLVmQyK8DL6yNe',
-        'HOST': 'billy.iran.liara.ir',
-        'PORT': '31411',
+        'PASSWORD': 'VzXcrLZP0tEtMZbvtnhxQzew',
+        'HOST': 'vinson.liara.cloud',
+        'PORT': '33666',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',

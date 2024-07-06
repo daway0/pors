@@ -1,5 +1,4 @@
 from django.db.models import Count, Sum
-from django.http.response import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -34,7 +33,7 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
 
     date = u.validate_date(request.data.get("date"))
 
-    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date).values(
+    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date).order_by("-DeliveryDate", "Personnel").values(
         "NationalCode",
         "Personnel",
         "FirstName",
@@ -42,20 +41,30 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
         "ItemName",
         "Quantity",
         "DeliveryDate",
-        "DeliveryBuilding",
-        "DeliveryFloor",
-        )
+        "DeliveryBuildingPersian",
+        "DeliveryFloorPersian"
+    )
     if not queryset:
         return u.raise_report_notfound(message, request)
 
-    response = u.generate_csv(queryset)
+    response = u.queryset_to_xlsx_response(queryset, [
+        "کد ملی",
+        "نام کاربری",
+        "نام",
+        "نام خانوادگی",
+        "ایتم",
+        "تعداد",
+        "زمان تحویل",
+        "ساختمان تحویل",
+        "طبقه تحویل"
+    ])
 
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Daily Orders report generated for {date}",
         m.PersonnelDailyReport
-        )
+    )
 
     return response
 
@@ -108,7 +117,7 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         f"Monthly Financial report generated for year {year} and month "
         f"{month}",
         m.Order
-        )
+    )
     csv_content = u.generate_csv(result)
     return csv_content
 
@@ -117,7 +126,7 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
 def item_ordering_personnel_list_report(
-    request, user: m.User, override_user: m.User
+        request, user: m.User, override_user: m.User
 ):
     """
     This view is responsible for generating a csv file that contains
@@ -146,7 +155,7 @@ def item_ordering_personnel_list_report(
     # query sets that are in report must have .values for specifying columns
     res = m.PersonnelDailyReport.objects.filter(
         DeliveryDate=date, ItemId=item_id
-    ).values(
+    ).order_by("-DeliveryDate").values(
         "NationalCode",
         "Personnel",
         "FirstName",
@@ -154,23 +163,29 @@ def item_ordering_personnel_list_report(
         "ItemName",
         "Quantity",
         "DeliveryDate",
-        "DeliveryBuilding",
-        "DeliveryFloor",
+        "DeliveryBuildingPersian",
+        "DeliveryFloorPersian",
     )
     if not res:
         return u.raise_report_notfound(message, request)
 
-    csv_content = u.generate_csv(res)
+    response = u.queryset_to_xlsx_response(res, [
+        "کد ملی",
+        "نام کاربری",
+        "نام",
+        "نام خانوادگی",
+        "ایتم",
+        "تعداد",
+        "زمان تحویل",
+        "ساختمان تحویل",
+        "طبقه تحویل"
+    ])
 
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Item Orders report generated for item {item_id} for {date}",
         m.PersonnelDailyReport
-        )
-    response = HttpResponse(
-        content=csv_content,
-        content_type="text/csv",
     )
 
     return response
@@ -189,7 +204,7 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
     first_date, last_date = u.first_and_last_day_date(month, year)
     qs = m.PersonnelDailyReport.objects.filter(
         DeliveryDate__range=[first_date, last_date]
-    ).values(
+    ).order_by("-DeliveryDate").values(
         "NationalCode",
         "Personnel",
         "FirstName",
@@ -197,21 +212,28 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
         "ItemName",
         "Quantity",
         "DeliveryDate",
-        "DeliveryBuilding",
-        "DeliveryFloor",
+        "DeliveryBuildingPersian",
+        "DeliveryFloorPersian",
     )
     if not qs:
         return u.raise_report_notfound(message, request)
 
-    csv_content = u.generate_csv(qs)
+    response = u.queryset_to_xlsx_response(qs, [
+        "کد ملی",
+        "نام کاربری",
+        "نام",
+        "نام خانوادگی",
+        "ایتم",
+        "تعداد",
+        "زمان تحویل",
+        "ساختمان تحویل",
+        "طبقه تحویل"
+    ])
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Monthly Orders report generated for year {year} and month {month}",
         m.PersonnelDailyReport
-        )
-    response = HttpResponse(
-        content=csv_content,
-        content_type="text/csv",
     )
+
     return response
