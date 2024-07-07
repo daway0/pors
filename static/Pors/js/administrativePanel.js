@@ -235,8 +235,8 @@ function canAdminChangeMenu() {
     // این تابع کاری به این نداره که ایتمی که ملت سفارش دادن حذف بشه یا
     // نشه؟‌اون در جای دیگری چک میشه
     let can = true
-    let currentDateMomentObj = moment(toShamsiFormat(currentDate),'YYYY-MM-DD')
-    let selectedDateMomentObj = moment(toShamsiFormat(selectedDate),'YYYY-MM-DD')
+    let currentDateMomentObj = moment(toShamsiFormat(currentDate),'jYYYY-jM-jD')
+    let selectedDateMomentObj = moment(toShamsiFormat(selectedDate),'jYYYY-jM-jD')
 
     // با تفریق این دو از هم یک عدد بهمون میده اگه که عدد منفی بود یعنی
     // اولی از دومی کوچک تره و برعکس
@@ -613,6 +613,7 @@ function selectDayOnCalendar(e) {
     updateHasMenuCalendarDayBlock()
 
     if (canAdminChangeMenu()){
+        console.log(canAdminChangeMenu())
         changeVisibilityAddMenuItemDropDown(false)
         updateAvailableItemForThisDay()
     } else {
