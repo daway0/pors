@@ -234,6 +234,12 @@ class Subsidy(models.Model):
         ]
 
 
+class ItemProvider(models.Model):
+    Title = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.Title
+
 class MealTypeChoices(models.TextChoices):
     """To determine the serving time of a meal, we use the following
     choices.
@@ -288,6 +294,8 @@ class Item(models.Model):
     # ItemPriceHistory table
     CurrentPrice = models.PositiveIntegerField()
 
+    ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.CASCADE)
+
     def __str__(self):
         return self.ItemName
 
@@ -332,6 +340,25 @@ class Order(models.Model):
     class Meta:
         managed = False
         db_table = "Order"
+
+
+class FoodProviderOrdering(models.Model):
+    """Food Provider Ordering List View"""
+    Id = models.PositiveIntegerField(primary_key=True)
+    ItemName = models.CharField(max_length=250)
+    MealType = models.CharField(max_length=250)
+    PricePerOne = models.PositiveIntegerField()
+    ItemTotalCount = models.PositiveIntegerField()
+    DeliveryDate = models.CharField(max_length=10)
+    DeliveryBuilding = models.CharField(max_length=10)
+    FoodProvider = models.PositiveIntegerField()
+    FoodProviderPersian = models.CharField(max_length=10)
+    DeliveryBuildingPersian = models.CharField(max_length=10)
+
+
+    class Meta:
+        managed = False
+        db_table = "FoodProviderOrdering"
 
 
 class OrderItem(Logger):

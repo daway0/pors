@@ -47,6 +47,11 @@ urlpatterns = [
         name="personnel_daily_report",
     ),
     path(
+        "administrative/reports/daily-foodprovider-ordering/",
+        report_views.food_provider_daily_ordering_report,
+        name="foodprovider_daily_report",
+    ),
+    path(
         "administrative/reports/monthly-orders/",
         report_views.personnel_monthly_report,
     ),
