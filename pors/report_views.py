@@ -16,6 +16,47 @@ message = Message()
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
+def food_provider_daily_ordering_report(request, user: m.User, override_user: m.User):
+    schema = {"date": ""}
+    try:
+        u.validate_request_based_on_schema(schema, request.data)
+    except ValueError as err:
+        return Response({"errors": str(err)}, status.HTTP_400_BAD_REQUEST)
+
+    date = u.validate_date(request.data.get("date"))
+
+    queryset = m.FoodProviderOrdering.objects.filter(DeliveryDate=date).order_by(
+        "MealType",
+        "FoodProvider",
+        "DeliveryBuilding").values(
+        "ItemName",
+        "ItemTotalCount",
+        "DeliveryBuildingPersian",
+        "FoodProviderPersian",
+    )
+    if not queryset:
+        return u.raise_report_notfound(message, request)
+
+    providers = queryset.values_list("FoodProviderPersian", flat=True)
+    response = u.queryset_to_xlsx_response_food_provider_ordering(queryset, [
+        "آیتم",
+        "تعداد",
+        "محل تحویل",
+        "تامین کننده"
+    ], providers)
+
+    m.ActionLog.objects.log(
+        m.ActionLog.ActionTypeChoices.CREATE,
+        user,
+        f"Food Provider Ordering report generated for {date}",
+        m.PersonnelDailyReport
+    )
+
+    return response
+
+@api_view(["POST"])
+@decs.check([decs.is_open_for_admins])
+@decs.authenticate(privileged_users=True)
 def personnel_daily_report(request, user: m.User, override_user: m.User):
     """
     Generating CSV based report for personnel's orders on each day.
