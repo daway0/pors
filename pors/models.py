@@ -294,7 +294,7 @@ class Item(models.Model):
     # ItemPriceHistory table
     CurrentPrice = models.PositiveIntegerField()
 
-    ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.CASCADE)
+    ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.ItemName
