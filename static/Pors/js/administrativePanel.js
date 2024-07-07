@@ -132,7 +132,7 @@ function convertToPersianNumber(englishNumber) {
         '8': '۸',
         '9': '۹'
     };
-
+    if (!englishNumber) return ''
     const englishNumberArray = englishNumber.toString().split('');
 
     const persianNumberArray = englishNumberArray.map(digit => {

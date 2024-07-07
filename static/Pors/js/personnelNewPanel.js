@@ -199,6 +199,7 @@ function convertToPersianNumber(englishNumber) {
         '9': '۹'
     };
 
+    if (!englishNumber) return ''
     const englishNumberArray = englishNumber.toString().split('');
 
     const persianNumberArray = englishNumberArray.map(digit => {
@@ -346,10 +347,10 @@ function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, 
     data-item-order-count=${itemCount} 
     data-item-serve-time="${serveTime}"
     data-item-price="${price}"
-class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
+class="flex flex-col gap-0  ${selected ? "bg-emerald-100" : "bg-gray-200"}
     ${serveTime===selectedMenuToDisplay ? "": "hidden"}
-     border ${selected ? "border-blue-500" : ""} rounded p-4 shadow-md 
-      ${selected ? "hover:bg-blue-200" : "hover:bg-gray-300"}">
+     border ${selected ? "border-emerald-500" : ""} rounded p-4 shadow-md 
+      ${selected ? "hover:bg-emerald-200" : "hover:bg-gray-300"}">
 
             <div class="flex items-center gap-4">
                 <img
@@ -387,10 +388,30 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
             </div>
             <div class="flex justify-between items-center">
             <div class="flex flex-row gap-2 py-2 items-center">
-                <span class="flex flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs">
+                <span class="flex items-center  flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs">
                     <svg class="w-4 h-4 fill-black" viewBox="0 -18.83 122.88 122.88" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="enable-background:new 0 0 122.88 85.22" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style> <g> <path class="st0" d="M82.08,7.33h35.4c1.35,0,2.46,1.11,2.46,2.46V30.4h0.24c1.49,0,2.7,1.22,2.7,2.7v3.01 c0,1.51-1.24,2.74-2.74,2.74h-19c14.12,1.26,22.19,14.39,21.31,31.46h-12.56c-0.01,8.23-6.69,14.89-14.92,14.89 c-8.23,0-14.91-6.67-14.92-14.89H41.68c-0.01-0.27-0.02-0.53-0.03-0.8c0.03,1.81-0.08,3.73-0.34,5.78L7.87,59.54L0,55.82 c6.32-7.19,13.94-10.21,23.16-8.13c1.42,0.36,2.76,0.78,4.03,1.26c-1.3-0.5-2.67-0.92-4.11-1.28l10.52-34.65l-4.75-0.09l0,0 c-0.98-0.02-2.04,0.25-2.71-0.23c-1.16-0.03-2.17-0.73-2.87-1.83c-0.63-0.98-1.01-2.32-1.01-3.78c0-1.46,0.39-2.8,1.01-3.78 c0.52-0.81,1.2-1.4,1.98-1.67c0.01-0.16,0.02-0.27,0.04-0.3c1.12-1.79,3.3-1.25,5.24-1.25l1.89,0.12c1.37,0.17,2.71,0.62,4,1.36 l2.16,1.21h1.75l5.88,1.14c1.92,0.37,2.2,0.21,1.75,2.58c-0.06,0.3-0.13,0.6-0.23,0.89c-0.58,1.73-1.04,1.09-2.83,0.72l-5.51-1.14 c0.21,2.22-0.49,4.94-1.48,8.12c3.17,2.68,4.59,6.5,2.43,11.53l-5.26,16.21C43.9,49.08,49.2,54.74,49.5,64.03h11.67 c7.19-5.45,6-15.15-1.89-21.35v-3.82h0v-5.84c0.01-1.85,1-2.68,2.84-2.63h17.5V9.79C79.62,8.44,80.73,7.33,82.08,7.33L82.08,7.33z M90.68,26.67h18.21c0.14,0,0.26,0.12,0.26,0.26v0.52c0,0.14-0.12,0.26-0.26,0.26H90.68c-0.14,0-0.26-0.12-0.26-0.26v-0.52 C90.42,26.79,90.53,26.67,90.68,26.67L90.68,26.67z M100.54,15.35c5.33,0.43,9.19,4.44,8.52,9.72H90.5 c-0.65-5.31,3.22-9.33,8.59-9.72v-1.49h-1.48c-0.15,0-0.27-0.12-0.27-0.27v-0.97c0-0.15,0.12-0.27,0.27-0.27h4.37 c0.15,0,0.27,0.12,0.27,0.27v0.97c0,0.15-0.12,0.27-0.27,0.27h-1.45V15.35L100.54,15.35L100.54,15.35z M7.91,59.56l13.3,6.3 l-4.32-1.98c-2.97,0.63-5.19,3.27-5.19,6.42c0,3.63,2.94,6.57,6.57,6.57c3.63,0,6.57-2.94,6.57-6.57c0-1.12-0.28-2.17-0.77-3.1 l9.08,4.3c-0.61,7.68-7.04,13.72-14.87,13.72c-8.24,0-14.92-6.68-14.92-14.92C3.34,66.08,5.09,62.27,7.91,59.56L7.91,59.56 L7.91,59.56z M25.27,4.2c0.06,1.92,0.19,4.39,0.28,6.05c-0.16-0.14-0.32-0.32-0.46-0.55c-0.42-0.65-0.67-1.58-0.67-2.62 s0.26-1.97,0.67-2.62C25.15,4.37,25.21,4.28,25.27,4.2L25.27,4.2z M88.4,70.32h13.14c-0.01,3.62-2.95,6.54-6.57,6.54 C91.35,76.87,88.41,73.94,88.4,70.32L88.4,70.32L88.4,70.32z"></path> </g> </g></svg>
                     ${convertToPersianNumber(itemProvider)}    
                 </span>
+                
+                    <div class="flex gap-1">
+                        <span class="cursor-pointer items-center  flex flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs hover:scale-105 hover:border-hover:shadow">
+                        <svg class="h-3 w-3 fill-black" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z"></path>
+                        </svg>
+                            ${convertToPersianNumber("458")}    
+                        </span>
+                        <span class="cursor-pointer items-center  flex flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs hover:scale-105 hover:border-hover:shadow">
+                            <svg class="h-3 w-3 fill-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.024-9.75c.011.05.028.1.052.148.591 1.2.924 2.55.924 3.977a8.96 8.96 0 01-.999 4.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889 0 1.713.518 1.972 1.368.339 1.11.521 2.287.521 3.507 0 1.553-.295 3.036-.831 4.398C20.613 14.547 19.833 15 19 15h-1.053c-.472 0-.745-.556-.5-.96a8.95 8.95 0 00.303-.54m.023-8.25H16.48a4.5 4.5 0 01-1.423-.23l-3.114-1.04a4.5 4.5 0 00-1.423-.23H6.504c-.618 0-1.217.247-1.605.729A11.95 11.95 0 002.25 12c0 .434.023.863.068 1.285C2.427 14.306 3.346 15 4.372 15h3.126c.618 0 .991.724.725 1.282A7.471 7.471 0 007.5 19.5a2.25 2.25 0 002.25 2.25.75.75 0 00.75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33 1.653-1.715a9.04 9.04 0 002.86-2.4c.498-.634 1.226-1.08 2.032-1.08h.384"></path>
+                            </svg>
+                            ${convertToPersianNumber("26")}    
+                        </span>
+                    </div>
+                <span class="cursor-pointer items-center flex flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs hover:scale-105 hover:border-hover:shadow">
+                    <svg class="h-3 w-3 fill-black" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="#000000" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3.188c1 0 1.812.811 1.812 1.812 0 .808.976 1.212 1.547.641l1.867-1.867A2 2 0 0 1 14.828 18H19a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path></g></svg>
+                    ${convertToPersianNumber("12 نظر")}    
+                </span>
+
             </div>
                 <div class="">
                                             <span class="text-sm">${insertCommas(convertToPersianNumber(price))}<span
@@ -711,14 +732,14 @@ function updateItemMenuDetails(id, quantity) {
         changedItem.removeClass("hover:bg-gray-300")
         changedItem.removeClass("bg-gray-200")
 
-        changedItem.addClass("hover:bg-blue-200")
-        changedItem.addClass("border-blue-500")
-        changedItem.addClass("bg-blue-100")
+        changedItem.addClass("hover:bg-emerald-200")
+        changedItem.addClass("border-emerald-500")
+        changedItem.addClass("bg-emerald-100")
 
     } else {
-        changedItem.removeClass("hover:bg-blue-200")
-        changedItem.removeClass("border-blue-500")
-        changedItem.removeClass("bg-blue-100")
+        changedItem.removeClass("hover:bg-emerald-200")
+        changedItem.removeClass("border-emerald-500")
+        changedItem.removeClass("bg-emerald-100")
 
         changedItem.addClass("hover:bg-gray-300")
         changedItem.addClass("bg-gray-200")
@@ -1380,8 +1401,8 @@ $(document).ready(function () {
 
     // دکمه انتخاب منو برای نمایش منوی انتخابی (فعلا ناهار و صبحانه رو داریم)
     $(document).on('click', '.separate-menu', function () {
-        let mustAdd = "text-blue-900 bg-blue-100"
-        let mustRemove = "text-black bg-white"
+        let mustAdd = "text-emerald-900 bg-emerald-100 shadow-md"
+        let mustRemove = "text-gray-500 bg-white"
 
         // با فرض اینکه دوتا منو داریم فعلا اگه چندتا شد باید ارایه شه
         let other = $(this).attr("id") === "BRF-menu" ? "#LNC-menu" : "#BRF-menu"
@@ -1391,9 +1412,9 @@ $(document).ready(function () {
         selectedMenuToDisplay = selectedMenu
 
         $(this).removeClass(mustRemove).addClass(mustAdd)
-        $(this).find("svg").removeClass("fill-black").addClass("fill-blue-900")
-        $(other).removeClass(mustAdd)
-        $(other).find("svg").removeClass("fill-blue-900").addClass("fill-black")
+        $(this).find("svg").removeClass("fill-gray-500").addClass("fill-emerald-900")
+        $(other).removeClass(mustAdd).addClass(mustRemove)
+        $(other).find("svg").removeClass("fill-emerald-900").addClass("fill-gray-500")
 
         let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
         selectDayOnCalendar(sd)
