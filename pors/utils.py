@@ -185,6 +185,78 @@ def execute_raw_sql_with_params(query: str, params: tuple) -> list:
     return result
 
 
+def queryset_to_xlsx_response_food_provider_ordering(queryset, persian_headers, providers):
+    # Create an in-memory output file for the new workbook.
+    output = io.BytesIO()
+
+    # Create a new Excel workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    worksheet = workbook.add_worksheet()
+
+    # Define a format for the table that sets the font.
+    table_font = workbook.add_format({
+        'font_name': 'Tahoma',
+        'font_size': 10
+    })
+
+    # Add a bold format for headers.
+    header_format = workbook.add_format({
+        'bold': True,
+        'font_name': 'Tahoma',
+        'font_size': 10,
+        'bg_color': '#D7E4BC',  # Light green background for headers
+        'border': 1
+    })
+
+    # spilting qs to providers 
+    providers_qs = {}
+    for provider in providers:
+        providers_qs[provider] = queryset.filter(FoodProviderPersian=provider) 
+
+    main_row_number = 0
+    for provider, qs in providers_qs.items():
+        worksheet.write(
+            main_row_number,
+            0,
+            provider,
+            header_format
+        )
+        main_row_number += 1        
+
+        # Write Persian headers to the first row.
+        for col_num, header in enumerate(persian_headers):
+            worksheet.write(0 + main_row_number, col_num, header, header_format)
+        main_row_number += 1        
+
+
+        col_widths = [len(header) for header in persian_headers]
+
+        for row_num, obj in enumerate(qs):
+            for col_num, data in enumerate(obj.values()):
+                value = str(data)  # Ensure value is a string
+                worksheet.write_string(row_num+main_row_number, col_num, value, table_font)  # Write as text
+
+                # update col width
+                col_widths[col_num] = max(col_widths[col_num], len(value))
+        main_row_number += len(qs) + 2
+    
+    # Adjust col len
+    for col_num, width in enumerate(col_widths):
+        worksheet.set_column(col_num, col_num, width + 2)
+
+    # Close the workbook.
+    workbook.close()
+
+    # Rewind the buffer.
+    output.seek(0)
+
+    # Create an HTTP response with the appropriate content type and headers.
+    response = HttpResponse(output.read(),
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=report.xlsx'
+
+    return response
+
 def queryset_to_xlsx_response(queryset, persian_headers):
     # Create an in-memory output file for the new workbook.
     output = io.BytesIO()

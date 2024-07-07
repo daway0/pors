@@ -23,6 +23,7 @@ class AllItemSerializer(serializers.ModelSerializer):
     serveTime = serializers.CharField(source="MealType")
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
+    itemProvider = serializers.CharField(source="ItemProvider")
 
     class Meta:
         model = m.Item
@@ -36,6 +37,7 @@ class AllItemSerializer(serializers.ModelSerializer):
             "serveTime",
             "itemDesc",
             "isActive",
+            "itemProvider"
         )
 
 
