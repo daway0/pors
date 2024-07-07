@@ -212,12 +212,19 @@ class OverrideUserValidator:
         """
         Validating request that supposed to come from admin.
         """
-        self.reason = data.get("reason")
-        self.comment = data.get("comment")
-        if self.reason is None:
+        s_data = s.AdminReasonserializer(data=data)
+        if not s_data.is_valid():
+            raise ValueError(s_data.errors)
+
+        if s_data.validated_data[
+            "reason"
+        ].title == "other" and not s_data.validated_data.get("comment"):
             raise ValueError(
-                "you must provide a reason before doing any action."
+                "you must provide a comment when using other's reason"
             )
+
+        self.reason = s_data.validated_data["reason"]
+        self.comment = s_data.validated_data["comment"]
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -532,6 +539,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
             return
 

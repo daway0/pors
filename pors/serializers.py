@@ -283,4 +283,16 @@ class PersonnelMonthlyReport(serializers.Serializer):
 class AdminManipulationReasonsSerializer(serializers.ModelSerializer):
     class Meta:
         model = m.AdminManipulationReason
-        fields = ["title"]
+        fields = ["id", "title"]
+
+
+class AdminReasonserializer(serializers.Serializer):
+    reason = serializers.IntegerField()
+    comment = serializers.CharField(max_length=250, required=False)
+
+    def validate_reason(self, id):
+        reason = m.AdminManipulationReason.objects.filter(pk=id).first()
+        if reason is None:
+            raise serializers.ValidationError("invalid id")
+        
+        return reason
