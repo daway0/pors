@@ -278,3 +278,9 @@ class UserSerializer(serializers.ModelSerializer):
 class PersonnelMonthlyReport(serializers.Serializer):
     year = serializers.IntegerField(max_value=9999, min_value=0000)
     month = serializers.IntegerField(max_value=12, min_value=1)
+
+
+class AdminManipulationReasonsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = m.AdminManipulationReason
+        fields = ["title"]

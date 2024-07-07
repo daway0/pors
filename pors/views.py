@@ -11,15 +11,11 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import (
-    authenticate,
-    check,
-    is_open_for_admins,
-    is_open_for_personnel,
-)
+from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
+    AdminManipulationReason,
     Category,
     DailyMenuItem,
     Item,
@@ -30,6 +26,7 @@ from .models import (
     User,
 )
 from .serializers import (
+    AdminManipulationReasonsSerializer,
     AllItemSerializer,
     BuildingSerializer,
     CategorySerializer,
@@ -93,14 +90,17 @@ def add_item_to_menu(request, user: User, override_user: User):
     if validator.is_valid():
         validator.add_item()
 
-        message.add_message(request,
+        message.add_message(
+            request,
             "آیتم با موفقیت اضافه شد.",
             Message.SUCCESS,
         )
 
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -127,10 +127,12 @@ def remove_item_from_menu(request, user: User, override_user: User):
     validator = b.ValidateRemove(request.data, user)
     if validator.is_valid():
         validator.remove_item()
-        message.add_message(request,"آیتم با موفقیت حذف شد.", Message.SUCCESS)
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+        message.add_message(request, "آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -175,8 +177,10 @@ def personnel_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(request,
-            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.",
+            Message.ERROR,
         )
         return Response(
             {"messages": message.messages(request), "errors": error_message},
@@ -277,8 +281,10 @@ def edari_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(request,
-            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.",
+            Message.ERROR,
         )
         return Response(
             {"messages": message.messages(request), "errors": error_message},
@@ -385,15 +391,17 @@ def create_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
         validator.create_order()
-        message.add_message(request,
-            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
+        message.add_message(
+            request,
+            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.",
+            Message.SUCCESS,
         )
         return Response(
             {"messages": message.messages(request)},
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {
             "messages": message.messages(request),
@@ -420,13 +428,16 @@ def remove_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
-        message.add_message(request,
-            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
+        message.add_message(
+            request,
+            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.",
+            Message.SUCCESS,
         )
-        return Response({"messages": message.messages(request)},
-                        status.HTTP_200_OK)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -451,12 +462,14 @@ def create_breakfast_order(request, user: User, override_user: User):
     validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
         validator.create_breakfast_order()
-        message.add_message(request,"صبحانه با موفقیت ثبت شد.", message.SUCCESS)
+        message.add_message(
+            request, "صبحانه با موفقیت ثبت شد.", message.SUCCESS
+        )
         return Response(
             {"messages": message.messages(request)}, status.HTTP_201_CREATED
         )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -467,11 +480,16 @@ def create_breakfast_order(request, user: User, override_user: User):
 def get_subsidy(request):
     date = b.validate_date(request.query_params.get("date"))
     if not date:
-        message.add_message(request,
-            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.",
+            Message.ERROR,
         )
         return Response(
-            {"messages": message.messages(request), "errors": "Invalid 'date' value."}
+            {
+                "messages": message.messages(request),
+                "errors": "Invalid 'date' value.",
+            }
         )
 
     subsidy = (
@@ -626,19 +644,21 @@ def change_delivery_building(request, user: User, override_user: User):
     )
     if validator.is_valid():
         validator.change_delivery_place()
-        
+
         # todo shipment
         # data = validator.validated_data()
         # sync_hr_delivery_place_with_pors(
         #     data.get("delivery_building"), data.get("delivery_floor"),
         #     override_user or user
         # )
-        message.add_message(request,
-            "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
+        message.add_message(
+            request, "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -651,3 +671,12 @@ def change_delivery_building(request, user: User, override_user: User):
 def available_users(request, user, override_user):
     qs = User.objects.all()
     return Response(data=UserSerializer(qs, many=True).data, status=200)
+
+
+@api_view(["GET"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def admin_manipulation_reasons(request, user, override_user):
+    qs = AdminManipulationReason.objects.all()
+    serializer = AdminManipulationReasonsSerializer(qs).data
+    return Response(serializer, status.HTTP_200_OK)

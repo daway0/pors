@@ -1,23 +1,23 @@
 """Before making any changes, I would like you to read all project documents.
 
-    Under no circumstances should operations be performed manually at the
-    database level. This is because the log is not stored in the ActionLog
-    table, and such behavior has consequences for the developer. Operations
-    should be performed through the specialized admin panel  (not referring
-    to the Django admin panel but a custom-designed panel).
+Under no circumstances should operations be performed manually at the
+database level. This is because the log is not stored in the ActionLog
+table, and such behavior has consequences for the developer. Operations
+should be performed through the specialized admin panel  (not referring
+to the Django admin panel but a custom-designed panel).
 
-    Note that, in addition to these models, some database views are also
-    used in this project, and you can find its code in /pors/SQLs
+Note that, in addition to these models, some database views are also
+used in this project, and you can find its code in /pors/SQLs
 
-    Contracts:
+Contracts:
 
-    The date should be stored in the database as a solar(shamsi) date and with
-    the Charfield data type.
+The date should be stored in the database as a solar(shamsi) date and with
+the Charfield data type.
 
-    Any change in one of the states that includes data in the database
-    should be recorded in the ActionLog table.
+Any change in one of the states that includes data in the database
+should be recorded in the ActionLog table.
 
-    Prices are in Toman everywhere.
+Prices are in Toman everywhere.
 """
 
 from django.db import models
@@ -31,6 +31,7 @@ class Logger(models.Model):
         log_msg = kwargs.pop("log", None)
         admin = kwargs.pop("admin", None)
         reason = kwargs.pop("reason", None)
+        comment = kwargs.pop("comment", None)
 
         if self._state.adding:
             action_type = ActionLog.ActionTypeChoices.CREATE
@@ -53,14 +54,16 @@ class Logger(models.Model):
             old_data=old_data,
             user=user,
             admin=admin,
-            manipulation_reason=reason
-            )
+            manipulation_reason=reason,
+            manipulation_reason_comment=comment,
+        )
 
     def delete(self, *args, **kwargs):
         user = kwargs.pop("user", "SYSTEM")
         log_msg = kwargs.pop("log", None)
         admin = kwargs.pop("admin", None)
         reason = kwargs.pop("reason", None)
+        comment = kwargs.pop("comment", None)
         old_data = model_to_dict(self)
 
         record_id = self.id
@@ -76,8 +79,9 @@ class Logger(models.Model):
             old_data=old_data,
             user=user,
             admin=admin,
-            manipulation_reason=reason
-            )
+            manipulation_reason=reason,
+            manipulation_reason_comment=comment,
+        )
 
     class Meta:
         abstract = True
@@ -102,7 +106,7 @@ class User(models.Model):
     # HR ConstValue Table Code (For Cache purposes)
     LastDeliveryBuilding = models.CharField(
         max_length=250, null=True, blank=True
-        )
+    )
     LastDeliveryFloor = models.CharField(max_length=250, null=True, blank=True)
 
     def __str__(self) -> str:
@@ -112,8 +116,8 @@ class User(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["Personnel"], name="unique_personnel"
-                )
-            ]
+            )
+        ]
 
 
 class SystemSetting(models.Model):
@@ -155,7 +159,7 @@ class SystemSetting(models.Model):
         models.PositiveSmallIntegerField(
             null=True,
             default=1,
-            )
+        )
     )
 
 
@@ -226,8 +230,8 @@ class Subsidy(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["UntilDate"], name="untildate_unique"
-                )
-            ]
+            )
+        ]
 
 
 class MealTypeChoices(models.TextChoices):
@@ -266,7 +270,7 @@ class Item(models.Model):
         choices=MealTypeChoices.choices,
         default=MealTypeChoices.BREAKFAST,
         max_length=3,
-        )
+    )
     ItemDesc = models.TextField(blank=True, null=True)
 
     # todo
@@ -277,7 +281,7 @@ class Item(models.Model):
         upload_to="media/items/",
         null=True,
         blank=True,
-        )
+    )
 
     # This field should not be modified by the admin or even the DBA.
     # Changes to this field should occur when adding a new record to the
@@ -295,10 +299,10 @@ class Deadlines(Logger):
     MealType = models.CharField(choices=MealTypeChoices.choices, max_length=3)
     Days = models.PositiveSmallIntegerField(
         default=0,
-        )
+    )
     Hour = models.PositiveSmallIntegerField(
         default=0,
-        )
+    )
 
 
 class Order(models.Model):
@@ -353,8 +357,8 @@ class OrderItem(Logger):
             models.UniqueConstraint(
                 fields=["Personnel", "DeliveryDate", "Item"],
                 name="unique_item_date_personnel",
-                ),
-            ]
+            ),
+        ]
 
 
 class ItemsOrdersPerDay(models.Model):
@@ -386,7 +390,7 @@ class ItemPriceHistory(models.Model):
 
     Item = models.ForeignKey(
         Item, on_delete=models.CASCADE, null=False, blank=False
-        )
+    )
 
     Price = models.PositiveIntegerField()
     FromDate = models.CharField(max_length=10)
@@ -410,8 +414,8 @@ class DailyMenuItem(Logger):
             models.UniqueConstraint(
                 fields=["AvailableDate", "Item"],
                 name="unique_AvailableDate_Item",
-                )
-            ]
+            )
+        ]
 
 
 class ActionLog(models.Model):
@@ -439,16 +443,17 @@ class ActionLog(models.Model):
 
     class LogManager(models.Manager):
         def log(
-                self,
-                action_type,
-                user="SYSTEM",
-                log_msg=None,
-                model=None,
-                record_id=None,
-                old_data: dict = None,
-                admin=None,
-                manipulation_reason=None,
-                ):
+            self,
+            action_type,
+            user="SYSTEM",
+            log_msg=None,
+            model=None,
+            record_id=None,
+            old_data: dict = None,
+            admin=None,
+            manipulation_reason=None,
+            manipulation_reason_comment=None,
+        ):
             table_name = model._meta.model_name if model else None
             return self.create(
                 User=user,
@@ -458,8 +463,9 @@ class ActionLog(models.Model):
                 ActionDesc=log_msg,
                 OldData=old_data,
                 Admin=admin,
-                ManipulationReason=manipulation_reason
-                )
+                ManipulationReason=manipulation_reason,
+                ManipulationReasonComment=manipulation_reason_comment,
+            )
 
     class ActionTypeChoices(models.TextChoices):
         CREATE = "C", "create"
@@ -476,7 +482,7 @@ class ActionLog(models.Model):
     ReferencedRecordId = models.PositiveIntegerField(null=True)
     ActionType = models.CharField(
         max_length=1, choices=ActionTypeChoices.choices
-        )
+    )
 
     # Summary of what happened in this log for system supporter
     # (in the most human-readable word)
@@ -484,7 +490,10 @@ class ActionLog(models.Model):
     OldData = models.JSONField(null=True)
 
     Admin = models.CharField(max_length=250, null=True)
-    ManipulationReason = models.CharField(max_length=250, null=True)
+    ManipulationReasonComment = models.CharField(max_length=250, null=True)
+    ManipulationReason = models.ForeignKey(
+        "AdminManipulationReason", on_delete=models.SET_NULL, null=True
+    )
 
     objects = LogManager()
 
@@ -529,8 +538,14 @@ class HR_constvalue(models.Model):
     Caption = models.CharField(max_length=50)
     Code = models.CharField(max_length=100)
     IsActive = models.BooleanField(default=True)
-    OrderNumber = models.PositiveSmallIntegerField(null=True, blank=True, default=1)
+    OrderNumber = models.PositiveSmallIntegerField(
+        null=True, blank=True, default=1
+    )
     ConstValue = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = "HR_constvalue"
+
+
+class AdminManipulationReason(models.Model):
+    title = models.CharField(max_length=50)

@@ -158,16 +158,16 @@ def get_first_orderable_date(
 
         if (
             (
-                (breakfast_deadline.Days == passed_days and breakfast_deadline.Hour <= now.hour)
-                or
-                (breakfast_deadline.Days > passed_days)
+                breakfast_deadline.Days == passed_days
+                and breakfast_deadline.Hour <= now.hour
             )
-            and 
+            or (breakfast_deadline.Days > passed_days)
+        ) and (
             (
-                (launch_deadline.Days == passed_days and launch_deadline.Hour <= now.hour)
-                or
-                (launch_deadline.Days > passed_days)
+                launch_deadline.Days == passed_days
+                and launch_deadline.Hour <= now.hour
             )
+            or (launch_deadline.Days > passed_days)
         ):
 
             passed_days += 1
@@ -198,9 +198,26 @@ class OverrideUserValidator:
         admin_user: Admin's user object.
     """
 
-    def __init__(self, user: m.User, override_user: m.User) -> None:
+    def __init__(
+        self,
+        user: m.User,
+        override_user: m.User,
+    ) -> None:
         self.user = user if not override_user else override_user
         self.admin_user = user.Personnel if override_user else None
+        self.reason: m.AdminManipulationReason = None
+        self.comment: str = None
+
+    def validate_admin_request(self, data: dict):
+        """
+        Validating request that supposed to come from admin.
+        """
+        self.reason = data.get("reason")
+        self.comment = data.get("comment")
+        if self.reason is None:
+            raise ValueError(
+                "you must provide a reason before doing any action."
+            )
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -396,8 +413,12 @@ class ValidateOrder(OverrideUserValidator):
                 self._validate_default_delivery_building()
             elif remove:
                 self._validate_item_removal()
+
             if not self._is_admin():
                 self._validate_date()
+            else:
+                self.validate_admin_request(self.data)
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -529,6 +550,8 @@ class ValidateOrder(OverrideUserValidator):
             ),
             user=self.user.Personnel,
             admin=self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
     def remove_order(self):
@@ -557,6 +580,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
         else:
             self.order_item.delete(
@@ -566,6 +591,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
 
 
@@ -616,9 +643,14 @@ class ValidateBreakfast(OverrideUserValidator):
             self.date, self.item = validate_request(self.data)
             self._validate_item()
             self._validate_default_delivery_building()
+
             if not self._is_admin():
                 self._validate_date()
+            else:
+                self.validate_admin_request(self.data)
+
             self._validate_order()
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -746,6 +778,8 @@ class ValidateBreakfast(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
             return
 
@@ -763,6 +797,8 @@ class ValidateBreakfast(OverrideUserValidator):
             ),
             user=self.user.Personnel,
             admin=self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
 
@@ -943,8 +979,12 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             self._validate_request()
             self._validate_building()
             self._validate_order_items()
+
             if not self._is_admin():
                 self._validate_date()
+            else:
+                self.validate_admin_request(self.data)
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -1090,6 +1130,8 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 else None
             ),
             self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
         user = m.User.objects.get(Personnel=personnel)
