@@ -1072,7 +1072,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         current_order = m.Order.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
-            MealType=self.meal_type
+            MealType=self.meal_type,
         ).first()
 
         if current_order and (
@@ -1095,23 +1095,22 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         """
 
         date_obj = create_jdate_object(self.date)
-        deadlines: dict[str, s.Deadline] = get_specific_deadline(
-            weekday=date_obj.weekday(), deadline=s.Deadline
+        deadline: s.Deadline = get_specific_deadline(
+            weekday=date_obj.weekday(),
+            meal_type=self.meal_type,
+            deadline=s.Deadline,
         )
         now = localnow()
 
-        for deadline in deadlines.values():
-            is_valid = is_date_valid_for_action(
-                now, self.date, deadline.Days, deadline.Hour
-            )
+        is_valid = is_date_valid_for_action(
+            now, self.date, deadline.Days, deadline.Hour
+        )
 
-            if not is_valid:
-                self.message = (
-                    "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
-                )
-                raise ValueError(
-                    "Deadline for changing delivery building is over."
-                )
+        if not is_valid:
+            self.message = "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
+            raise ValueError(
+                "Deadline for changing delivery building is over."
+            )
 
     def change_delivery_place(self):
         """
@@ -1125,7 +1124,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
-            Item__MealType=self.meal_type
+            Item__MealType=self.meal_type,
         ).update(
             DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,

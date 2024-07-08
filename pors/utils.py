@@ -423,6 +423,9 @@ def get_specific_deadline(
 
     qs = m.Deadlines.objects.get(MealType=meal_type, WeekDay=weekday)
 
+    if deadline:
+        return deadline(qs.Days, qs.Hour)
+
     return qs.Days, qs.Hour
 
 
