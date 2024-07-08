@@ -283,9 +283,11 @@ class PersonnelMonthlyReport(serializers.Serializer):
 
 
 class AdminManipulationReasonsSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source="Title")
+    reasonCode = serializers.CharField(source="ReasonCode")
     class Meta:
         model = m.AdminManipulationReason
-        fields = ["id", "title"]
+        fields = ["id", "title", "reasonCode"]
 
 
 class AdminReasonserializer(serializers.Serializer):

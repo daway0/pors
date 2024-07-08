@@ -218,13 +218,13 @@ class OverrideUserValidator:
 
         if s_data.validated_data[
             "reason"
-        ].title == "other" and not s_data.validated_data.get("comment"):
+        ].Title == "other" and not s_data.validated_data.get("comment"):
             raise ValueError(
                 "you must provide a comment when using other's reason"
             )
 
         self.reason = s_data.validated_data["reason"]
-        self.comment = s_data.validated_data["comment"]
+        self.comment = s_data.validated_data.get("comment")
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -1139,8 +1139,8 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 else None
             ),
             self.admin_user,
-            reason=self.reason,
-            comment=self.comment,
+            manipulation_reason=self.reason,
+            manipulation_reason_comment=self.comment,
         )
 
         user = m.User.objects.get(Personnel=personnel)

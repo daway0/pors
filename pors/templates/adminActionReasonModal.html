@@ -1,0 +1,58 @@
+{% load static %}
+<!-- Modal toggle -->
+<button id="admin-action-reason-modal" data-modal-target="select-admin-action-modal" 
+        data-modal-toggle="select-admin-action-modal"
+        class="hidden block text-white bg-blue-700 hover:bg-blue-800 
+        focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        type="button">
+    Toggle modal
+</button>
+
+<!-- Main modal -->
+<div style="direction: rtl" id="select-admin-action-modal" tabindex="-1" aria-hidden="true"
+     class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow ">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                <h3 class="text-base font-semibold text-gray-900 ">
+                    علت بررسی پنل پرسنل
+                </h3>
+                <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-xs h-8 w-8 ms-auto inline-flex justify-center items-center "
+                        data-modal-toggle="select-admin-action-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            
+            <!-- Modal body -->
+            <div id="place-modal-body-container" class="p-4 md:p-5">
+                <p class="text-gray-500  mb-4">
+                    علت بررسی پرسنل را انتخاب کنید 
+                    <span>
+                        در صورتی که علت در گزینه های ذکر شده وجود ندارد از <b class="text-blue-500">سایر</b> استفاده کنید و آن را به صورت دستی وارد نمایید
+                    </span>
+                </p>
+                <div class="flex flex-col gap-2">
+                    <p>
+                        <select id="reason-select" class="w-full border border-gray-200 p-2 rounded-md text-sm">
+                        </select>
+                    </p>
+                    <textarea class="hidden w-full border-gray-200 rounded-md text-sm p-2" id="reason-comment" placeholder="علت را وارد کنید..."></textarea>
+                </div>
+                <div class="mt-4 w-full flex flex-row-reverse">
+                    <div id="enter-godmode" class="text-gray-800 cursor-pointer bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center">
+                        ورود به پنل پرسنل
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div> 
