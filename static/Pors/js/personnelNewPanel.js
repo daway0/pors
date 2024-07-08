@@ -83,6 +83,9 @@ let tempNewBuilding = undefined
 let tempNewFloor = undefined
 let queueOrderedItem = undefined
 let selectedMenuToDisplay = "LNC"
+let godModeEntryReason = undefined
+let godModeEntryReasonComment = undefined
+let actionReasonObj = {}
 
 function getDeliveryPlaceTitleByCode(code) {
     for (const building of deliveryPlaces) {
@@ -572,21 +575,21 @@ function loadMenu(day, month, year) {
 
 function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, monthNumber, yearNumber, orderedDays) {
 
-// ابتدا باید تقویم قبلی را پاگ کنیم
+    // ابتدا باید تقویم قبلی را پاگ کنیم
     $('#dayBlocksWrapper [class^="cd-"]').remove()
 
     let newCalendarHTML = ""
-//     حال باید با توجه به روز این روز اول ماه چند شنبه است بلاک های روز
-//     های ما قبل آن خاکستری کنیم
+    //     حال باید با توجه به روز این روز اول ماه چند شنبه است بلاک های روز
+    //     های ما قبل آن خاکستری کنیم
     for (let i = 1; i < startDayOfWeek; i++) {
         newCalendarHTML += '<div class="cd- flex flex-col items-center' +
             ' bg-gray-50 border border-gray-100 p-4 grow"></div>'
     }
 
 
-//     سپس به سراغ ساخت بلاک روز های دیگر می کنیم. در صورتی روز مورد نظر
-//     تعطیل بود باید شماره روز را رنگی کنیم و در همچنین وضعیت ثبت منو توسط
-//     اداری را در آن روز به نمایش بگذاریم
+    //     سپس به سراغ ساخت بلاک روز های دیگر می کنیم. در صورتی روز مورد نظر
+    //     تعطیل بود باید شماره روز را رنگی کنیم و در همچنین وضعیت ثبت منو توسط
+    //     اداری را در آن روز به نمایش بگذاریم
     for (let dayNumber = 1; dayNumber <= endDayOfMonth; dayNumber++) {
 
         let dayNumberStyle = ""
@@ -633,7 +636,7 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
 }
 
 function getSubsidy() {
-//     میره و با توجه به تاریخ سوبسید مورد نظر رو میگیره
+    //     میره و با توجه به تاریخ سوبسید مورد نظر رو میگیره
     // و برای محاسبات مالی ازش استفاده می شه
 
     $.ajax({
@@ -978,7 +981,7 @@ function checkErrorRelatedToAuth(errorCode) {
 function loadUserBasicInfo() {
     $("#user-profile").attr("src", userProfileImg)
     $("#user-fullname").text(userFullName)
-    if (!godMode){
+    if (!godMode) {
         $("#god-mode").addClass("hidden")
     }
 }
@@ -995,34 +998,34 @@ function imgError(image) {
     return true;
 }
 
-function orderNewItem(itemId, url){
+function orderNewItem(itemId, url) {
     $.ajax({
-            url: url,
-            method: 'POST',
-            contentType: 'application/json',
-            async: false,
-            data: JSON.stringify(
-                {
-                    "item": itemId,
-                    "date": toShamsiFormat(selectedDate)
-                }
-            ),
-            statusCode: {
-                201: function (data) {
-                    addNewItemToMenu(itemId)
-                    updateOrders(selectedDate.month, selectedDate.year)
-                    updateItemsCounter()
-                    updateHasOrderedCalendarDayBlock()
-                    updateOrderBillDetail()
-                    catchResponseMessagesToDisplay(data.messages)
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Item not added!', status, 'and error:', error, 'detail:', xhr.responseJSON);
-                checkErrorRelatedToAuth(xhr.status)
-                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+        url: url,
+        method: 'POST',
+        contentType: 'application/json',
+        async: false,
+        data: JSON.stringify(
+            Object.assign({}, {
+                "item": itemId,
+                "date": toShamsiFormat(selectedDate)
+            }, actionReasonObj)
+        ),
+        statusCode: {
+            201: function (data) {
+                addNewItemToMenu(itemId)
+                updateOrders(selectedDate.month, selectedDate.year)
+                updateItemsCounter()
+                updateHasOrderedCalendarDayBlock()
+                updateOrderBillDetail()
+                catchResponseMessagesToDisplay(data.messages)
             }
-        });
+        },
+        error: function (xhr, status, error) {
+            console.error('Item not added!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+            checkErrorRelatedToAuth(xhr.status)
+            catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+        }
+    });
 }
 
 function isInChangingPlaceProcess() {
@@ -1038,6 +1041,10 @@ $(document).ready(function () {
 
     let targetURL = undefined
     let overrideUser = localStorage.getItem("nextUsername")
+    let godModeEntryReason = parseInt(localStorage.getItem("godModeEntryReason"))
+    let godModeEntryReasonComment = localStorage.getItem("godModeEntryReasonComment")
+
+
     if (overrideUser) {
         targetURL = addPrefixTo(`panel/?override_username=${overrideUser}`)
         displayDismiss(DISMISSLEVELS.WARNING,
@@ -1045,6 +1052,16 @@ $(document).ready(function () {
             DISMISSDURATIONS.DISPLAY_TIME_PARAMENT)
 
         localStorage.removeItem("nextUsername")
+        localStorage.removeItem("godModeEntryReason")
+        localStorage.removeItem("godModeEntryReasonComment")
+
+        actionReasonObj = {
+            "reason": godModeEntryReason
+        }
+        if (godModeEntryReasonComment) {
+            actionReasonObj["comment"] = godModeEntryReasonComment
+        }
+
     } else {
         targetURL = addPrefixTo(`panel/`)
     }
@@ -1187,10 +1204,10 @@ $(document).ready(function () {
 
         // *********** CAUTION **********
         // this if validation must be the last thing is going to check before add item ajax call
-        if (latestFloor == undefined || latestBuilding == undefined){
+        if (latestFloor == undefined || latestBuilding == undefined) {
             // storing item to queue for further process
             // (after choosing place by user, this will be sent to back as and order for better UX)
-            queueOrderedItem = {id:id, url:url}
+            queueOrderedItem = { id: id, url: url }
             $("#building-place-modal").click()
             return
         }
@@ -1213,10 +1230,10 @@ $(document).ready(function () {
             contentType: 'application/json',
             async: false,
             data: JSON.stringify(
-                {
+                Object.assign({}, {
                     "item": id,
                     "date": toShamsiFormat(selectedDate)
-                }
+                }, actionReasonObj)
             ),
             statusCode: {
                 200: function (data) {
@@ -1298,7 +1315,7 @@ $(document).ready(function () {
         // تغییر دادن ماه تقویم
         let monthNumber = getSelectedCalendarMonthDropdown()
         $.ajax({
-            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`calendar/?year=${currentDate.year}&month=${monthNumber}`,userName)),
+            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`calendar/?year=${currentDate.year}&month=${monthNumber}`, userName)),
             method: 'GET',
             dataType: 'json',
 
@@ -1362,11 +1379,11 @@ $(document).ready(function () {
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
-                {
+                Object.assign({}, {
                     "newDeliveryBuilding": tempNewBuilding,
                     "newDeliveryFloor": tempNewFloor,
-                    "date": toShamsiFormat(selectedDate)
-                }
+                    "date": toShamsiFormat(selectedDate),
+                }, actionReasonObj)
             ),
             statusCode: {
                 200: function (data) {
@@ -1377,8 +1394,8 @@ $(document).ready(function () {
                     catchResponseMessagesToDisplay(data.messages)
 
                     // check if anything is in order queue, send to back (this must be happened before closing modal)
-                    if (queueOrderedItem != undefined){
-                        orderNewItem(queueOrderedItem.id,queueOrderedItem.url)
+                    if (queueOrderedItem != undefined) {
+                        orderNewItem(queueOrderedItem.id, queueOrderedItem.url)
 
                         // flush order queue after modal, no matter it will succeed or not!
                         queueOrderedItem = undefined

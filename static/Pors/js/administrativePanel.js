@@ -71,6 +71,10 @@ let orderedDays = undefined
 let selectedItems = undefined
 let availableItems = undefined
 let allItems = undefined
+let godModeEntryReason = undefined
+let godModeEntryReasonComment = undefined
+let godModUsername = undefined
+
 
 
 
@@ -773,7 +777,7 @@ function makeUserDropdownChoices() {
                     choicesHTML += `<li class="">
                         <div class="flex items-center ps-2 rounded 
                 hover:bg-gray-100 ">
-                            <a target="_blank" href=${addPrefixTo(nextURL)} 
+                            <a href="#" 
                             class="user-choice-a flex items-center justify-between w-full py-2
                             text-xs
                            text-gray-900 rounded ">
@@ -837,6 +841,24 @@ $(document).ready(function () {
                 catchResponseMessagesToDisplay(data.messages)
                 return
             }
+            // فچ کردن دلایل مربوط به گاد مود
+            $.ajax({
+                url: addPrefixTo(`administrative/reasons/`),
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    data.forEach(function(item) {
+                        $("#reason-select").append($('<option>', {
+                            value: item.id,
+                            text: item.title
+                        }).attr('data-reason-code', item.reasonCode));
+                    })
+                    if ($("#reason-select option:selected").attr("data-reason-code")==="OTHER"){
+                        $("#reason-comment").empty()
+                        $("#reason-comment").removeClass("hidden")
+                    } 
+                }
+                })
 
             $.ajax({
                 url: addPrefixTo(`administrative/calendar/?year=${currentDate.year}&month=${currentDate.month}`),
@@ -1161,9 +1183,49 @@ $(document).ready(function () {
         });
     });
 
+    $(document).on('change', '#reason-select', function () {
+        if ($("#reason-select option:selected").attr("data-reason-code")==="OTHER"){
+            $("#reason-comment").empty()
+            $("#reason-comment").removeClass("hidden")
+        } else {
+            $("#reason-comment").addClass("hidden")
+        }
+    })
+    $(document).on('click', '#enter-godmode', function () {
+        // validations 
+        godModeEntryReason = $("#reason-select").val()
+        godModeEntryReasonComment = $("#reason-comment").val()
+
+        if (!godModeEntryReason && !godModeEntryReasonComment){
+            console.log("insert reason before you go")
+            return 
+        }
+
+        if ($("#reason-select option:selected").attr("data-reason-code")==="OTHER"){
+            // check has comment or not !
+            if (!godModeEntryReasonComment.trim()){
+                displayDismiss(DISMISSLEVELS["ERROR"], "علت را وارد کنید", DISMISSDURATIONS["DISPLAY_TIME_TEN"])
+                return
+            }
+        }
+        
+        localStorage.setItem("godModeEntryReason", godModeEntryReason)
+        localStorage.setItem("godModeEntryReasonComment", godModeEntryReasonComment)
+        localStorage.setItem("nextUsername", godModUsername)
+        
+        let nextURL = addPrefixTo(`?override_username=${godModUsername}`)
+        window.open(nextURL, "_blank")
+
+        $("#reason-comment").val("")
+        $("#admin-action-reason-modal").click()
+    })
+
     $(document).on('click', '.user-choice-a', function () {
-        let username = $(this).find(".user-in-search[data-username]").text()
-        localStorage.setItem("nextUsername", username)
+        godModeEntryReason = undefined
+        godModeEntryReasonComment = undefined
+        godModUsername = $(this).find(".user-in-search[data-username]").text()
+        
+        $("#admin-action-reason-modal").click()
     })
 
 });

@@ -596,4 +596,5 @@ class HR_constvalue(models.Model):
 
 
 class AdminManipulationReason(models.Model):
-    title = models.CharField(max_length=50)
+    Title = models.CharField(max_length=50)
+    ReasonCode = models.CharField(max_length=50, null=True)
