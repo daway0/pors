@@ -482,8 +482,8 @@ class ActionLog(models.Model):
             record_id=None,
             old_data: dict = None,
             admin=None,
-            manipulation_reason=None,
-            manipulation_reason_comment=None,
+            reason=None,
+            comment=None,
         ):
             table_name = model._meta.model_name if model else None
             return self.create(
@@ -494,8 +494,8 @@ class ActionLog(models.Model):
                 ActionDesc=log_msg,
                 OldData=old_data,
                 Admin=admin,
-                ManipulationReason=manipulation_reason,
-                ManipulationReasonComment=manipulation_reason_comment,
+                ManipulationReason=reason,
+                ManipulationReasonComment=comment,
             )
 
     class ActionTypeChoices(models.TextChoices):
