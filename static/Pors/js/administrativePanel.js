@@ -120,6 +120,10 @@ function insertCommas(str) {
 }
 
 function convertToPersianNumber(englishNumber) {
+    if (englishNumber===null || englishNumber===undefined){
+        console.error("something went wrong, in my input :_)")
+        return ""
+    }
     const persianNumbers = {
         '0': '۰',
         '1': '۱',
@@ -132,7 +136,6 @@ function convertToPersianNumber(englishNumber) {
         '8': '۸',
         '9': '۹'
     };
-    if (!englishNumber) return ''
     const englishNumberArray = englishNumber.toString().split('');
 
     const persianNumberArray = englishNumberArray.map(digit => {
