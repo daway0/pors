@@ -54,8 +54,8 @@ class Logger(models.Model):
             old_data=old_data,
             user=user,
             admin=admin,
-            manipulation_reason=reason,
-            manipulation_reason_comment=comment,
+            reason=reason,
+            comment=comment,
         )
 
     def delete(self, *args, **kwargs):
@@ -79,8 +79,8 @@ class Logger(models.Model):
             old_data=old_data,
             user=user,
             admin=admin,
-            manipulation_reason=reason,
-            manipulation_reason_comment=comment,
+            reason=reason,
+            comment=comment,
         )
 
     class Meta:
