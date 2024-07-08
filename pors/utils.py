@@ -12,7 +12,7 @@ import pytz
 import requests
 import xlsxwriter
 from django.db import connection
-from django.db.models import Prefetch, QuerySet
+from django.db.models import QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 from rest_framework import status
@@ -544,3 +544,22 @@ def raise_report_notfound(message_obj: Message, request: Request):
         {"messages": message_obj.messages(request), "errors": error},
         status.HTTP_404_NOT_FOUND,
     )
+
+
+def add_mealtype_building(order_row, schema: dict):
+    if (
+        order_row["MealType"] == m.MealTypeChoices.LAUNCH
+        and schema.get("launchDeliveryBuilding") is None
+    ):
+        schema["launchDeliveryBuilding"] = order_row[
+            "DeliveryBuilding"
+        ]
+        schema["launchDeliveryFloor"] = order_row["DeliveryFloor"]
+    elif (
+        order_row["MealType"] == m.MealTypeChoices.BREAKFAST
+        and schema.get("breakfastDeliveryBuilding") is None
+    ):
+        schema["breakfastDeliveryBuilding"] = order_row[
+            "DeliveryBuilding"
+        ]
+        schema["breakfastDeliveryFloor"] = order_row["DeliveryFloor"]

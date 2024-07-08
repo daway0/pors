@@ -678,5 +678,5 @@ def available_users(request, user, override_user):
 @authenticate(privileged_users=True)
 def admin_manipulation_reasons(request, user, override_user):
     qs = AdminManipulationReason.objects.all()
-    serializer = AdminManipulationReasonsSerializer(qs).data
+    serializer = AdminManipulationReasonsSerializer(qs, many=True).data
     return Response(serializer, status.HTTP_200_OK)

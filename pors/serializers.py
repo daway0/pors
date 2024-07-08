@@ -5,7 +5,7 @@ from rest_framework import serializers
 from . import business as b
 from . import models as m
 from . import utils as u
-from .models import User
+from .models import MealTypeChoices, User
 
 Deadline = namedtuple("Deadline", "Days Hour")
 
@@ -37,7 +37,7 @@ class AllItemSerializer(serializers.ModelSerializer):
             "serveTime",
             "itemDesc",
             "isActive",
-            "itemProvider"
+            "itemProvider",
         )
 
 
@@ -124,6 +124,8 @@ class OrderItemSerializer(serializers.Serializer):
     description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
+    # deliveryBuilding = serializers.CharField(source="DeliveryBuilding")
+    # deliveryFloor = serializers.CharField(source="DeliveryFloor")
 
 
 class OrderSerializer(serializers.Serializer):
@@ -136,13 +138,15 @@ class OrderSerializer(serializers.Serializer):
             serializer = OrderItemSerializer(object).data
             date = schema.get("orderDate")
             if date == object["DeliveryDate"]:
+                u.add_mealtype_building(object, schema)
                 schema["orderItems"].append(serializer)
                 continue
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
-            schema["deliveryBuilding"] = object["DeliveryBuilding"]
-            schema["deliveryFloor"] = object["DeliveryFloor"]
+
+            u.add_mealtype_building(object, schema)
+
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
@@ -296,5 +300,5 @@ class AdminReasonserializer(serializers.Serializer):
         reason = m.AdminManipulationReason.objects.filter(pk=id).first()
         if reason is None:
             raise serializers.ValidationError("invalid id")
-        
+
         return reason

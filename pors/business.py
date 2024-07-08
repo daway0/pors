@@ -1013,14 +1013,22 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         date = self.data.get("date")
         new_delivery_building = self.data.get("newDeliveryBuilding")
         new_delivery_floor = self.data.get("newDeliveryFloor")
-        if not (date and new_delivery_building and new_delivery_floor):
+        meal_type = self.data.get("mealType")
+        if not (
+            date and new_delivery_building and new_delivery_floor and meal_type
+        ):
             raise ValueError(
-                "'date', 'newDeliveryBuilding' and 'newDeliveryFloor'"
-                " parameters must specified."
+                "'date', 'newDeliveryBuilding', 'newDeliveryFloor'"
+                " and 'mealType' parameters must specified."
             )
 
         self.new_delivery_building = new_delivery_building
         self.new_delivery_floor = new_delivery_floor
+        self.meal_type = meal_type
+
+        if meal_type not in m.MealTypeChoices.values:
+            raise ValueError("Invalid 'mealType' value")
+
         self.date = validate_date(date)
         if not self.date:
             raise ValueError("Invalid 'date' value.")
@@ -1064,6 +1072,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         current_order = m.Order.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            MealType=self.meal_type
         ).first()
 
         if current_order and (
@@ -1116,6 +1125,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            Item__MealType=self.meal_type
         ).update(
             DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,
@@ -1127,7 +1137,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             m.ActionLog.ActionTypeChoices.UPDATE,
             personnel,
             f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor} "
-            f"for {self.date}",
+            f"for {self.date} and meal type {self.meal_type}",
             m.OrderItem,
             None,
             (
@@ -1139,8 +1149,8 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 else None
             ),
             self.admin_user,
-            reason=self.reason,
-            comment=self.comment,
+            manipulation_reason=self.reason,
+            manipulation_reason_comment=self.comment,
         )
 
         user = m.User.objects.get(Personnel=personnel)

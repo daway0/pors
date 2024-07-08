@@ -332,6 +332,7 @@ class Order(models.Model):
     DeliveryFloor = models.CharField(max_length=250)
     DeliveryBuildingPersian = models.CharField(max_length=250)
     DeliveryFloorPersian = models.CharField(max_length=250)
+    MealType = models.CharField(max_length=3)
 
     # PersonnelDebt = TotalPrice - SubsidyCap
     # Note that PersonnelDebt will never be negative

@@ -19,7 +19,8 @@ SELECT Row_number()                                                             
                 Sum(PersonnelService.dbo.pors_orderitem.quantity * PersonnelService.dbo.pors_orderitem.priceperone)
                < 0 THEN s.Amount
            ELSE Sum(PersonnelService.dbo.pors_orderitem.quantity *
-                    PersonnelService.dbo.pors_orderitem.priceperone) END                                   AS SubsidySpent
+                    PersonnelService.dbo.pors_orderitem.priceperone) END                                   AS SubsidySpent,
+                    pi2.MealType
 FROM PersonnelService.dbo.pors_orderitem
          INNER JOIN
      PersonnelService.dbo.pors_subsidy AS s
@@ -30,6 +31,8 @@ FROM PersonnelService.dbo.pors_orderitem
      HR_constvalue AS dbp ON dbp.Code = PersonnelService.dbo.pors_orderitem.DeliveryBuilding
          INNER JOIN
      HR_constvalue AS dfp ON dfp.Code = PersonnelService.dbo.pors_orderitem.DeliveryFloor
+         INNER JOIN
+     pors_item pi2 on pi2.id = PersonnelService.dbo.pors_orderitem.Item_id
 GROUP BY PersonnelService.dbo.pors_orderitem.personnel, PersonnelService.dbo.pors_orderitem.deliverydate, s.amount,
          Users.FirstName, Users.LastName, PersonnelService.dbo.pors_orderitem.DeliveryBuilding,
-         PersonnelService.dbo.pors_orderitem.DeliveryFloor, Users.NationalCode, dbp.Caption, dfp.Caption
+         PersonnelService.dbo.pors_orderitem.DeliveryFloor, Users.NationalCode, dbp.Caption, dfp.Caption, pi2.MealType
