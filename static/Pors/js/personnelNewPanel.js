@@ -78,6 +78,7 @@ let orders = undefined
 let orderSubsidy = undefined
 let latestBuilding = null
 let latestFloor = null
+let latestDeliveryPlace = undefined
 let deliveryPlaces = {}
 let tempNewBuilding = undefined
 let tempNewFloor = undefined
@@ -86,6 +87,9 @@ let selectedMenuToDisplay = "LNC"
 let godModeEntryReason = undefined
 let godModeEntryReasonComment = undefined
 let actionReasonObj = {}
+let currentDeliveryChangingMealType = "LNC"
+let BRFOrderItemsCount = undefined
+let LNCOrderItemsCount = undefined
 
 function getDeliveryPlaceTitleByCode(code) {
     for (const building of deliveryPlaces) {
@@ -189,7 +193,7 @@ function insertCommas(str) {
 }
 
 function convertToPersianNumber(englishNumber) {
-    if (englishNumber===null || englishNumber===undefined){
+    if (englishNumber === null || englishNumber === undefined) {
         console.error("something went wrong, in my input :_)")
         return ""
     }
@@ -354,7 +358,7 @@ function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, 
     data-item-serve-time="${serveTime}"
     data-item-price="${price}"
 class="flex flex-col gap-0  ${selected ? "bg-emerald-100" : "bg-gray-200"}
-    ${serveTime===selectedMenuToDisplay ? "": "hidden"}
+    ${serveTime === selectedMenuToDisplay ? "" : "hidden"}
      border ${selected ? "border-emerald-500" : ""} rounded p-4 shadow-md 
       ${selected ? "hover:bg-emerald-200" : "hover:bg-gray-300"}">
 
@@ -499,7 +503,7 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
 
 
 function loadOrder(day, month, year) {
-    let requestedDate = toShamsiFormat({year: year, month: month, day: day})
+    let requestedDate = toShamsiFormat({ year: year, month: month, day: day })
     let selectedMenu = menuItems.find(function (entry) {
         return entry.date === requestedDate;
     });
@@ -530,7 +534,7 @@ function loadMenu(day, month, year) {
 
     if (menuItems === undefined) return
 
-    let requestedDate = toShamsiFormat({year: year, month: month, day: day})
+    let requestedDate = toShamsiFormat({ year: year, month: month, day: day })
     let selectedMenu = menuItems.find(function (entry) {
         return entry.date === requestedDate;
     });
@@ -661,24 +665,31 @@ function canPersonnelChangeDeliveryPlace(dateObj) {
         return orderObj["date"] === toShamsiFormat(dateObj)
     })
     if (day === undefined) return false
-    return day.openForLaunch && day.openForBreakfast
+    return { BRF: day.openForBreakfast, LNC: day.openForLaunch }
 }
 
-function orderDeliveryPlace(dateObj) {
+function orderDeliveryPlace(dateObj, mealType) {
+    // other mealtype is LNC btw :) 
+    let prefix = mealType === "BRF" ? "breakfast" : "launch"
+
     let order = orders.find(function (orderObj) {
         return orderObj.orderDate === toShamsiFormat(dateObj)
     })
     if (order === undefined) {
-        if (latestFloor != null && latestBuilding != null) {
-            return getDeliveryPlaceTitleByCode(latestBuilding) +
-                " " +
-                getDeliveryPlaceTitleByCode(latestFloor)
+        if (latestDeliveryPlace) {
+            return latestDeliveryPlace
         } else return "مشخص نشده"
     }
-    let deliveryBuilding = getDeliveryPlaceTitleByCode(order["deliveryBuilding"])
-    let deliveryFloor = getDeliveryPlaceTitleByCode(order["deliveryFloor"])
 
-    return deliveryBuilding + " " + deliveryFloor
+    
+    if (`${prefix}DeliveryBuilding` in order){
+        let deliveryBuilding = getDeliveryPlaceTitleByCode(order[`${prefix}DeliveryBuilding`])
+        let deliveryFloor = getDeliveryPlaceTitleByCode(order[`${prefix}DeliveryFloor`])
+    
+        return deliveryBuilding + " " + deliveryFloor
+    }
+    return latestDeliveryPlace
+    
 }
 
 function billDisplay(show) {
@@ -698,13 +709,29 @@ function updateOrderBillDetail() {
     let total = 0
     let fanavaran = orderSubsidy
     let debt = 0
-    let deliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate))
+    let BRFdeliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate, "BRF"))
+    let LNCdeliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate, "LNC"))
+    let $BRFDeliveryRow= $("#brf-delivery-place-row")
+    let $LNCDeliveryRow= $("#lnc-delivery-place-row")
+    let $BRFDeliveryEdit = $("#BRF-location-modal-trigger")
+    let $LNCDeliveryEdit = $("#LNC-location-modal-trigger")
+    let h = "hidden"
 
-    if (!canPersonnelChangeDeliveryPlace(selectedDate)) {
-        $("#location-modal-trigger").addClass("hidden")
+
+    // check if is editable or not
+    let isOpenFor = canPersonnelChangeDeliveryPlace(selectedDate)
+    if (BRFOrderItemsCount > 0){
+        $BRFDeliveryRow.removeClass("hidden")
+        !isOpenFor.BRF ? $BRFDeliveryEdit.addClass(h) : $BRFDeliveryEdit.removeClass(h)
     } else {
-        $("#location-modal-trigger").removeClass("hidden")
+        $BRFDeliveryRow.addClass("hidden")
+    }
 
+    if (LNCOrderItemsCount > 0){
+        $LNCDeliveryRow.removeClass("hidden")
+        !isOpenFor.LNC ? $LNCDeliveryEdit.addClass(h) : $LNCDeliveryEdit.removeClass(h)
+    } else {
+        $LNCDeliveryRow.addClass("hidden")
     }
 
     if (orderItems.length === 0) {
@@ -728,8 +755,8 @@ function updateOrderBillDetail() {
     $(".subsidy-amount").text(insertCommas(convertToPersianNumber(fanavaran)))
     $(".debt-amount").text(insertCommas(convertToPersianNumber(debt)))
 
-    $("#delivery-place").text(deliveryPlace)
-
+    $("#brf-delivery-place").text(BRFdeliveryPlace)
+    $("#lnc-delivery-place").text(LNCdeliveryPlace)
 }
 
 function updateItemMenuDetails(id, quantity) {
@@ -875,7 +902,24 @@ function updateItemsCounter() {
             orderTotalItemsQuantity(["BRF", "LNC"])
         ))
 }
+function updateOrderItemsQuantity() {
+    let sumBRFOrderedItem = 0;
+    let sumLNCOrderedItem = 0;
+    let $items = $("#menu-items-container li");
+    $items.each(function () {
+        if ($(this).attr("data-item-serve-time")==="BRF") {
+            sumBRFOrderedItem += parseInt($(this).attr("data-item-order-count"));
+        } else {
+            sumLNCOrderedItem += parseInt($(this).attr("data-item-order-count"));
+        }
+    });
+    
+    BRFOrderItemsCount = sumBRFOrderedItem
+    LNCOrderItemsCount = sumLNCOrderedItem
 
+    console.log(BRFOrderItemsCount, LNCOrderItemsCount);
+
+}
 function orderTotalItemsQuantity(serveTime) {
     // serveTime یا BRF یا LNC
     if (serveTime === undefined) serveTime = ["LNC", "BRF"]
@@ -928,6 +972,7 @@ function selectDayOnCalendar(e) {
     loadMenu(selectedDate.day, selectedDate.month, selectedDate.year)
     loadOrder(selectedDate.day, selectedDate.month, selectedDate.year)
     updateItemsCounter()
+    updateOrderItemsQuantity()
     updateHasOrderedCalendarDayBlock()
     getSubsidy()
     updateOrderBillDetail()
@@ -1015,6 +1060,7 @@ function orderNewItem(itemId, url) {
                 addNewItemToMenu(itemId)
                 updateOrders(selectedDate.month, selectedDate.year)
                 updateItemsCounter()
+                updateOrderItemsQuantity()
                 updateHasOrderedCalendarDayBlock()
                 updateOrderBillDetail()
                 catchResponseMessagesToDisplay(data.messages)
@@ -1085,6 +1131,11 @@ $(document).ready(function () {
             isAdmin = data["isAdmin"]
             godMode = data["godMode"]
 
+            // make latest delivery string 
+            if (latestFloor != null && latestBuilding != null) {
+                latestDeliveryPlace = `${getDeliveryPlaceTitleByCode(latestBuilding)} ${getDeliveryPlaceTitleByCode(latestFloor)}`
+            }
+            
             loadUserBasicInfo()
             displayAdminButtonToAdminPersonnel()
             makeDeliveryBuildingModal()
@@ -1240,6 +1291,7 @@ $(document).ready(function () {
                     removeItemFromMenu(id)
                     updateOrders(selectedDate.month, selectedDate.year)
                     updateItemsCounter()
+                    updateOrderItemsQuantity()
                     updateHasOrderedCalendarDayBlock()
                     updateOrderBillDetail()
                     catchResponseMessagesToDisplay(data.messages)
@@ -1347,8 +1399,8 @@ $(document).ready(function () {
     })
 
     // دکمه ویرایش مکان تحویل سفارش
-    $(document).on('click', '#location-modal-trigger', function () {
-
+    $(document).on('click', '#BRF-location-modal-trigger, #LNC-location-modal-trigger', function () {
+        currentDeliveryChangingMealType = $(this).attr("data-meal-type")
         queueOrderedItem = undefined
         $("#building-place-modal").click()
     })
@@ -1383,12 +1435,16 @@ $(document).ready(function () {
                     "newDeliveryBuilding": tempNewBuilding,
                     "newDeliveryFloor": tempNewFloor,
                     "date": toShamsiFormat(selectedDate),
+                    "mealType": currentDeliveryChangingMealType
                 }, actionReasonObj)
             ),
             statusCode: {
                 200: function (data) {
                     latestBuilding = tempNewBuilding
                     latestFloor = tempNewFloor
+
+                    latestDeliveryPlace = `${getDeliveryPlaceTitleByCode(latestBuilding)} ${getDeliveryPlaceTitleByCode(latestFloor)}`
+
                     updateOrders(selectedDate.month, selectedDate.year)
                     updateOrderBillDetail()
                     catchResponseMessagesToDisplay(data.messages)

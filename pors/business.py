@@ -1148,8 +1148,8 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 else None
             ),
             self.admin_user,
-            manipulation_reason=self.reason,
-            manipulation_reason_comment=self.comment,
+            reason=self.reason,
+            comment=self.comment,
         )
 
         user = m.User.objects.get(Personnel=personnel)
