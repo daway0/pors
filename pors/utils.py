@@ -12,7 +12,7 @@ import pytz
 import requests
 import xlsxwriter
 from django.db import connection
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.http import HttpResponse
 from persiantools.jdatetime import JalaliDate
 from rest_framework import status
@@ -113,11 +113,13 @@ def split_dates(dates, mode: str):
                 int(dates.split("/")[2]),
             )
         for date in dates:
-            new_dates.append((
-                int(dates.split("/")[0]),
-                int(dates.split("/")[1]),
-                int(dates.split("/")[2]),
-            ))
+            new_dates.append(
+                (
+                    int(dates.split("/")[0]),
+                    int(dates.split("/")[1]),
+                    int(dates.split("/")[2]),
+                )
+            )
         return new_dates
 
 
@@ -185,61 +187,60 @@ def execute_raw_sql_with_params(query: str, params: tuple) -> list:
     return result
 
 
-def queryset_to_xlsx_response_food_provider_ordering(queryset, persian_headers, providers):
+def queryset_to_xlsx_response_food_provider_ordering(
+    queryset, persian_headers, providers
+):
     # Create an in-memory output file for the new workbook.
     output = io.BytesIO()
 
     # Create a new Excel workbook and add a worksheet.
-    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet()
 
     # Define a format for the table that sets the font.
-    table_font = workbook.add_format({
-        'font_name': 'Tahoma',
-        'font_size': 10
-    })
+    table_font = workbook.add_format({"font_name": "Tahoma", "font_size": 10})
 
     # Add a bold format for headers.
-    header_format = workbook.add_format({
-        'bold': True,
-        'font_name': 'Tahoma',
-        'font_size': 10,
-        'bg_color': '#D7E4BC',  # Light green background for headers
-        'border': 1
-    })
+    header_format = workbook.add_format(
+        {
+            "bold": True,
+            "font_name": "Tahoma",
+            "font_size": 10,
+            "bg_color": "#D7E4BC",  # Light green background for headers
+            "border": 1,
+        }
+    )
 
-    # spilting qs to providers 
+    # spilting qs to providers
     providers_qs = {}
     for provider in providers:
-        providers_qs[provider] = queryset.filter(FoodProviderPersian=provider) 
+        providers_qs[provider] = queryset.filter(FoodProviderPersian=provider)
 
     main_row_number = 0
     for provider, qs in providers_qs.items():
-        worksheet.write(
-            main_row_number,
-            0,
-            provider,
-            header_format
-        )
-        main_row_number += 1        
+        worksheet.write(main_row_number, 0, provider, header_format)
+        main_row_number += 1
 
         # Write Persian headers to the first row.
         for col_num, header in enumerate(persian_headers):
-            worksheet.write(0 + main_row_number, col_num, header, header_format)
-        main_row_number += 1        
-
+            worksheet.write(
+                0 + main_row_number, col_num, header, header_format
+            )
+        main_row_number += 1
 
         col_widths = [len(header) for header in persian_headers]
 
         for row_num, obj in enumerate(qs):
             for col_num, data in enumerate(obj.values()):
                 value = str(data)  # Ensure value is a string
-                worksheet.write_string(row_num+main_row_number, col_num, value, table_font)  # Write as text
+                worksheet.write_string(
+                    row_num + main_row_number, col_num, value, table_font
+                )  # Write as text
 
                 # update col width
                 col_widths[col_num] = max(col_widths[col_num], len(value))
         main_row_number += len(qs) + 2
-    
+
     # Adjust col len
     for col_num, width in enumerate(col_widths):
         worksheet.set_column(col_num, col_num, width + 2)
@@ -251,34 +252,36 @@ def queryset_to_xlsx_response_food_provider_ordering(queryset, persian_headers, 
     output.seek(0)
 
     # Create an HTTP response with the appropriate content type and headers.
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=report.xlsx'
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = "attachment; filename=report.xlsx"
 
     return response
+
 
 def queryset_to_xlsx_response(queryset, persian_headers):
     # Create an in-memory output file for the new workbook.
     output = io.BytesIO()
 
     # Create a new Excel workbook and add a worksheet.
-    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet()
 
     # Define a format for the table that sets the font.
-    table_font = workbook.add_format({
-        'font_name': 'Tahoma',
-        'font_size': 10
-    })
+    table_font = workbook.add_format({"font_name": "Tahoma", "font_size": 10})
 
     # Add a bold format for headers.
-    header_format = workbook.add_format({
-        'bold': True,
-        'font_name': 'Tahoma',
-        'font_size': 10,
-        'bg_color': '#D7E4BC',  # Light green background for headers
-        'border': 1
-    })
+    header_format = workbook.add_format(
+        {
+            "bold": True,
+            "font_name": "Tahoma",
+            "font_size": 10,
+            "bg_color": "#D7E4BC",  # Light green background for headers
+            "border": 1,
+        }
+    )
 
     # Write Persian headers to the first row.
     for col_num, header in enumerate(persian_headers):
@@ -290,7 +293,9 @@ def queryset_to_xlsx_response(queryset, persian_headers):
     for row_num, obj in enumerate(queryset, start=1):
         for col_num, data in enumerate(obj.values()):
             value = str(data)  # Ensure value is a string
-            worksheet.write_string(row_num, col_num, value, table_font)  # Write as text
+            worksheet.write_string(
+                row_num, col_num, value, table_font
+            )  # Write as text
 
             # update col width
             col_widths[col_num] = max(col_widths[col_num], len(value))
@@ -306,9 +311,11 @@ def queryset_to_xlsx_response(queryset, persian_headers):
     output.seek(0)
 
     # Create an HTTP response with the appropriate content type and headers.
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=report.xlsx'
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = "attachment; filename=report.xlsx"
 
     return response
 
@@ -488,43 +495,24 @@ def get_deadlines(
 
 def fetch_available_location():
     """fetch available location (building and floors from HR)"""
-    # todo shipment
-    # path = "HR/api/v1/locations/"
-    # url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    # response = requests.get(url, timeout=30)
-
-    # when im out of production
     from .serializers import BuildingSerializer
-    
-    floor01 = dict(code="Floor_Padidar_P1", title="P1")
-    floor02 = dict(code="Floor_Padidar_Lobby", title="لابی")
-    floor03 = dict(code="Floor_Padidar_1", title="طبقه 1")
-    floor04 = dict(code="Floor_Padidar_2", title="طبقه 2")
-    floor05 = dict(code="Floor_Padidar_3", title="طبقه 3")
-    floor06 = dict(code="Floor_Padidar_4", title="طبقه 4")
-    floor07 = dict(code="Floor_Padidar_5", title="طبقه 5")
-    
-    floors0 = [floor01, floor02, floor03, floor04, floor05, floor06, floor07]
-    floor11 = dict(code="Floor_Gandi_Lobby", title="لابی")
-    floor12 = dict(code="Floor_Gandi_1", title="طبقه 1")
-    floor13 = dict(code="Floor_Gandi_2", title="طبقه 2")
-    floor14 = dict(code="Floor_Gandi_3", title="طبقه 3")
-    floor15 = dict(code="Floor_Gandi_4", title="طبقه 4")
-    
-    floors1 = [floor11, floor12, floor13, floor14, floor15]
-    building1: dict[str, list[str]] = dict(
-        code="Building_Padidar", title="ساختمان پدیدار", floors=floors0
-    )
-    building2 = dict(
-        code="Building_Gandi", title="ساختمان گاندی", floors=floors1
-    )
-    buildings = BuildingSerializer(
-        data=[building1, building2], many=True
-    ).initial_data
-    return buildings
-    # END
 
-    # return response.json()
+    building_code_prefix = "Building_"
+    qs = m.HR_constvalue.objects.filter(Code__startswith=building_code_prefix)
+    if not qs:
+        return {}
+
+    buildings = []
+    for building in qs:
+        floors_qs = m.HR_constvalue.objects.filter(Parent_id=building.id)
+        buildings.append(
+            dict(
+                code=building.Code,
+                title=building.Caption,
+                floors=floors_qs,
+            )
+        )
+    return BuildingSerializer(buildings, many=True).data
 
 
 def sync_hr_delivery_place_with_pors(
@@ -548,10 +536,7 @@ def sync_hr_delivery_place_with_pors(
     # pass
 
 
-def raise_report_notfound(
-    message_obj: Message,
-    request: Request
-):
+def raise_report_notfound(message_obj: Message, request: Request):
     msg = "هیچ رکوردی بین بازه ارائه داده شده موجود نیست."
     error = "Queryset is empty!"
     message_obj.add_message(request, msg, Message.ERROR)

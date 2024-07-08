@@ -240,6 +240,7 @@ class ItemProvider(models.Model):
     def __str__(self):
         return self.Title
 
+
 class MealTypeChoices(models.TextChoices):
     """To determine the serving time of a meal, we use the following
     choices.
@@ -294,7 +295,9 @@ class Item(models.Model):
     # ItemPriceHistory table
     CurrentPrice = models.PositiveIntegerField()
 
-    ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.SET_NULL, null=True)
+    ItemProvider = models.ForeignKey(
+        "ItemProvider", on_delete=models.SET_NULL, null=True
+    )
 
     def __str__(self):
         return self.ItemName
@@ -344,6 +347,7 @@ class Order(models.Model):
 
 class FoodProviderOrdering(models.Model):
     """Food Provider Ordering List View"""
+
     Id = models.PositiveIntegerField(primary_key=True)
     ItemName = models.CharField(max_length=250)
     MealType = models.CharField(max_length=250)
@@ -354,7 +358,6 @@ class FoodProviderOrdering(models.Model):
     FoodProvider = models.PositiveIntegerField()
     FoodProviderPersian = models.CharField(max_length=10)
     DeliveryBuildingPersian = models.CharField(max_length=10)
-
 
     class Meta:
         managed = False
@@ -564,14 +567,31 @@ class TempUsers(models.Model):
 class HR_constvalue(models.Model):
     Caption = models.CharField(max_length=50)
     Code = models.CharField(max_length=100)
+    Parent = models.ForeignKey(
+        "HR_constvalue",
+        verbose_name="شناسه پدر",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     IsActive = models.BooleanField(default=True)
     OrderNumber = models.PositiveSmallIntegerField(
         null=True, blank=True, default=1
     )
     ConstValue = models.IntegerField(null=True, blank=True)
 
+    def __str__(self):
+        return self.Caption
+
+    @property
+    def ParentTitle(self):
+        return self.Parent.Caption
+
     class Meta:
         db_table = "HR_constvalue"
+        verbose_name = "مقدار ثابت"
+        verbose_name_plural = "مقادیر ثابت"
+        ordering = ["Parent_id", "OrderNumber"]
 
 
 class AdminManipulationReason(models.Model):

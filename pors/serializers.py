@@ -261,14 +261,14 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
 
 
 class FloorSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    title = serializers.CharField()
+    code = serializers.CharField(source="Code")
+    title = serializers.CharField(source="Caption")
 
 
 class BuildingSerializer(serializers.Serializer):
     code = serializers.CharField()
     title = serializers.CharField()
-    floors = FloorSerializer()
+    floors = FloorSerializer(many=True)
 
 
 class UserSerializer(serializers.ModelSerializer):
