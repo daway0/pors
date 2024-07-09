@@ -11,7 +11,12 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
+from .decorators import (
+    authenticate,
+    check,
+    is_open_for_admins,
+    is_open_for_personnel,
+)
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -28,7 +33,6 @@ from .models import (
 from .serializers import (
     AdminManipulationReasonsSerializer,
     AllItemSerializer,
-    BuildingSerializer,
     CategorySerializer,
     Deadline,
     FirstPageSerializer,
@@ -46,7 +50,6 @@ from .utils import (
     get_deadlines,
     localnow,
     split_dates,
-    profile_url,
 )
 
 # todo shipment
@@ -608,37 +611,7 @@ def auth_gateway(request):
 @check([is_open_for_personnel])
 @authenticate()
 def change_delivery_building(request, user: User, override_user: User):
-
-    # fetching buildings from HR services somehow
-    available_buildings = dict()
-
-    # todo shipment
-    # buildings_from_hr = fetch_available_location()
-    # for building in buildings_from_hr:
-    #     available_buildings[building["code"]] = list()
-    #     for floor in building["floors"]:
-    #         available_buildings[building["code"]].append(floor["code"])
-
-    available_buildings["Building_Padidar"] = [
-        "Floor_Padidar_P1",
-        "Floor_Padidar_Lobby",
-        "Floor_Padidar_1",
-        "Floor_Padidar_2",
-        "Floor_Padidar_3",
-        "Floor_Padidar_4",
-        "Floor_Padidar_5",
-    ]
-    available_buildings["Building_Gandi"] = [
-        "Floor_Gandi_Lobby",
-        "Floor_Gandi_1",
-        "Floor_Gandi_2",
-        "Floor_Gandi_3",
-        "Floor_Gandi_4",
-    ]
-
-    validator = b.ValidateDeliveryBuilding(
-        request.data, available_buildings, user, override_user
-    )
+    validator = b.ValidateDeliveryBuilding(request.data, user, override_user)
     if validator.is_valid():
         validator.change_delivery_place()
         message.add_message(

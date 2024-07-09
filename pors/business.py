@@ -960,12 +960,10 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
     def __init__(
         self,
         request_data: dict,
-        buildings: dict[str, list[str]],
         user: m.User,
         override_user: m.User,
     ) -> None:
         super().__init__(user, override_user)
-        self.available_buildings: dict[str, list[str]] = buildings
         self.data = request_data
         self.message: str = ""
         self.error: str = ""
@@ -1038,26 +1036,25 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         Validating provided building and floor via 'available_buildings'.
         """
 
-        if not self.available_buildings:
-            raise ValueError("'buildings' parameter is empty!")
+        if not self.new_delivery_building.startswith("Building_"):
+            raise ValueError("Invalid building value.")
 
-        valid = False
-        for building, floors in self.available_buildings.items():
-            if self.new_delivery_building != building:
-                continue
-
-            elif self.new_delivery_floor not in floors:
-                self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
-                raise ValueError(
-                    "'newDeliveryFloor' value does not exists in available"
-                    " choices."
-                )
-            valid = True
-
-        if not valid:
+        valid_building = m.HR_constvalue.objects.filter(
+            Code=self.new_delivery_building
+        )
+        if not valid_building.exists():
             self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
             raise ValueError(
                 "'newDeliveryBuilding' value does not exists in available"
+                " choices."
+            )
+        valid_floor = m.HR_constvalue.objects.filter(
+            Code=self.new_delivery_floor, Parent_id=valid_building.first().pk
+        )
+        if not valid_floor.exists():
+            self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
+            raise ValueError(
+                "'newDeliveryFloor' value does not exists in available"
                 " choices."
             )
 

@@ -9,7 +9,6 @@ from urllib.parse import urlunparse
 
 import jdatetime
 import pytz
-import requests
 import xlsxwriter
 from django.db import connection
 from django.db.models import QuerySet
@@ -508,7 +507,7 @@ def fetch_available_location():
 
     buildings = []
     for building in qs:
-        floors_qs = m.HR_constvalue.objects.filter(Parent_id=building.id)
+        floors_qs = qs.filter(Parent_id=building.id)
         buildings.append(
             dict(
                 code=building.Code,
@@ -530,22 +529,24 @@ def raise_report_notfound(message_obj: Message, request: Request):
 
 
 def add_mealtype_building(order_row, schema: dict):
+    """
+    Adding buildings info for each meal type in each order record
+    of personnel calendar.
+    """
+
     if (
         order_row["MealType"] == m.MealTypeChoices.LAUNCH
         and schema.get("launchDeliveryBuilding") is None
     ):
-        schema["launchDeliveryBuilding"] = order_row[
-            "DeliveryBuilding"
-        ]
+        schema["launchDeliveryBuilding"] = order_row["DeliveryBuilding"]
         schema["launchDeliveryFloor"] = order_row["DeliveryFloor"]
     elif (
         order_row["MealType"] == m.MealTypeChoices.BREAKFAST
         and schema.get("breakfastDeliveryBuilding") is None
     ):
-        schema["breakfastDeliveryBuilding"] = order_row[
-            "DeliveryBuilding"
-        ]
+        schema["breakfastDeliveryBuilding"] = order_row["DeliveryBuilding"]
         schema["breakfastDeliveryFloor"] = order_row["DeliveryFloor"]
+
 
 def profile_url(username):
     path = HR_PROFILE_PATH + username
