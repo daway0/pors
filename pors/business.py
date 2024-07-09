@@ -425,7 +425,7 @@ class ValidateOrder(OverrideUserValidator):
                 self._validate_date()
                 create and self._validate_primary_item()
             else:
-                self.validate_admin_request
+                self.validate_admin_request(self.data)
 
         except ValueError as e:
             self.error = str(e)
