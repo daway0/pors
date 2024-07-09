@@ -507,7 +507,7 @@ def fetch_available_location():
 
     buildings = []
     for building in qs:
-        floors_qs = qs.filter(Parent_id=building.id)
+        floors_qs = m.HR_constvalue.objects.filter(Parent_id=building.id)
         buildings.append(
             dict(
                 code=building.Code,
