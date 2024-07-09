@@ -212,7 +212,7 @@ function zfill(number, width) {
 function catchResponseMessagesToDisplay(messages) {
     if (messages===undefined) return
     messages.forEach(function (msg){
-        displayDismiss(DISMISSLEVELS[msg.level], msg.message, DISMISSDURATIONS[msg.displayDuration])
+        displayDismiss(DISMISSLEVELS[msg.level], convertToPersianNumber(msg.message), DISMISSDURATIONS[msg.displayDuration])
     })
 }
 function displayDismiss(color, content, duration) {
@@ -733,7 +733,7 @@ function startDownloadReport(fileName, xlsxData) {
     document.body.removeChild(link);
 
     let dm = `دانلود ${link.download} شروع شد `;
-    displayDismiss(DISMISSLEVELS.INFO, dm, DISMISSDURATIONS.DISPLAY_TIME_TEN);
+    displayDismiss(DISMISSLEVELS.INFO, convertToPersianNumber(dm), DISMISSDURATIONS.DISPLAY_TIME_TEN);
 }
 
 

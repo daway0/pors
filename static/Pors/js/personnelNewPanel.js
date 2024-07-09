@@ -273,9 +273,9 @@ function zfill(number, width) {
 }
 
 function catchResponseMessagesToDisplay(messages) {
-    if (messages === undefined) return
-    messages.forEach(function (msg) {
-        displayDismiss(DISMISSLEVELS[msg.level], msg.message, DISMISSDURATIONS[msg.displayDuration])
+    if (messages===undefined) return
+    messages.forEach(function (msg){
+        displayDismiss(DISMISSLEVELS[msg.level], convertToPersianNumber(msg.message), DISMISSDURATIONS[msg.displayDuration])
     })
 }
 
