@@ -418,6 +418,7 @@ class ValidateOrder(OverrideUserValidator):
             if create:
                 self._validate_item_submission()
                 self._validate_default_delivery_building()
+                self._validate_primary_item()
             elif remove:
                 self._validate_item_removal()
 
@@ -509,6 +510,25 @@ class ValidateOrder(OverrideUserValidator):
                 f" {self.item.MealType} related actions"
                 " on this date is over."
             )
+
+    def _validate_primary_item(self):
+        """
+        Checking if user has already ordered a primary item, if so,
+        they are not allowed to submit more.
+
+        Validation returns if the requested item is not primary.
+        """
+        if not self.item.Category.IsPrimary:
+            return
+
+        current_order = m.Order.objects.filter(
+            DeliveryDate=self.date,
+            Personnel=self.user,
+            MealType=m.MealTypeChoices.LAUNCH,
+        ).first()
+        if current_order is not None and current_order.HasPrimary:
+            self.message = "شما نمی‌توانید بیشتر 1 غذای اصلی سفارش دهید."
+            raise ValueError("You cannot submit more than 1 primary item.")
 
     def create_order(self):
         """
@@ -736,28 +756,15 @@ class ValidateBreakfast(OverrideUserValidator):
 
         """
 
-        total_breakfast_orders = (
-            m.OrderItem.objects.filter(
-                Personnel=self.user.Personnel,
-                DeliveryDate=self.date,
-                DeliveryBuilding=self.user.LastDeliveryBuilding,
-                DeliveryFloor=self.user.LastDeliveryFloor,
-                Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
-            )
-            .values("Quantity")
-            .aggregate(total=Coalesce(Sum("Quantity"), Value(0)))["total"]
+        breakfast_order = m.Order.objects.filter(
+            DeliveryDate=self.date,
+            Personnel=self.user,
+            MealType=m.MealTypeChoices.BREAKFAST,
         )
-
-        threshold = (
-            m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
-        )
-        if total_breakfast_orders >= threshold:
-            self.message = (
-                f" امکان سفارش حداکثر{threshold} عدد آیتم صبحانه‌ای وجود دارد."
-            )
+        if breakfast_order.exists():
+            self.message = "امکان سفارش حداکثر 1 عدد آیتم صبحانه‌ای وجود دارد."
             raise ValueError(
-                f"Personnel cannot submit more than {threshold} breakfast"
-                " item(s)."
+                "Personnel cannot submit more than 1 breakfast" " item(s)."
             )
 
     def create_breakfast_order(self):

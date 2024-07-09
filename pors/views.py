@@ -363,9 +363,6 @@ def first_page(request, user: User, override_user: User):
             "latestBuilding": user.LastDeliveryBuilding,
             "latestFloor": user.LastDeliveryFloor,
             "firstOrderableDate": first_orderable_date,
-            "totalItemsCanOrderedForBreakfastByPersonnel": (
-                system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
-            ),
             "godMode": True if override_user else False,
         }
     ).initial_data
