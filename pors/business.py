@@ -423,7 +423,7 @@ class ValidateOrder(OverrideUserValidator):
 
             if not self._is_admin():
                 self._validate_date()
-                self._validate_primary_item()
+                create and self._validate_primary_item()
             else:
                 self.validate_admin_request
 
@@ -516,7 +516,8 @@ class ValidateOrder(OverrideUserValidator):
         Checking if user has already ordered a primary item, if so,
         they are not allowed to submit more.
 
-        Validation returns if the requested item is not primary.
+        Validation returns if the requested item is not primary,
+        or the request is for removing order.
         """
         if not self.item.Category.IsPrimary:
             return
@@ -1124,6 +1125,11 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         """
 
         personnel = self.user.Personnel
+        user = m.User.objects.get(Personnel=personnel)
+        user.LastDeliveryBuilding = self.new_delivery_building
+        user.LastDeliveryFloor = self.new_delivery_floor
+        user.save()
+
         m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
@@ -1154,11 +1160,6 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             reason=self.reason,
             comment=self.comment,
         )
-
-        user = m.User.objects.get(Personnel=personnel)
-        user.LastDeliveryBuilding = self.new_delivery_building
-        user.LastDeliveryFloor = self.new_delivery_floor
-        user.save()
 
     def validated_data(self) -> dict[str, str]:
         return dict(
