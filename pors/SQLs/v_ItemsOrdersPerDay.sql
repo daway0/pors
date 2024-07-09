@@ -1,3 +1,4 @@
+-- تعداد ادم هایی که ایتم خاص رو سفارش دادند و توی ادمین به کار میره کنار هر ایتم
 SELECT ROW_NUMBER() over (ORDER BY dmi.AvailableDate ) as Id, dmi.AvailableDate as [Date],
          dmi.Item_id AS Item,
           COUNT(oi.id) TotalOrders

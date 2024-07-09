@@ -191,6 +191,7 @@ class Category(models.Model):
     """
 
     CategoryName = models.CharField(max_length=300)
+    IsPrimary = models.BooleanField(default=False)
 
     def __str__(self):
         return self.CategoryName
@@ -324,6 +325,7 @@ class Order(models.Model):
     FirstName = models.CharField(max_length=250)
     LastName = models.CharField(max_length=250)
     DeliveryDate = models.CharField(max_length=10)
+    HasPrimary = models.BooleanField()
     SubsidyCap = models.PositiveIntegerField()
     TotalPrice = models.PositiveIntegerField()
 
