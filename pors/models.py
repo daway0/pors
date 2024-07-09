@@ -152,16 +152,6 @@ class SystemSetting(models.Model):
     # Does the system provide breakfast-related services or not?
     IsSystemOpenForBreakfastSubmission = models.BooleanField(default=True)
 
-    # Currently, according to the administrative unit(HR) regulations,
-    # each individual can only order one item from the breakfast menu. This
-    # field determines the total number of orderable items for breakfast.
-    TotalItemsCanOrderedForBreakfastByPersonnel = (
-        models.PositiveSmallIntegerField(
-            null=True,
-            default=1,
-        )
-    )
-
 
 class Holiday(models.Model):
     """
