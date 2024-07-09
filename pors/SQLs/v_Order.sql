@@ -3,6 +3,7 @@ SELECT Row_number()                                                             
        Users.LastName,
        PersonnelService.dbo.pors_orderitem.Personnel                                                       AS Personnel,
        PersonnelService.dbo.pors_orderitem.DeliveryDate                                                    AS DeliveryDate,
+       Sum(cast(pc.IsPrimary as int)) as HasPrimary,
        PersonnelService.dbo.pors_orderitem.DeliveryBuilding                                                AS DeliveryBuilding,
        PersonnelService.dbo.pors_orderitem.DeliveryFloor                                                   AS DeliveryFloor,
        dbp.Caption                                                                                         AS DeliveryBuildingPersian,
@@ -24,8 +25,8 @@ SELECT Row_number()                                                             
 FROM PersonnelService.dbo.pors_orderitem
          INNER JOIN
      PersonnelService.dbo.pors_subsidy AS s
-     ON PersonnelService.dbo.pors_orderitem.deliverydate BETWEEN s.fromdate AND COALESCE(s.untildate, N'1499/12/12')
-         LEFT JOIN
+     ON PersonnelService.dbo.pors_orderitem.deliverydate BETWEEN s.fromdate AND COALESCE(s.untildate, N'1499/12/12') 
+     LEFT JOIN
      Users ON Users.UserName = PersonnelService.dbo.pors_orderitem.Personnel
          INNER JOIN
      HR_constvalue AS dbp ON dbp.Code = PersonnelService.dbo.pors_orderitem.DeliveryBuilding
@@ -33,6 +34,9 @@ FROM PersonnelService.dbo.pors_orderitem
      HR_constvalue AS dfp ON dfp.Code = PersonnelService.dbo.pors_orderitem.DeliveryFloor
          INNER JOIN
      pors_item pi2 on pi2.id = PersonnelService.dbo.pors_orderitem.Item_id
+     	INNER JOIN 
+     pors_category pc on pc.id = pi2.Category_id
+     	
 GROUP BY PersonnelService.dbo.pors_orderitem.personnel, PersonnelService.dbo.pors_orderitem.deliverydate, s.amount,
          Users.FirstName, Users.LastName, PersonnelService.dbo.pors_orderitem.DeliveryBuilding,
          PersonnelService.dbo.pors_orderitem.DeliveryFloor, Users.NationalCode, dbp.Caption, dfp.Caption, pi2.MealType
