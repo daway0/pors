@@ -418,14 +418,14 @@ class ValidateOrder(OverrideUserValidator):
             if create:
                 self._validate_item_submission()
                 self._validate_default_delivery_building()
-                self._validate_primary_item()
             elif remove:
                 self._validate_item_removal()
 
             if not self._is_admin():
                 self._validate_date()
+                self._validate_primary_item()
             else:
-                self.validate_admin_request(self.data)
+                self.validate_admin_request
 
         except ValueError as e:
             self.error = str(e)
@@ -675,10 +675,9 @@ class ValidateBreakfast(OverrideUserValidator):
 
             if not self._is_admin():
                 self._validate_date()
+                self._validate_order()
             else:
                 self.validate_admin_request(self.data)
-
-            self._validate_order()
 
         except ValueError as e:
             self.error = str(e)
