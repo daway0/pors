@@ -5,7 +5,7 @@ from rest_framework import serializers
 from . import business as b
 from . import models as m
 from . import utils as u
-from .models import User
+from .models import MealTypeChoices, User
 
 Deadline = namedtuple("Deadline", "Days Hour")
 
@@ -23,6 +23,7 @@ class AllItemSerializer(serializers.ModelSerializer):
     serveTime = serializers.CharField(source="MealType")
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
+    itemProvider = serializers.CharField(source="ItemProvider")
 
     class Meta:
         model = m.Item
@@ -36,6 +37,7 @@ class AllItemSerializer(serializers.ModelSerializer):
             "serveTime",
             "itemDesc",
             "isActive",
+            "itemProvider",
         )
 
 
@@ -122,6 +124,8 @@ class OrderItemSerializer(serializers.Serializer):
     description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
+    # deliveryBuilding = serializers.CharField(source="DeliveryBuilding")
+    # deliveryFloor = serializers.CharField(source="DeliveryFloor")
 
 
 class OrderSerializer(serializers.Serializer):
@@ -134,13 +138,15 @@ class OrderSerializer(serializers.Serializer):
             serializer = OrderItemSerializer(object).data
             date = schema.get("orderDate")
             if date == object["DeliveryDate"]:
+                u.add_mealtype_building(object, schema)
                 schema["orderItems"].append(serializer)
                 continue
 
             schema = {}
             schema["orderDate"] = object["DeliveryDate"]
-            schema["deliveryBuilding"] = object["DeliveryBuilding"]
-            schema["deliveryFloor"] = object["DeliveryFloor"]
+
+            u.add_mealtype_building(object, schema)
+
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
             schema["orderBill"] = {
@@ -259,14 +265,14 @@ class PersonnelMenuItemSerializer(serializers.Serializer):
 
 
 class FloorSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    title = serializers.CharField()
+    code = serializers.CharField(source="Code")
+    title = serializers.CharField(source="Caption")
 
 
 class BuildingSerializer(serializers.Serializer):
     code = serializers.CharField()
     title = serializers.CharField()
-    floors = FloorSerializer()
+    floors = FloorSerializer(many=True)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -278,3 +284,24 @@ class UserSerializer(serializers.ModelSerializer):
 class PersonnelMonthlyReport(serializers.Serializer):
     year = serializers.IntegerField(max_value=9999, min_value=0000)
     month = serializers.IntegerField(max_value=12, min_value=1)
+
+
+class AdminManipulationReasonsSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source="Title")
+    reasonCode = serializers.CharField(source="ReasonCode")
+
+    class Meta:
+        model = m.AdminManipulationReason
+        fields = ["id", "title", "reasonCode"]
+
+
+class AdminReasonserializer(serializers.Serializer):
+    reason = serializers.IntegerField()
+    comment = serializers.CharField(max_length=250, required=False)
+
+    def validate_reason(self, id):
+        reason = m.AdminManipulationReason.objects.filter(pk=id).first()
+        if reason is None:
+            raise serializers.ValidationError("invalid id")
+
+        return reason

@@ -20,6 +20,7 @@ from .decorators import (
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
+    AdminManipulationReason,
     Category,
     DailyMenuItem,
     Item,
@@ -30,8 +31,8 @@ from .models import (
     User,
 )
 from .serializers import (
+    AdminManipulationReasonsSerializer,
     AllItemSerializer,
-    BuildingSerializer,
     CategorySerializer,
     Deadline,
     FirstPageSerializer,
@@ -49,7 +50,6 @@ from .utils import (
     get_deadlines,
     localnow,
     split_dates,
-    sync_hr_delivery_place_with_pors,
 )
 
 # todo shipment
@@ -58,9 +58,6 @@ from .utils import (
 #     V1_get_data_from_token as get_token_data,
 #     V1_find_token_from_request as find_token
 # )
-#
-# todo shipment
-# from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
 message = Message()
 
@@ -93,14 +90,17 @@ def add_item_to_menu(request, user: User, override_user: User):
     if validator.is_valid():
         validator.add_item()
 
-        message.add_message(request,
+        message.add_message(
+            request,
             "آیتم با موفقیت اضافه شد.",
             Message.SUCCESS,
         )
 
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -127,10 +127,12 @@ def remove_item_from_menu(request, user: User, override_user: User):
     validator = b.ValidateRemove(request.data, user)
     if validator.is_valid():
         validator.remove_item()
-        message.add_message(request,"آیتم با موفقیت حذف شد.", Message.SUCCESS)
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
+        message.add_message(request, "آیتم با موفقیت حذف شد.", Message.SUCCESS)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -175,8 +177,10 @@ def personnel_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(request,
-            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.",
+            Message.ERROR,
         )
         return Response(
             {"messages": message.messages(request), "errors": error_message},
@@ -277,8 +281,10 @@ def edari_calendar(request, user: User, override_user: User):
 
     error_message = b.validate_calendar_request(request.query_params)
     if error_message:
-        message.add_message(request,
-            "خطایی در حین اعتبارسنجی درخواست رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "خطایی در حین اعتبارسنجی درخواست رخ داده است.",
+            Message.ERROR,
         )
         return Response(
             {"messages": message.messages(request), "errors": error_message},
@@ -357,9 +363,6 @@ def first_page(request, user: User, override_user: User):
             "latestBuilding": user.LastDeliveryBuilding,
             "latestFloor": user.LastDeliveryFloor,
             "firstOrderableDate": first_orderable_date,
-            "totalItemsCanOrderedForBreakfastByPersonnel": (
-                system_settings.TotalItemsCanOrderedForBreakfastByPersonnel
-            ),
             "godMode": True if override_user else False,
         }
     ).initial_data
@@ -385,15 +388,17 @@ def create_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
         validator.create_order()
-        message.add_message(request,
-            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.", Message.SUCCESS
+        message.add_message(
+            request,
+            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.",
+            Message.SUCCESS,
         )
         return Response(
             {"messages": message.messages(request)},
             status.HTTP_201_CREATED,
         )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {
             "messages": message.messages(request),
@@ -420,13 +425,16 @@ def remove_order_item(request, user: User, override_user: User):
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
-        message.add_message(request,
-            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.", Message.SUCCESS
+        message.add_message(
+            request,
+            "آیتم مورد نظر با موفقیت از سفارش شما حذف شد.",
+            Message.SUCCESS,
         )
-        return Response({"messages": message.messages(request)},
-                        status.HTTP_200_OK)
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
+        )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -451,12 +459,14 @@ def create_breakfast_order(request, user: User, override_user: User):
     validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
         validator.create_breakfast_order()
-        message.add_message(request,"صبحانه با موفقیت ثبت شد.", message.SUCCESS)
+        message.add_message(
+            request, "صبحانه با موفقیت ثبت شد.", message.SUCCESS
+        )
         return Response(
             {"messages": message.messages(request)}, status.HTTP_201_CREATED
         )
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -467,11 +477,16 @@ def create_breakfast_order(request, user: User, override_user: User):
 def get_subsidy(request):
     date = b.validate_date(request.query_params.get("date"))
     if not date:
-        message.add_message(request,
-            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.", Message.ERROR
+        message.add_message(
+            request,
+            "مشکلی در اعتبارسنجی درخواست شما رخ داده است.",
+            Message.ERROR,
         )
         return Response(
-            {"messages": message.messages(request), "errors": "Invalid 'date' value."}
+            {
+                "messages": message.messages(request),
+                "errors": "Invalid 'date' value.",
+            }
         )
 
     subsidy = (
@@ -509,8 +524,11 @@ def auth_gateway(request):
     #
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
+    # profile = profile_url(personnel)
+
     personnel = "e.rezaee@eit"
     full_name = "erfan rezaee"
+    profile = ""
     is_admin = False
 
     personnel_user_record = User.objects.filter(
@@ -537,9 +555,6 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
-        # todo shipment
-        # profile = user_info(personnel)["StaticPhotoURL"]
-        profile = ""
         token = generate_token_hash(personnel, full_name, getrandbits)
         User.objects.create(
             Personnel=personnel,
@@ -593,50 +608,17 @@ def auth_gateway(request):
 @check([is_open_for_personnel])
 @authenticate()
 def change_delivery_building(request, user: User, override_user: User):
-
-    # fetching buildings from HR services somehow
-    available_buildings = dict()
-
-    # todo shipment
-    # buildings_from_hr = fetch_available_location()
-    # for building in buildings_from_hr:
-    #     available_buildings[building["code"]] = list()
-    #     for floor in building["floors"]:
-    #         available_buildings[building["code"]].append(floor["code"])
-
-    available_buildings["Building_Padidar"] = [
-        "Floor_Padidar_P1",
-        "Floor_Padidar_Lobby",
-        "Floor_Padidar_1",
-        "Floor_Padidar_2",
-        "Floor_Padidar_3",
-        "Floor_Padidar_4",
-        "Floor_Padidar_5",
-    ]
-    available_buildings["Building_Gandi"] = [
-        "Floor_Gandi_Lobby",
-        "Floor_Gandi_1",
-        "Floor_Gandi_2",
-        "Floor_Gandi_3",
-        "Floor_Gandi_4",
-    ]
-
-    validator = b.ValidateDeliveryBuilding(
-        request.data, available_buildings, user, override_user
-    )
+    validator = b.ValidateDeliveryBuilding(request.data, user, override_user)
     if validator.is_valid():
         validator.change_delivery_place()
-        data = validator.validated_data()
-        sync_hr_delivery_place_with_pors(
-            data.get("delivery_building"), data.get("delivery_floor"),
-            override_user or user
+        message.add_message(
+            request, "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
-        message.add_message(request,
-            "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
+        return Response(
+            {"messages": message.messages(request)}, status.HTTP_200_OK
         )
-        return Response({"messages": message.messages(request)}, status.HTTP_200_OK)
 
-    message.add_message(request,validator.message, Message.ERROR)
+    message.add_message(request, validator.message, Message.ERROR)
     return Response(
         {"messages": message.messages(request), "errors": validator.error},
         status.HTTP_400_BAD_REQUEST,
@@ -649,3 +631,12 @@ def change_delivery_building(request, user: User, override_user: User):
 def available_users(request, user, override_user):
     qs = User.objects.all()
     return Response(data=UserSerializer(qs, many=True).data, status=200)
+
+
+@api_view(["GET"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def admin_manipulation_reasons(request, user, override_user):
+    qs = AdminManipulationReason.objects.all()
+    serializer = AdminManipulationReasonsSerializer(qs, many=True).data
+    return Response(serializer, status.HTTP_200_OK)

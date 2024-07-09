@@ -83,14 +83,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'PersonnelService',
+#         'USER': 'sa',
+#         'PASSWORD': 'VzXcrLZP0tEtMZbvtnhxQzew',
+#         'HOST': 'vinson.liara.cloud',
+#         'PORT': '33666',
+
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 17 for SQL Server',
+#         },
+#     },
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'PersonnelService',
-        'USER': 'sa',
-        'PASSWORD': 'VzXcrLZP0tEtMZbvtnhxQzew',
-        'HOST': 'vinson.liara.cloud',
-        'PORT': '33666',
+        'NAME': 'master',
+        # 'USER': 'ARCANE',
+        # 'PASSWORD': 'VzXcrLZP0tEtMZbvtnhxQzew',
+        'HOST': 'localhost',
+        'PORT': '1433',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',

@@ -47,6 +47,11 @@ urlpatterns = [
         name="personnel_daily_report",
     ),
     path(
+        "administrative/reports/daily-foodprovider-ordering/",
+        report_views.food_provider_daily_ordering_report,
+        name="foodprovider_daily_report",
+    ),
+    path(
         "administrative/reports/monthly-orders/",
         report_views.personnel_monthly_report,
     ),
@@ -59,4 +64,6 @@ urlpatterns = [
     path("admin/", views.uiadmin, name="admin_panel"),
     path("", views.ui, name="personnel_panel"),
     path("available-users/", views.available_users, name="available_users"),
+    path("administrative/reasons/", views.admin_manipulation_reasons, name="manipulation_reasons"),
+
 ]

@@ -159,17 +159,17 @@ def get_first_orderable_date(
         if (
             (
                 breakfast_deadline.Days == passed_days
-                and launch_deadline.Days == passed_days
+                and breakfast_deadline.Hour <= now.hour
             )
-            and (
-                breakfast_deadline.Hour <= now.hour
+            or (breakfast_deadline.Days > passed_days)
+        ) and (
+            (
+                launch_deadline.Days == passed_days
                 and launch_deadline.Hour <= now.hour
             )
-            or (
-                breakfast_deadline.Days > passed_days
-                and launch_deadline.Days > passed_days
-            )
+            or (launch_deadline.Days > passed_days)
         ):
+
             passed_days += 1
             if weekday != 6:  # has 7 days only (starts with 0)
                 weekday += 1
@@ -198,9 +198,33 @@ class OverrideUserValidator:
         admin_user: Admin's user object.
     """
 
-    def __init__(self, user: m.User, override_user: m.User) -> None:
+    def __init__(
+        self,
+        user: m.User,
+        override_user: m.User,
+    ) -> None:
         self.user = user if not override_user else override_user
         self.admin_user = user.Personnel if override_user else None
+        self.reason: m.AdminManipulationReason = None
+        self.comment: str = None
+
+    def validate_admin_request(self, data: dict):
+        """
+        Validating request that supposed to come from admin.
+        """
+        s_data = s.AdminReasonserializer(data=data)
+        if not s_data.is_valid():
+            raise ValueError(s_data.errors)
+
+        if s_data.validated_data[
+            "reason"
+        ].Title == "other" and not s_data.validated_data.get("comment"):
+            raise ValueError(
+                "you must provide a comment when using other's reason"
+            )
+
+        self.reason = s_data.validated_data["reason"]
+        self.comment = s_data.validated_data.get("comment")
 
     def _is_admin(self) -> bool:
         if not self.admin_user:
@@ -396,8 +420,13 @@ class ValidateOrder(OverrideUserValidator):
                 self._validate_default_delivery_building()
             elif remove:
                 self._validate_item_removal()
+
             if not self._is_admin():
                 self._validate_date()
+                self._validate_primary_item()
+            else:
+                self.validate_admin_request
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -482,6 +511,25 @@ class ValidateOrder(OverrideUserValidator):
                 " on this date is over."
             )
 
+    def _validate_primary_item(self):
+        """
+        Checking if user has already ordered a primary item, if so,
+        they are not allowed to submit more.
+
+        Validation returns if the requested item is not primary.
+        """
+        if not self.item.Category.IsPrimary:
+            return
+
+        current_order = m.Order.objects.filter(
+            DeliveryDate=self.date,
+            Personnel=self.user,
+            MealType=m.MealTypeChoices.LAUNCH,
+        ).first()
+        if current_order is not None and current_order.HasPrimary:
+            self.message = "شما نمی‌توانید بیشتر 1 غذای اصلی سفارش دهید."
+            raise ValueError("You cannot submit more than 1 primary item.")
+
     def create_order(self):
         """
         Submitting order.
@@ -511,6 +559,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
             return
 
@@ -529,6 +579,8 @@ class ValidateOrder(OverrideUserValidator):
             ),
             user=self.user.Personnel,
             admin=self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
     def remove_order(self):
@@ -557,6 +609,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
         else:
             self.order_item.delete(
@@ -566,6 +620,8 @@ class ValidateOrder(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
 
 
@@ -616,9 +672,13 @@ class ValidateBreakfast(OverrideUserValidator):
             self.date, self.item = validate_request(self.data)
             self._validate_item()
             self._validate_default_delivery_building()
+
             if not self._is_admin():
                 self._validate_date()
-            self._validate_order()
+                self._validate_order()
+            else:
+                self.validate_admin_request(self.data)
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -695,28 +755,15 @@ class ValidateBreakfast(OverrideUserValidator):
 
         """
 
-        total_breakfast_orders = (
-            m.OrderItem.objects.filter(
-                Personnel=self.user.Personnel,
-                DeliveryDate=self.date,
-                DeliveryBuilding=self.user.LastDeliveryBuilding,
-                DeliveryFloor=self.user.LastDeliveryFloor,
-                Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
-            )
-            .values("Quantity")
-            .aggregate(total=Coalesce(Sum("Quantity"), Value(0)))["total"]
+        breakfast_order = m.Order.objects.filter(
+            DeliveryDate=self.date,
+            Personnel=self.user,
+            MealType=m.MealTypeChoices.BREAKFAST,
         )
-
-        threshold = (
-            m.SystemSetting.objects.last().TotalItemsCanOrderedForBreakfastByPersonnel
-        )
-        if total_breakfast_orders >= threshold:
-            self.message = (
-                f" امکان سفارش حداکثر{threshold} عدد آیتم صبحانه‌ای وجود دارد."
-            )
+        if breakfast_order.exists():
+            self.message = "امکان سفارش حداکثر 1 عدد آیتم صبحانه‌ای وجود دارد."
             raise ValueError(
-                f"Personnel cannot submit more than {threshold} breakfast"
-                " item(s)."
+                "Personnel cannot submit more than 1 breakfast" " item(s)."
             )
 
     def create_breakfast_order(self):
@@ -746,6 +793,8 @@ class ValidateBreakfast(OverrideUserValidator):
                 ),
                 user=self.user.Personnel,
                 admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
             )
             return
 
@@ -763,6 +812,8 @@ class ValidateBreakfast(OverrideUserValidator):
             ),
             user=self.user.Personnel,
             admin=self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
 
@@ -915,12 +966,10 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
     def __init__(
         self,
         request_data: dict,
-        buildings: dict[str, list[str]],
         user: m.User,
         override_user: m.User,
     ) -> None:
         super().__init__(user, override_user)
-        self.available_buildings: dict[str, list[str]] = buildings
         self.data = request_data
         self.message: str = ""
         self.error: str = ""
@@ -943,8 +992,12 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             self._validate_request()
             self._validate_building()
             self._validate_order_items()
+
             if not self._is_admin():
                 self._validate_date()
+            else:
+                self.validate_admin_request(self.data)
+
         except ValueError as e:
             self.error = str(e)
             return False
@@ -964,14 +1017,22 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         date = self.data.get("date")
         new_delivery_building = self.data.get("newDeliveryBuilding")
         new_delivery_floor = self.data.get("newDeliveryFloor")
-        if not (date and new_delivery_building and new_delivery_floor):
+        meal_type = self.data.get("mealType")
+        if not (
+            date and new_delivery_building and new_delivery_floor and meal_type
+        ):
             raise ValueError(
-                "'date', 'newDeliveryBuilding' and 'newDeliveryFloor'"
-                " parameters must specified."
+                "'date', 'newDeliveryBuilding', 'newDeliveryFloor'"
+                " and 'mealType' parameters must specified."
             )
 
         self.new_delivery_building = new_delivery_building
         self.new_delivery_floor = new_delivery_floor
+        self.meal_type = meal_type
+
+        if meal_type not in m.MealTypeChoices.values:
+            raise ValueError("Invalid 'mealType' value")
+
         self.date = validate_date(date)
         if not self.date:
             raise ValueError("Invalid 'date' value.")
@@ -981,26 +1042,25 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         Validating provided building and floor via 'available_buildings'.
         """
 
-        if not self.available_buildings:
-            raise ValueError("'buildings' parameter is empty!")
+        if not self.new_delivery_building.startswith("Building_"):
+            raise ValueError("Invalid building value.")
 
-        valid = False
-        for building, floors in self.available_buildings.items():
-            if self.new_delivery_building != building:
-                continue
-
-            elif self.new_delivery_floor not in floors:
-                self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
-                raise ValueError(
-                    "'newDeliveryFloor' value does not exists in available"
-                    " choices."
-                )
-            valid = True
-
-        if not valid:
+        valid_building = m.HR_constvalue.objects.filter(
+            Code=self.new_delivery_building
+        )
+        if not valid_building.exists():
             self.message = "ساختمان انتخابی شما در سیستم موجود نمی‌باشد."
             raise ValueError(
                 "'newDeliveryBuilding' value does not exists in available"
+                " choices."
+            )
+        valid_floor = m.HR_constvalue.objects.filter(
+            Code=self.new_delivery_floor, Parent_id=valid_building.first().pk
+        )
+        if not valid_floor.exists():
+            self.message = "طبقه انتخابی شما در سیستم موجود نمی‌باشد."
+            raise ValueError(
+                "'newDeliveryFloor' value does not exists in available"
                 " choices."
             )
 
@@ -1015,6 +1075,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         current_order = m.Order.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            MealType=self.meal_type,
         ).first()
 
         if current_order and (
@@ -1037,23 +1098,22 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         """
 
         date_obj = create_jdate_object(self.date)
-        deadlines: dict[str, s.Deadline] = get_specific_deadline(
-            weekday=date_obj.weekday(), deadline=s.Deadline
+        deadline: s.Deadline = get_specific_deadline(
+            weekday=date_obj.weekday(),
+            meal_type=self.meal_type,
+            deadline=s.Deadline,
         )
         now = localnow()
 
-        for deadline in deadlines.values():
-            is_valid = is_date_valid_for_action(
-                now, self.date, deadline.Days, deadline.Hour
-            )
+        is_valid = is_date_valid_for_action(
+            now, self.date, deadline.Days, deadline.Hour
+        )
 
-            if not is_valid:
-                self.message = (
-                    "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
-                )
-                raise ValueError(
-                    "Deadline for changing delivery building is over."
-                )
+        if not is_valid:
+            self.message = "مهلت عوض کردن ساختمان تحویل سفارش تمام شده است."
+            raise ValueError(
+                "Deadline for changing delivery building is over."
+            )
 
     def change_delivery_place(self):
         """
@@ -1067,6 +1127,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
+            Item__MealType=self.meal_type,
         ).update(
             DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,
@@ -1078,7 +1139,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             m.ActionLog.ActionTypeChoices.UPDATE,
             personnel,
             f"Delivery place has changed to {self.new_delivery_building}  {self.new_delivery_floor} "
-            f"for {self.date}",
+            f"for {self.date} and meal type {self.meal_type}",
             m.OrderItem,
             None,
             (
@@ -1090,6 +1151,8 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 else None
             ),
             self.admin_user,
+            reason=self.reason,
+            comment=self.comment,
         )
 
         user = m.User.objects.get(Personnel=personnel)
