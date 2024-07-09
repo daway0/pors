@@ -25,6 +25,7 @@ from .messages import Message
 HR_SCHEME = "http"
 HR_HOST = "192.168.20.81"
 HR_PORT = "14000"
+HR_PROFILE_PATH = "/media/HR/PersonalPhoto/"
 
 
 def localnow() -> jdatetime.datetime:
@@ -518,27 +519,6 @@ def fetch_available_location():
     return BuildingSerializer(buildings, many=True).data
 
 
-def sync_hr_delivery_place_with_pors(
-    latest_building: str, latest_floor: str, user: m.User
-):
-    # todo shipment
-
-    path = f"/HR/api/v1/user-location/{user.Personnel}"
-    url = urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
-    res = requests.patch(
-        url,
-        {"latestBuilding": latest_building, "latestFloor": latest_floor},
-        timeout=30,
-    )
-    if not res.status_code == 200:
-        raise ValueError(
-            "Something went wrong when updating HR source with pors db."
-        )
-
-    # todo shipment
-    # pass
-
-
 def raise_report_notfound(message_obj: Message, request: Request):
     msg = "هیچ رکوردی بین بازه ارائه داده شده موجود نیست."
     error = "Queryset is empty!"
@@ -566,3 +546,7 @@ def add_mealtype_building(order_row, schema: dict):
             "DeliveryBuilding"
         ]
         schema["breakfastDeliveryFloor"] = order_row["DeliveryFloor"]
+
+def profile_url(username):
+    path = HR_PROFILE_PATH + username
+    return urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))

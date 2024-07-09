@@ -46,7 +46,7 @@ from .utils import (
     get_deadlines,
     localnow,
     split_dates,
-    sync_hr_delivery_place_with_pors,
+    profile_url,
 )
 
 # todo shipment
@@ -55,9 +55,6 @@ from .utils import (
 #     V1_get_data_from_token as get_token_data,
 #     V1_find_token_from_request as find_token
 # )
-#
-# todo shipment
-# from Utility.APIManager.HR.get_single_user_info import v1 as user_info
 
 message = Message()
 
@@ -527,8 +524,11 @@ def auth_gateway(request):
     #
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
+    # profile = profile_url(personnel)
+
     personnel = "e.rezaee@eit"
     full_name = "erfan rezaee"
+    profile = ""
     is_admin = False
 
     personnel_user_record = User.objects.filter(
@@ -555,9 +555,6 @@ def auth_gateway(request):
         # In this scenario, we will create a user record, with an api key
         # that will set as a cookie for personnel.
 
-        # todo shipment
-        # profile = user_info(personnel)["StaticPhotoURL"]
-        profile = ""
         token = generate_token_hash(personnel, full_name, getrandbits)
         User.objects.create(
             Personnel=personnel,
@@ -644,13 +641,6 @@ def change_delivery_building(request, user: User, override_user: User):
     )
     if validator.is_valid():
         validator.change_delivery_place()
-
-        # todo shipment
-        # data = validator.validated_data()
-        # sync_hr_delivery_place_with_pors(
-        #     data.get("delivery_building"), data.get("delivery_floor"),
-        #     override_user or user
-        # )
         message.add_message(
             request, "محل تحویل سفارش با موفقیت تغییر یافت.", Message.SUCCESS
         )
