@@ -90,6 +90,7 @@ let actionReasonObj = {}
 let currentDeliveryChangingMealType = "LNC"
 let BRFOrderItemsCount = undefined
 let LNCOrderItemsCount = undefined
+const bpUsers = ["padidar.guest@eit","gandi.guest@eit"]
 
 function getDeliveryPlaceTitleByCode(code) {
     for (const building of deliveryPlaces) {
@@ -734,6 +735,13 @@ function updateOrderBillDetail() {
         $LNCDeliveryRow.addClass("hidden")
     }
 
+    // admin cannot change delivery place for guest users! 
+    // check if user is in bypass users and admin is in god mode, hidden deliveryplace
+    if (godMode && bpUsers.includes(userName)){
+        $BRFDeliveryEdit.addClass("hidden")
+        $LNCDeliveryEdit.addClass("hidden")
+    }
+
     if (orderItems.length === 0) {
         billDisplay(false)
         return
@@ -778,34 +786,6 @@ function updateItemMenuDetails(id, quantity) {
         changedItem.addClass("bg-gray-200")
     }
     changedItem.find(".item-quantity").text(convertToPersianNumber(quantity))
-}
-
-function canAddNewItem(itemId) {
-    /*     چک های مرتبط با محدودیت و باقی مانده طرفیت اینجا صورت می گیرد
-        برای مثال با توجه به متغیر orderableBreakFastItemCount که از بکند
-         دریافت می شود و به صورت پیشفرض 1 بوده است یعنی اینکه مجموع ایتم های
-          قابل سفارش صبحانه 1 است
-
-          نکته توالی شروط در اینجا باید رعایت شود چرا که فقط یک ارور مسیج باز
-           خواهد گشت
-     */
-
-    let item = allItems.find(function (obj) {
-        return obj.id === itemId
-    })
-    let sumBreakfastItems = orderTotalItemsQuantity(["BRF"])
-    if (item.serveTime === "BRF" && sumBreakfastItems >= orderableBreakFastItemCount) {
-        let x = convertToPersianNumber(orderableBreakFastItemCount)
-        return {
-            "res": false,
-            "msg": `امکان اضافه کردن حداکثر ${x} آیتم به منوی صبحانه روز وجود دارد`
-        }
-    }
-    return {
-        "res": true
-    }
-
-
 }
 
 function addNewItemToMenu(id) {
@@ -1087,8 +1067,8 @@ $(document).ready(function () {
 
     let targetURL = undefined
     let overrideUser = localStorage.getItem("nextUsername")
-    let godModeEntryReason = parseInt(localStorage.getItem("godModeEntryReason"))
-    let godModeEntryReasonComment = localStorage.getItem("godModeEntryReasonComment")
+    godModeEntryReason = parseInt(localStorage.getItem("godModeEntryReason"))
+    godModeEntryReasonComment = localStorage.getItem("godModeEntryReasonComment")
 
 
     if (overrideUser) {
@@ -1239,15 +1219,6 @@ $(document).ready(function () {
             url = addPrefixTo(addOverrideUsernameIfIsAdmin(`create-order/`, userName))
         }
         let id = parseInt($(this).parent().parent().parent().parent().attr("data-item-id"))
-        let can = canAddNewItem(id)
-        if (!can.res) {
-            displayDismiss(
-                DISMISSLEVELS.ERROR,
-                can.msg,
-                DISMISSDURATIONS.DISPLAY_TIME_SHORT
-            )
-            return
-        }
 
         // check if delivery place specified or not, if both delivery building or floor are undefined, then system
         // displays delivery modal, and the added item is going to store in queue. after the delivery place was selected
