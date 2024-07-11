@@ -20,6 +20,7 @@ should be recorded in the ActionLog table.
 Prices are in Toman everywhere.
 """
 
+from django.core.mail import send_mail
 from django.db import models
 from django.forms.models import model_to_dict
 
@@ -305,6 +306,37 @@ class Deadlines(Logger):
     Hour = models.PositiveSmallIntegerField(
         default=0,
     )
+    weekday_persian = {
+        0: "شنبه",
+        1: "یکشنبه",
+        2: "دوشنبه",
+        3: "سه‌شنبه",
+        4: "چهارشنبه",
+        5: "پنج‌شنبه",
+        6: "جمعه",
+    }
+
+    @staticmethod
+    def update(
+        WeekDay: int, MealType: str, Days: int, Hour: int, admin_user: User
+    ):
+        deadline = Deadlines.objects.get(WeekDay=WeekDay, MealType=MealType)
+        prev_days = deadline.Days
+        prev_hours = deadline.Hour
+
+        deadline.Days = Days
+        deadline.Hour = Hour
+        deadline.save()
+
+        send_mail(
+            subject="آپدیت مهلت ثبت سفارش",
+            message=f"سفارش برای روز {Deadlines.weekday_persian[WeekDay]} "
+            f"از {prev_days} روز و {prev_hours} ساعت، "
+            f"به {deadline.Days} روز و {deadline.Hour} ساعت تغییر یافت.\n"
+            f"ادمین تغییر دهنده: آقا/خانم {admin_user.FullName}.",
+            from_email="pors@eit.com",
+            recipient_list=["admin@eit.com"],
+        )
 
 
 class Order(models.Model):

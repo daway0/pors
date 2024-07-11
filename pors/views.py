@@ -23,6 +23,7 @@ from .models import (
     AdminManipulationReason,
     Category,
     DailyMenuItem,
+    Deadlines,
     Item,
     ItemsOrdersPerDay,
     Order,
@@ -35,6 +36,7 @@ from .serializers import (
     AllItemSerializer,
     CategorySerializer,
     Deadline,
+    DeadlineSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
@@ -640,3 +642,17 @@ def admin_manipulation_reasons(request, user, override_user):
     qs = AdminManipulationReason.objects.all()
     serializer = AdminManipulationReasonsSerializer(qs, many=True).data
     return Response(serializer, status.HTTP_200_OK)
+
+
+@api_view(["GET", "PATCH"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def deadline(request, user, override_user):
+    if request.method == "PATCH":
+        serializer = DeadlineSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+        Deadlines.update(**serializer.validated_data, admin_user=user)
+
+        return Response(status=status.HTTP_200_OK)

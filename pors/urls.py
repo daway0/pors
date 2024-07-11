@@ -65,5 +65,6 @@ urlpatterns = [
     path("", views.ui, name="personnel_panel"),
     path("available-users/", views.available_users, name="available_users"),
     path("administrative/reasons/", views.admin_manipulation_reasons, name="manipulation_reasons"),
+    path("administrative/deadline/", views.deadline, name="deadline"),
 
 ]
