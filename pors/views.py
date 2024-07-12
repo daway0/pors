@@ -2,7 +2,7 @@ from random import getrandbits
 
 from django.db.models import Q
 from django.http.response import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_list_or_404, render
 from django.urls import reverse
 from jdatetime import timedelta
 from rest_framework import status
@@ -647,12 +647,17 @@ def admin_manipulation_reasons(request, user, override_user):
 @api_view(["GET", "PATCH"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def deadline(request, user, override_user):
-    if request.method == "PATCH":
-        serializer = DeadlineSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+def deadline(request, user, override_user, weekday: int):
+    if request.method == "GET":
+        deadlines = get_list_or_404(Deadlines, WeekDay=weekday)
+        serializer = DeadlineSerializer(deadlines, many=True)
 
-        Deadlines.update(**serializer.validated_data, admin_user=user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(status=status.HTTP_200_OK)
+    serializer = DeadlineSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    Deadlines.update(**serializer.validated_data, admin_user=user)
+
+    return Response(status=status.HTTP_200_OK)

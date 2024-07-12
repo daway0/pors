@@ -20,6 +20,8 @@ should be recorded in the ActionLog table.
 Prices are in Toman everywhere.
 """
 
+from threading import Thread
+
 from django.core.mail import send_mail
 from django.db import models
 from django.forms.models import model_to_dict
@@ -326,17 +328,65 @@ class Deadlines(Logger):
 
         deadline.Days = Days
         deadline.Hour = Hour
-        deadline.save()
-
-        send_mail(
-            subject="آپدیت مهلت ثبت سفارش",
-            message=f"سفارش برای روز {Deadlines.weekday_persian[WeekDay]} "
-            f"از {prev_days} روز و {prev_hours} ساعت، "
-            f"به {deadline.Days} روز و {deadline.Hour} ساعت تغییر یافت.\n"
-            f"ادمین تغییر دهنده: آقا/خانم {admin_user.FullName}.",
-            from_email="pors@eit.com",
-            recipient_list=["admin@eit.com"],
+        deadline.save(
+            log=f"Deadline for weekday {WeekDay} changed",
+            admin=admin_user,
         )
+
+        email_process = Thread(
+            target=Deadlines._send_deadline_notif,
+            args=(
+                Deadlines.weekday_persian,
+                WeekDay,
+                prev_days,
+                prev_hours,
+                deadline,
+                admin_user,
+            ),
+        )
+        email_process.start()
+
+    @staticmethod
+    def _send_deadline_notif(
+        weekday_persian: dict,
+        weekday: int,
+        prev_days: int,
+        prev_hours: int,
+        new_deadline: "Deadlines",
+        admin_user: User,
+    ):
+        subject = "آپدیت مهلت ثبت سفارش"
+        message = (
+            f"سفارش برای روز {weekday_persian[weekday]} "
+            f"از {prev_days} روز و {prev_hours} ساعت، "
+            f"به {new_deadline.Days} روز و {new_deadline.Hour} ساعت تغییر یافت.\n"
+            f"ادمین تغییر دهنده: آقا/خانم {admin_user.FullName}."
+        )
+        from_email = "pors@eit.com"
+        recipient_list = ["admin@eit.com"]
+
+        total_tries = 0
+        success = 0
+
+        while success == 0:
+            try:
+                success = send_mail(
+                    subject, message, from_email, recipient_list
+                )
+            except:
+                total_tries += 1
+
+                if total_tries < 3:
+                    continue
+                else:
+                    ActionLog.objects.log(
+                        action_type=ActionLog.ActionTypeChoices.UPDATE,
+                        log_msg=message,
+                        model=Deadlines,
+                        record_id=new_deadline.pk,
+                        admin=admin_user.Personnel,
+                    )
+                    break
 
 
 class Order(models.Model):

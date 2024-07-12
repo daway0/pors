@@ -66,5 +66,6 @@ urlpatterns = [
     path("available-users/", views.available_users, name="available_users"),
     path("administrative/reasons/", views.admin_manipulation_reasons, name="manipulation_reasons"),
     path("administrative/deadline/", views.deadline, name="deadline"),
+    path("administrative/deadline/<int:weekday>/", views.deadline, name="deadline"),
 
 ]
