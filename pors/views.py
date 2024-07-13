@@ -671,10 +671,16 @@ def deadline(request, user, override_user, weekday: int):
 @check([is_open_for_personnel])
 @authenticate()
 def item_like(request, user, override_user, item_id: int):
+    """
+    Responsible for liking specific item.
+
+    Users cannot submit feedback for items they haven't ordered in past month
+    or they have already submitted a feedback for it.
+    """
+
     item = get_object_or_404(Item, pk=item_id)
 
-    now = localnow()
-    if not item.valid_for_feedback(user, now.year, now.month):
+    if not item.valid_for_feedback(user):
         return invalid_request(
             request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
         )
@@ -692,10 +698,16 @@ def item_like(request, user, override_user, item_id: int):
 @check([is_open_for_personnel])
 @authenticate()
 def item_diss_like(request, user, override_user, item_id: int):
+    """
+    Responsible for liking specific item.
+
+    Users cannot submit feedback for items they haven't ordered in past month
+    or they have already submitted a feedback for it.
+    """
+
     item = get_object_or_404(Item, pk=item_id)
 
-    now = localnow()
-    if not item.valid_for_feedback(user, now.year, now.month):
+    if not item.valid_for_feedback(user):
         return invalid_request(
             request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
         )
@@ -713,6 +725,13 @@ def item_diss_like(request, user, override_user, item_id: int):
 @check([is_open_for_personnel])
 @authenticate()
 def remove_item_feedback(request, user, override_user, item_id: int):
+    """
+    Removing feedback (like/diss_like) from a specific item.
+
+    Type is not important since users cannot like and diss like
+    an item simultaneously.
+    """
+
     item = get_object_or_404(Item, pk=item_id)
     deleted_id = item.remove_feedback(user)
     if deleted_id == 0:
@@ -731,6 +750,17 @@ def remove_item_feedback(request, user, override_user, item_id: int):
 def comments(
     request, user, override_user, item_id: int = None, comment_id: int = None
 ):
+    """
+    Responsible for list/add/deleting comments for a specific item.
+
+    GET:
+        Listing all comments for that item.
+    POST:
+        Adding comment (Must have ordered this item in last 30 days).
+    Delete:
+        Deleting a specific comment (comment_id) from item.
+    """
+
     if request.method == "GET":
         item = get_object_or_404(Item, pk=item_id)
         comments = CommentSerializer(
@@ -740,9 +770,8 @@ def comments(
 
     elif request.method == "POST":
         item = get_object_or_404(Item, pk=item_id)
-        
-        now = localnow()
-        if not item.valid_for_feedback(user, now.year, now.month):
+
+        if not item.valid_for_feedback(user):
             return invalid_request(
                 request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
             )
@@ -755,7 +784,7 @@ def comments(
         return Response({"id": cm_id.id}, status.HTTP_201_CREATED)
 
     else:
-        cm = get_object_or_404(ItemComments, pk=comment_id)
+        cm = get_object_or_404(ItemComments, pk=comment_id, User=user)
         cm.delete()
 
         return valid_request(request, message, "کامنت با موفقیت حذف شد.")

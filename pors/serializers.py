@@ -329,6 +329,7 @@ class DeadlineSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
     user = serializers.CharField(read_only=True, source="User.FullName")
     created = serializers.CharField(read_only=True, source="Created")
     comment = serializers.CharField(max_length=500, source="Comment")

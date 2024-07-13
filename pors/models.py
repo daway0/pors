@@ -355,7 +355,14 @@ class Item(models.Model):
             Item=self, User=user, Comment=Comment
         )
 
-    def valid_for_feedback(self, user: User, year: int, month: int) -> bool:
+    def valid_for_feedback(self, user: User) -> bool:
+        """
+        Validating if user is able to submit feedback for this item.
+
+        User must have ordered this item in last 30 days in order to be able
+        to submit feedback for it.
+        """
+
         return OrderItem.objects.filter(
             Item=self,
             Personnel=user.Personnel,
