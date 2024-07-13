@@ -535,7 +535,7 @@ def auth_gateway(request):
     personnel = "e.rezaee@eit"
     full_name = "erfan rezaee"
     profile = ""
-    is_admin = False
+    is_admin = True
 
     personnel_user_record = User.objects.filter(
         Personnel=personnel, IsActive=True
@@ -673,6 +673,12 @@ def deadline(request, user, override_user, weekday: int):
 def item_like(request, user, override_user, item_id: int):
     item = get_object_or_404(Item, pk=item_id)
 
+    now = localnow()
+    if not item.valid_for_feedback(user, now.year, now.month):
+        return invalid_request(
+            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+        )
+
     liked = item.like(user)
     if liked is None:
         return invalid_request(
@@ -687,6 +693,12 @@ def item_like(request, user, override_user, item_id: int):
 @authenticate()
 def item_diss_like(request, user, override_user, item_id: int):
     item = get_object_or_404(Item, pk=item_id)
+
+    now = localnow()
+    if not item.valid_for_feedback(user, now.year, now.month):
+        return invalid_request(
+            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+        )
 
     diss_liked = item.diss_like(user)
     if diss_liked is None:
@@ -728,6 +740,13 @@ def comments(
 
     elif request.method == "POST":
         item = get_object_or_404(Item, pk=item_id)
+        
+        now = localnow()
+        if not item.valid_for_feedback(user, now.year, now.month):
+            return invalid_request(
+                request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+            )
+
         serializer = CommentSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)

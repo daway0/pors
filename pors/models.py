@@ -35,6 +35,14 @@ def localnow_str() -> jdatetime.datetime:
     return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
 
 
+def localnow_minus_days(days_to_go_back: int) -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc) - jdatetime.timedelta(
+        days=days_to_go_back
+    )
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
+
+
 class Logger(models.Model):
     # todo doc
     def save(self, *args, **kwargs):
@@ -346,6 +354,13 @@ class Item(models.Model):
         return ItemComments.objects.create(
             Item=self, User=user, Comment=Comment
         )
+
+    def valid_for_feedback(self, user: User, year: int, month: int) -> bool:
+        return OrderItem.objects.filter(
+            Item=self,
+            Personnel=user.Personnel,
+            DeliveryDate__range=[localnow_minus_days(30), localnow_str()],
+        ).exists()
 
     def __str__(self):
         return self.ItemName
