@@ -24,6 +24,9 @@ class AllItemSerializer(serializers.ModelSerializer):
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
     itemProvider = serializers.CharField(source="ItemProvider")
+    totalLikes = serializers.IntegerField(source="Total_Likes")
+    TotalDissLikes = serializers.IntegerField(source="Total_Diss_Likes")
+    TotalComments = serializers.IntegerField(source="Total_Comments")
 
     class Meta:
         model = m.Item
@@ -38,6 +41,9 @@ class AllItemSerializer(serializers.ModelSerializer):
             "itemDesc",
             "isActive",
             "itemProvider",
+            "totalLikes",
+            "TotalDissLikes",
+            "TotalComments"
         )
 
 

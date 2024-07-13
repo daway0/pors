@@ -307,6 +307,22 @@ class Item(models.Model):
         "ItemProvider", on_delete=models.SET_NULL, null=True
     )
 
+    @property
+    def Total_Likes(self):
+        return ItemLikes.objects.filter(
+            Item=self, Type=ItemLikeType.LIKE
+        ).count()
+
+    @property
+    def Total_Diss_Likes(self):
+        return ItemLikes.objects.filter(
+            Item=self, Type=ItemLikeType.DISS_LIKE
+        ).count()
+
+    @property
+    def Total_Comments(self):
+        return self.Comments.count()
+
     def like(self, user: User) -> "ItemLikes":
         if self.Feedbacks.filter(id=user.id):
             return
@@ -721,15 +737,11 @@ class ItemLikes(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Type = models.CharField(choices=ItemLikeType.choices, max_length=1)
-    Created = models.CharField(
-        default=localnow_str, max_length=20
-    )
+    Created = models.CharField(default=localnow_str, max_length=20)
 
 
 class ItemComments(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Comment = models.TextField()
-    Created = models.CharField(
-        default=localnow_str, max_length=20
-    )
+    Created = models.CharField(default=localnow_str, max_length=20)
