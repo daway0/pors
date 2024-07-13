@@ -22,9 +22,17 @@ Prices are in Toman everywhere.
 
 from threading import Thread
 
+import jdatetime
+import pytz
 from django.core.mail import send_mail
 from django.db import models
 from django.forms.models import model_to_dict
+
+
+def localnow_str() -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc)
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
 
 
 class Logger(models.Model):
@@ -283,6 +291,12 @@ class Item(models.Model):
         null=True,
         blank=True,
     )
+    Feedbacks = models.ManyToManyField(
+        User, through="ItemLikes", related_name="feedbacks"
+    )
+    Comments = models.ManyToManyField(
+        User, through="ItemComments", related_name="comments"
+    )
 
     # This field should not be modified by the admin or even the DBA.
     # Changes to this field should occur when adding a new record to the
@@ -292,6 +306,30 @@ class Item(models.Model):
     ItemProvider = models.ForeignKey(
         "ItemProvider", on_delete=models.SET_NULL, null=True
     )
+
+    def like(self, user: User) -> "ItemLikes":
+        if self.Feedbacks.filter(id=user.id):
+            return
+
+        return ItemLikes.objects.create(
+            Item=self, User=user, Type=ItemLikeType.LIKE
+        )
+
+    def diss_like(self, user: User) -> "ItemLikes":
+        if self.Feedbacks.filter(id=user.id):
+            return
+
+        return ItemLikes.objects.create(
+            Item=self, User=user, Type=ItemLikeType.DISS_LIKE
+        )
+
+    def remove_feedback(self, user: User):
+        return self.Feedbacks.filter(id=user.id).delete()[0]
+
+    def add_comment(self, user: User, Comment: str) -> "ItemComments":
+        return ItemComments.objects.create(
+            Item=self, User=user, Comment=Comment
+        )
 
     def __str__(self):
         return self.ItemName
@@ -672,3 +710,26 @@ class HR_constvalue(models.Model):
 class AdminManipulationReason(models.Model):
     Title = models.CharField(max_length=350)
     ReasonCode = models.CharField(max_length=50, null=True)
+
+
+class ItemLikeType(models.TextChoices):
+    LIKE = "L", "دوست داشتم"
+    DISS_LIKE = "D", "دوست نداشتم"
+
+
+class ItemLikes(Logger):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE)
+    Type = models.CharField(choices=ItemLikeType.choices, max_length=1)
+    Created = models.CharField(
+        default=localnow_str, max_length=20
+    )
+
+
+class ItemComments(Logger):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE)
+    Comment = models.TextField()
+    Created = models.CharField(
+        default=localnow_str, max_length=20
+    )

@@ -320,3 +320,9 @@ class DeadlineSerializer(serializers.Serializer):
             raise serializers.ValidationError("invalid meal type value.")
         
         return mealtype
+
+
+class CommentSerializer(serializers.Serializer):
+    user = serializers.CharField(read_only=True, source="User.FullName")
+    created = serializers.CharField(read_only=True, source="Created")
+    comment = serializers.CharField(max_length=500, source="Comment")

@@ -551,3 +551,24 @@ def add_mealtype_building(order_row, schema: dict):
 def profile_url(username):
     path = HR_PROFILE_PATH + username
     return urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+
+
+def invalid_request(request, message_obj: Message, msg: str) -> Response:
+    message_obj.add_message(
+        request,
+        msg,
+        Message.ERROR,
+    )
+    return Response(
+        {"messages": message_obj.messages(request)},
+        status.HTTP_400_BAD_REQUEST,
+    )
+
+
+def valid_request(request, message_obj: Message, msg: str) -> Response:
+    message_obj.add_message(
+        request, msg, message_obj.SUCCESS
+    )
+    return Response(
+        {"messages": message_obj.messages(request)}, status.HTTP_200_OK
+    )

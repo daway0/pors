@@ -2,7 +2,7 @@ from random import getrandbits
 
 from django.db.models import Q
 from django.http.response import HttpResponse
-from django.shortcuts import get_list_or_404, render
+from django.shortcuts import get_list_or_404, get_object_or_404, render
 from django.urls import reverse
 from jdatetime import timedelta
 from rest_framework import status
@@ -25,6 +25,7 @@ from .models import (
     DailyMenuItem,
     Deadlines,
     Item,
+    ItemComments,
     ItemsOrdersPerDay,
     Order,
     Subsidy,
@@ -35,6 +36,7 @@ from .serializers import (
     AdminManipulationReasonsSerializer,
     AllItemSerializer,
     CategorySerializer,
+    CommentSerializer,
     Deadline,
     DeadlineSerializer,
     FirstPageSerializer,
@@ -50,8 +52,10 @@ from .utils import (
     first_and_last_day_date,
     generate_token_hash,
     get_deadlines,
+    invalid_request,
     localnow,
     split_dates,
+    valid_request,
 )
 
 # todo shipment
@@ -661,3 +665,78 @@ def deadline(request, user, override_user, weekday: int):
     Deadlines.update(**serializer.validated_data, admin_user=user)
 
     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def item_like(request, user, override_user, item_id: int):
+    item = get_object_or_404(Item, pk=item_id)
+
+    liked = item.like(user)
+    if liked is None:
+        return invalid_request(
+            request, message, "شما در حال حاضر برای این آیتم نظر ثبت کرده‌اید."
+        )
+
+    return valid_request(request, message, "آیتم با موفقیت لایک شد.")
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def item_diss_like(request, user, override_user, item_id: int):
+    item = get_object_or_404(Item, pk=item_id)
+
+    diss_liked = item.diss_like(user)
+    if diss_liked is None:
+        return invalid_request(
+            request, message, "شما در حال حاضر برای این آیتم نظر ثبت کرده‌اید."
+        )
+
+    return valid_request(request, message, "آیتم با موفقیت دیس‌لایک شد.")
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def remove_item_feedback(request, user, override_user, item_id: int):
+    item = get_object_or_404(Item, pk=item_id)
+    deleted_id = item.remove_feedback(user)
+    if deleted_id == 0:
+        return invalid_request(
+            request,
+            message,
+            "شما در حال حاضر برای این آیتم نظری ثبت نکرده‌اید.",
+        )
+
+    return valid_request(request, message, "نظر شما با موفقیت حذف شد.")
+
+
+@api_view(["GET", "POST", "DELETE"])
+@check([is_open_for_personnel])
+@authenticate()
+def comments(
+    request, user, override_user, item_id: int = None, comment_id: int = None
+):
+    if request.method == "GET":
+        item = get_object_or_404(Item, pk=item_id)
+        comments = CommentSerializer(
+            item.Comments.through.objects.all(), many=True
+        )
+        return Response(comments.data, status=status.HTTP_200_OK)
+
+    elif request.method == "POST":
+        item = get_object_or_404(Item, pk=item_id)
+        serializer = CommentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+        cm_id = item.add_comment(user, **serializer.validated_data)
+        return Response({"id": cm_id.id}, status.HTTP_201_CREATED)
+
+    else:
+        cm = get_object_or_404(ItemComments, pk=comment_id)
+        cm.delete()
+
+        return valid_request(request, message, "کامنت با موفقیت حذف شد.")
