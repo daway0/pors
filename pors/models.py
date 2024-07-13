@@ -299,12 +299,6 @@ class Item(models.Model):
         null=True,
         blank=True,
     )
-    Feedbacks = models.ManyToManyField(
-        User, through="ItemLikes", related_name="feedbacks"
-    )
-    Comments = models.ManyToManyField(
-        User, through="ItemComments", related_name="comments"
-    )
 
     # This field should not be modified by the admin or even the DBA.
     # Changes to this field should occur when adding a new record to the
@@ -773,15 +767,17 @@ class ItemLikeType(models.TextChoices):
     DISS_LIKE = "D", "دوست نداشتم"
 
 
-class ItemLikes(Logger):
+
+
+class Comment(Logger):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE)
+    Text = models.TextField()
+    Created = models.CharField(default=localnow_str, max_length=20)
+    
+
+class Feedback(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Type = models.CharField(choices=ItemLikeType.choices, max_length=1)
-    Created = models.CharField(default=localnow_str, max_length=20)
-
-
-class ItemComments(Logger):
-    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    User = models.ForeignKey(User, on_delete=models.CASCADE)
-    Comment = models.TextField()
     Created = models.CharField(default=localnow_str, max_length=20)
