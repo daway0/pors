@@ -335,25 +335,42 @@ class Item(models.Model):
         if self.Feedbacks.filter(id=user.id):
             return
 
-        return ItemLikes.objects.create(
-            Item=self, User=user, Type=ItemLikeType.LIKE
+        record = ItemLikes(
+            Item=self,
+            User=user,
+            Type=ItemLikeType.LIKE,
         )
+        record.save(
+            user=user.Personnel,
+            log=f"{user.Personnel} just liked item {self.ItemName}",
+        )
+        return record
 
     def diss_like(self, user: User) -> "ItemLikes":
         if self.Feedbacks.filter(id=user.id):
             return
 
-        return ItemLikes.objects.create(
-            Item=self, User=user, Type=ItemLikeType.DISS_LIKE
+        record = ItemLikes(
+            Item=self,
+            User=user,
+            Type=ItemLikeType.DISS_LIKE,
         )
+        record.save(
+            user=user.Personnel,
+            log=f"{user.Personnel} just diss liked item {self.ItemName}",
+        )
+        return record
 
     def remove_feedback(self, user: User):
         return self.Feedbacks.filter(id=user.id).delete()[0]
 
     def add_comment(self, user: User, Comment: str) -> "ItemComments":
-        return ItemComments.objects.create(
-            Item=self, User=user, Comment=Comment
+        record = ItemComments(Item=self, User=user, Comment=Comment)
+        record.save(
+            user=user.Personnel,
+            log=f"just added a comment for {self.ItemName},\n {Comment}",
         )
+        return record
 
     def valid_for_feedback(self, user: User) -> bool:
         """
@@ -405,7 +422,8 @@ class Deadlines(Logger):
         deadline.Days = Days
         deadline.Hour = Hour
         deadline.save(
-            log=f"Deadline for weekday {WeekDay} changed",
+            log=f"Deadline for weekday {WeekDay} changed to "
+            f"{Days} days and {Hour} hours.",
             admin=admin_user,
         )
 
