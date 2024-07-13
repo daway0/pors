@@ -25,7 +25,7 @@ from .models import (
     DailyMenuItem,
     Deadlines,
     Item,
-    ItemComments,
+    Comment,
     ItemsOrdersPerDay,
     Order,
     Subsidy,
@@ -762,9 +762,8 @@ def comments(
     """
 
     if request.method == "GET":
-        item = get_object_or_404(Item, pk=item_id)
         comments = CommentSerializer(
-            item.Comments.through.objects.all(), many=True
+            Comment.objects.filter(Item=item_id), many=True
         )
         return Response(comments.data, status=status.HTTP_200_OK)
 
@@ -784,7 +783,7 @@ def comments(
         return Response({"id": cm_id.id}, status.HTTP_201_CREATED)
 
     else:
-        cm = get_object_or_404(ItemComments, pk=comment_id, User=user)
+        cm = get_object_or_404(Comment, pk=comment_id, User=user)
         cm.delete()
 
         return valid_request(request, message, "کامنت با موفقیت حذف شد.")

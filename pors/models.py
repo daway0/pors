@@ -311,25 +311,25 @@ class Item(models.Model):
 
     @property
     def Total_Likes(self):
-        return ItemLikes.objects.filter(
+        return Feedback.objects.filter(
             Item=self, Type=ItemLikeType.LIKE
         ).count()
 
     @property
     def Total_Diss_Likes(self):
-        return ItemLikes.objects.filter(
+        return Feedback.objects.filter(
             Item=self, Type=ItemLikeType.DISS_LIKE
         ).count()
 
     @property
     def Total_Comments(self):
-        return self.Comments.count()
+        return Comment.objects.filter(Item=self).count()
 
-    def like(self, user: User) -> "ItemLikes":
-        if self.Feedbacks.filter(id=user.id):
+    def like(self, user: User) -> "Feedback":
+        if Feedback.objects.filter(User=user):
             return
 
-        record = ItemLikes(
+        record = Feedback(
             Item=self,
             User=user,
             Type=ItemLikeType.LIKE,
@@ -340,11 +340,11 @@ class Item(models.Model):
         )
         return record
 
-    def diss_like(self, user: User) -> "ItemLikes":
-        if self.Feedbacks.filter(id=user.id):
+    def diss_like(self, user: User) -> "Feedback":
+        if Feedback.objects.filter(User=user):
             return
 
-        record = ItemLikes(
+        record = Feedback(
             Item=self,
             User=user,
             Type=ItemLikeType.DISS_LIKE,
@@ -356,13 +356,13 @@ class Item(models.Model):
         return record
 
     def remove_feedback(self, user: User):
-        return self.Feedbacks.filter(id=user.id).delete()[0]
+        return Feedback.objects.filter(User=user).delete()[0]
 
-    def add_comment(self, user: User, Comment: str) -> "ItemComments":
-        record = ItemComments(Item=self, User=user, Comment=Comment)
+    def add_comment(self, user: User, Text: str) -> "Comment":
+        record = Comment(Item=self, User=user, Text=Text)
         record.save(
             user=user.Personnel,
-            log=f"just added a comment for {self.ItemName},\n {Comment}",
+            log=f"just added a comment for {self.ItemName},\n {Text}",
         )
         return record
 
@@ -767,14 +767,12 @@ class ItemLikeType(models.TextChoices):
     DISS_LIKE = "D", "دوست نداشتم"
 
 
-
-
 class Comment(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Text = models.TextField()
     Created = models.CharField(default=localnow_str, max_length=20)
-    
+
 
 class Feedback(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)

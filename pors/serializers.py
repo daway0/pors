@@ -43,7 +43,7 @@ class AllItemSerializer(serializers.ModelSerializer):
             "itemProvider",
             "totalLikes",
             "TotalDissLikes",
-            "TotalComments"
+            "TotalComments",
         )
 
 
@@ -324,7 +324,7 @@ class DeadlineSerializer(serializers.Serializer):
     def validate_mealType(self, mealtype: str):
         if mealtype not in m.MealTypeChoices.values:
             raise serializers.ValidationError("invalid meal type value.")
-        
+
         return mealtype
 
 
@@ -332,4 +332,4 @@ class CommentSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     user = serializers.CharField(read_only=True, source="User.FullName")
     created = serializers.CharField(read_only=True, source="Created")
-    comment = serializers.CharField(max_length=500, source="Comment")
+    text = serializers.CharField(max_length=500, source="Text")
