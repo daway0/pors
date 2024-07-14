@@ -318,75 +318,15 @@ class Deadlines(Logger):
         6: "جمعه",
     }
 
-    @staticmethod
     def update(
-        WeekDay: int, MealType: str, Days: int, Hour: int, admin_user: User
+        self, Days: int, Hour: int, admin_user: User
     ):
-        deadline = Deadlines.objects.get(WeekDay=WeekDay, MealType=MealType)
-        prev_days = deadline.Days
-        prev_hours = deadline.Hour
-
-        deadline.Days = Days
-        deadline.Hour = Hour
-        deadline.save(
-            log=f"Deadline for weekday {WeekDay} changed",
-            admin=admin_user,
+        self.Days = Days
+        self.Hour = Hour
+        self.save(
+            log=f"Deadline for weekday {self.WeekDay} changed",
+            admin=admin_user.Personnel,
         )
-
-        email_process = Thread(
-            target=Deadlines._send_deadline_notif,
-            args=(
-                Deadlines.weekday_persian,
-                WeekDay,
-                prev_days,
-                prev_hours,
-                deadline,
-                admin_user,
-            ),
-        )
-        email_process.start()
-
-    @staticmethod
-    def _send_deadline_notif(
-        weekday_persian: dict,
-        weekday: int,
-        prev_days: int,
-        prev_hours: int,
-        new_deadline: "Deadlines",
-        admin_user: User,
-    ):
-        subject = "آپدیت مهلت ثبت سفارش"
-        message = (
-            f"سفارش برای روز {weekday_persian[weekday]} "
-            f"از {prev_days} روز و {prev_hours} ساعت، "
-            f"به {new_deadline.Days} روز و {new_deadline.Hour} ساعت تغییر یافت.\n"
-            f"ادمین تغییر دهنده: آقا/خانم {admin_user.FullName}."
-        )
-        from_email = "pors@eit.com"
-        recipient_list = ["admin@eit.com"]
-
-        total_tries = 0
-        success = 0
-
-        while success == 0:
-            try:
-                success = send_mail(
-                    subject, message, from_email, recipient_list
-                )
-            except:
-                total_tries += 1
-
-                if total_tries < 3:
-                    continue
-                else:
-                    ActionLog.objects.log(
-                        action_type=ActionLog.ActionTypeChoices.UPDATE,
-                        log_msg=message,
-                        model=Deadlines,
-                        record_id=new_deadline.pk,
-                        admin=admin_user.Personnel,
-                    )
-                    break
 
 
 class Order(models.Model):

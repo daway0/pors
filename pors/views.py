@@ -2,7 +2,7 @@ from random import getrandbits
 
 from django.db.models import Q
 from django.http.response import HttpResponse
-from django.shortcuts import get_list_or_404, render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from jdatetime import timedelta
 from rest_framework import status
@@ -11,12 +11,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import (
-    authenticate,
-    check,
-    is_open_for_admins,
-    is_open_for_personnel,
-)
+from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -647,9 +642,9 @@ def admin_manipulation_reasons(request, user, override_user):
 @api_view(["GET", "PATCH"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def deadline(request, user, override_user, weekday: int):
+def deadlines(request, user, override_user, deadline_id=None):
     if request.method == "GET":
-        deadlines = get_list_or_404(Deadlines, WeekDay=weekday)
+        deadlines = Deadlines.objects.all()
         serializer = DeadlineSerializer(deadlines, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -658,6 +653,7 @@ def deadline(request, user, override_user, weekday: int):
     if not serializer.is_valid():
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
-    Deadlines.update(**serializer.validated_data, admin_user=user)
+    deadline = get_object_or_404(Deadlines, pk=deadline_id)
+    deadline.update(**serializer.validated_data, admin_user=user)
 
     return Response(status=status.HTTP_200_OK)
