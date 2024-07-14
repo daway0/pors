@@ -1,9 +1,9 @@
 import json
-from typing import Optional
+from threading import Thread
+from typing import Callable, Optional
 
 import jdatetime
-from django.db.models import Sum, Value
-from django.db.models.functions import Coalesce
+from django.core.mail import send_mail
 
 from . import models as m
 from . import serializers as s
@@ -230,6 +230,50 @@ class OverrideUserValidator:
         if not self.admin_user:
             return False
         return True
+
+    def email_notif(func: Callable):
+
+        def wrapper(self, *args, **kwargs):
+
+            func(self, *args, **kwargs)
+            if self.admin_user is not None:
+                print("here")
+                self.send_email_notif(
+                    "تغییر سفارش",
+                    f"سفارش شما توسط {self.admin_user} تغییر یافت.",
+                )
+            return
+
+        return wrapper
+
+    def send_email_notif(self, subject: str, message: str):
+        email_thread = Thread(
+            target=self._send_email,
+            args=(subject, message),
+        )
+        email_thread.start()
+
+    def _send_email(self, subject: str, message: str):
+        total_tries = 0
+        success = 0
+
+        while success == 0:
+            try:
+                success = send_mail(
+                    subject, message, "pors_admin@eit", [self.user.Personnel]
+                )
+            except Exception as e:
+                total_tries += 1
+
+                if total_tries < 3:
+                    continue
+                else:
+                    m.ActionLog.objects.log(
+                        action_type=m.ActionLog.ActionTypeChoices.CREATE,
+                        log_msg=f"An error occured while tried to send email "
+                        f"notif, {str(e)}",
+                    )
+                    break
 
 
 class ValidateRemove:
@@ -531,6 +575,7 @@ class ValidateOrder(OverrideUserValidator):
             self.message = "شما نمی‌توانید بیشتر 1 غذای اصلی سفارش دهید."
             raise ValueError("You cannot submit more than 1 primary item.")
 
+    @OverrideUserValidator.email_notif
     def create_order(self):
         """
         Submitting order.
@@ -584,6 +629,7 @@ class ValidateOrder(OverrideUserValidator):
             comment=self.comment,
         )
 
+    @OverrideUserValidator.email_notif
     def remove_order(self):
         """
         Removing the specified order.
@@ -767,6 +813,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 "Personnel cannot submit more than 1 breakfast" " item(s)."
             )
 
+    @OverrideUserValidator.email_notif
     def create_breakfast_order(self):
         """
         Creating breakfast order for personnel
