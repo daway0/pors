@@ -38,6 +38,7 @@ from .serializers import (
     CategorySerializer,
     Deadline,
     DeadlineSerializer,
+    UpdateDeadlineSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
@@ -648,20 +649,20 @@ def admin_manipulation_reasons(request, user, override_user):
 @api_view(["GET", "PATCH"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def deadlines(request, user, override_user, deadline_id=None):
+def deadlines(request, user, override_user):
     if request.method == "GET":
-        deadlines = Deadlines.objects.all()
+        deadlines = Deadlines.objects.exclude(WeekDay__in=[5, 6]).order_by(
+            "WeekDay"
+        )
         serializer = DeadlineSerializer(deadlines, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    serializer = DeadlineSerializer(data=request.data)
+    serializer = UpdateDeadlineSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
-    deadline = get_object_or_404(Deadlines, pk=deadline_id)
-    deadline.update(**serializer.validated_data, admin_user=user)
-
+    Deadlines.update(serializer.validated_data, user)
     return Response(status=status.HTTP_200_OK)
 
 
