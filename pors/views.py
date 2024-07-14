@@ -1,6 +1,7 @@
 from random import getrandbits
 
 from django.db.models import Q
+from django.forms import model_to_dict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -11,12 +12,19 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
+from .decorators import (
+    authenticate,
+    check,
+    is_open_for_admins,
+    is_open_for_personnel,
+)
+from .forms import CreateItemForm
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
     AdminManipulationReason,
     Category,
+    Comment,
     DailyMenuItem,
     Deadlines,
     Item,
@@ -657,3 +665,41 @@ def deadlines(request, user, override_user, deadline_id=None):
     deadline.update(**serializer.validated_data, admin_user=user)
 
     return Response(status=status.HTTP_200_OK)
+
+
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def item(request, user, override_user, item_id=None):
+    if request.method == "GET":
+        if item_id is None:
+            form = CreateItemForm()
+        else:
+            item = get_object_or_404(Item, pk=item_id)
+            form = CreateItemForm(item)
+
+        return render(request, "test.html", {"form": form})
+
+    form = CreateItemForm(data=request.POST)
+    if not form.is_valid():
+        return render(
+            request,
+            "test.html",
+            {"form": form},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if item_id is not None:
+        item = get_object_or_404(Item, pk=item_id)
+        for field, value in form.cleaned_data.items():
+            setattr(item, field, value)
+
+        item.save()
+        return render(
+            request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
+        )
+
+    else:
+        form.create(form.cleaned_data)
+        return render(
+            request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
+        )

@@ -64,8 +64,20 @@ urlpatterns = [
     path("admin/", views.uiadmin, name="admin_panel"),
     path("", views.ui, name="personnel_panel"),
     path("available-users/", views.available_users, name="available_users"),
-    path("administrative/reasons/", views.admin_manipulation_reasons, name="manipulation_reasons"),
+    path(
+        "administrative/reasons/",
+        views.admin_manipulation_reasons,
+        name="manipulation_reasons",
+    ),
     path("administrative/deadlines/", views.deadlines, name="deadlines"),
-    path("administrative/deadlines/<int:deadline_id>/", views.deadlines, name="update_deadline"),
-
+    path(
+        "administrative/deadlines/<int:deadline_id>/",
+        views.deadlines,
+        name="update_deadline",
+    ),
+    path(
+        "items/<int:item_id>/",
+        views.item,
+        name="item",
+    ),
 ]
