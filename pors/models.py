@@ -20,9 +20,6 @@ should be recorded in the ActionLog table.
 Prices are in Toman everywhere.
 """
 
-from threading import Thread
-
-from django.core.mail import send_mail
 from django.db import models
 from django.forms.models import model_to_dict
 

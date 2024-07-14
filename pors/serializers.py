@@ -5,7 +5,7 @@ from rest_framework import serializers
 from . import business as b
 from . import models as m
 from . import utils as u
-from .models import MealTypeChoices, User
+from .models import User
 
 Deadline = namedtuple("Deadline", "Days Hour")
 

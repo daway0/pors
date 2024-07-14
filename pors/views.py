@@ -1,7 +1,6 @@
 from random import getrandbits
 
 from django.db.models import Q
-from django.forms import model_to_dict
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -24,7 +23,6 @@ from .messages import Message
 from .models import (
     AdminManipulationReason,
     Category,
-    Comment,
     DailyMenuItem,
     Deadlines,
     Item,
