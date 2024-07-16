@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تغییر مهلت زمان سفارش‌گذاری</title>
+    <style>
+        body {
+            font-family: Tahoma;
+        }
+    </style>
+</head>
+<body>
+    <p>
+        همکار گرامی،
+    </p>
+    <p>
+        با سلام و احترام،
+    </p>
+    <p>
+        به اطلاع می‌رساند که به منظور بهبود خدمات و هماهنگی بهتر در توزیع تغذیه، تغییراتی در مهلت زمان سفارش‌گذاری اعمال شده است. از این پس، زمان‌های جدید به شرح زیر خواهد بود:
+    </p>
+    {% for deadline in deadlines %}
+        {% if "BRF" in changed %}
+            <p>
+                <b>سفارش صبحانه:</b>
+                <span>
+                    {% if deadline.days==0 %}همان روز{% endif %}
+                    {% if deadline.days==1 %}روز قبل{% endif %}
+                    {% if deadline.days>1 %}{{deadline.days}} روز قبل{% endif %} 
+                    حداکثر تا ساعت{{deadline.hours}}
+                </span>
+            </p>
+        {% endif %}
+        {% if "LNC" in changed %}
+            <p>
+                <b>سفارش ناهار:</b>
+                <span>
+                    {% if deadline.days==0 %}همان روز{% endif %}
+                    {% if deadline.days==1 %}روز قبل{% endif %}
+                    {% if deadline.days>1 %}{{deadline.days}} روز قبل{% endif %} 
+                    حداکثر تا ساعت{{deadline.hours}}
+                </span>
+            </p>
+        {% endif %}
+    {% endfor %}
+    
+    <p>
+        خواهشمندیم برای بهره‌مندی بهتر از خدمات، سفارشات خود را در بازه‌های زمانی فوق ثبت نمایید.
+    </p>
+    <p>
+        با تشکر از همکاری و توجه شما.
+    </p>
+</body>
+</html>

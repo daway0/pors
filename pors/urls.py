@@ -71,11 +71,6 @@ urlpatterns = [
     ),
     path("administrative/deadlines/", views.deadlines, name="deadlines"),
     path(
-        "administrative/deadlines/<int:deadline_id>/",
-        views.deadlines,
-        name="update_deadline",
-    ),
-    path(
         "items/<int:item_id>/",
         views.item,
         name="item",

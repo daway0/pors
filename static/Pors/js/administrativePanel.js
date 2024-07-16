@@ -74,6 +74,7 @@ let allItems = undefined
 let godModeEntryReason = undefined
 let godModeEntryReasonComment = undefined
 let godModUsername = undefined
+let deadlines = undefined
 
 
 
@@ -238,6 +239,19 @@ function displayDismiss(color, content, duration) {
 
 }
 
+function disableDeadlineSubmitButton() {
+    const $btn = $("#deadline-submit")                 
+        $btn.attr("disabled")
+        $btn.removeClass("bg-green-700 hover:bg-green-800 cursor-pointer") 
+        $btn.addClass("bg-gray-500") 
+}
+function enableDeadlineSubmitButton() {
+    const $btn = $("#deadline-submit")                 
+        $btn.removeAttr("disabled")
+        $btn.removeClass("bg-gray-500") 
+        $btn.addClass("bg-green-700 hover:bg-green-800 cursor-pointer") 
+}
+
 function canAdminChangeMenu() {
     // این تابع کاری به این نداره که ایتمی که ملت سفارش دادن حذف بشه یا
     // نشه؟‌اون در جای دیگری چک میشه
@@ -398,6 +412,32 @@ function loadMenu(day, month, year) {
     }
 
 
+}
+
+function makeDeadlineModal(data) {
+    let modal = ""
+    let $modal = $("#deadlines-modal-body-container .deadlines-container")
+    const todayTitle = "امروز"
+    const pastDays = "روز قبل"
+    data.forEach(function (obj) {
+        modal += `<div data-mealtype="${obj.mealType}" class="deadline-row flex flex-row gap-1 items-center bg-slate-100 rounded-md p-2">
+                    <p class="w-1/4 text-sm">
+                        ${obj.mealType==="LNC" ? "ناهار" : "صبحانه"}
+                    </p>
+                    <div class="relative max-w-sm w-2/3 text-sm">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <svg class="w-3 h-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                        </svg>
+                        </div>
+                        <input disabled value="${obj.days!==0? convertToPersianNumber(obj.days):""} ${obj.days===0 ? todayTitle:pastDays} ساعت ${convertToPersianNumber(obj.hours-1)} " type="text"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pr-8 py-2.5 px-0.5" placeholder="تعداد روز ">
+                    </div>
+                    <input value="${obj.days}" type="text" data-days="${obj.days}" aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-day border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/4 p-2.5 " placeholder="10" required />
+                    <input value="${obj.hours-1}" type="text" data-hours="${obj.hours-1}" aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-hour  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/4 p-2.5 " placeholder="10" required />
+                </div>`
+    })
+    $modal.empty()
+    $modal.append(modal)
 }
 
 function makeReportSectionMenu() {
@@ -1204,7 +1244,7 @@ $(document).ready(function () {
         if ($("#reason-select option:selected").attr("data-reason-code")==="OTHER"){
             // check has comment or not !
             if (!godModeEntryReasonComment.trim()){
-                displayDismiss(DISMISSLEVELS["ERROR"], "علت را وارد کنید", DISMISSDURATIONS["DISPLAY_TIME_TEN"])
+                displayDismiss(DISMISSLEVELS.ERROR, "علت را وارد کنید", DISMISSDURATIONS.DISPLAY_TIME_TEN)
                 return
             }
         }
@@ -1228,5 +1268,124 @@ $(document).ready(function () {
         $("#admin-action-reason-modal").click()
     })
 
+
+    $(document).on('click', '#settings-dropdown #s-deadlines', function () {
+        // fetching new deadlines and then make it
+        $.ajax({
+            url: addPrefixTo('administrative/deadlines/'),
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                makeDeadlineModal(data)
+                deadlines = data
+                disableDeadlineSubmitButton()
+                $("#deadline-notification").prop("checked", false)
+                $("#deadlines-modal").click()
+            },
+            error: function (xhr, status, error) {
+                console.error('Deadline modal cannot be constructed, data cannot feteched', status, 'and' +
+                    ' error:', error, 'detail:', xhr.responseJSON);
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+            }
+        });
+    })
+    $(document).on('input', ".deadline-day, .deadline-hour" ,function () {
+        // check if deadlines changed then deadline submit button get displayed 
+        const oldDealine = JSON.stringify(deadlines)
+        
+        let liveDeadlines = []
+        $(".deadline-row").each(function () {
+            let mealType = $(this).attr("data-mealtype")
+            let days = parseInt($(this).find(".deadline-day").val())
+            let hours = parseInt($(this).find(".deadline-hour").val())+1 
+            liveDeadlines.push({days:days, hours:hours, mealType:mealType})
+        })
+        const newDealine = JSON.stringify(liveDeadlines)
+        console.log(newDealine, oldDealine)
+        if (newDealine === oldDealine){
+            disableDeadlineSubmitButton()
+            return
+        } 
+        enableDeadlineSubmitButton()                
+    })
+    $(document).on('click', '#deadline-submit', function () {
+        // gathering data and send to back
+        let deadlines = []
+        let isValid = true
+
+        $(".deadline-row").each(function () {
+            if (!isValid) return
+
+            let mealType = $(this).attr("data-mealtype")
+            let days = parseInt($(this).find(".deadline-day").val())
+            let hours = parseInt($(this).find(".deadline-hour").val()) 
+            
+            // lets validate them
+            // megative hours and days
+            let err
+            if (days < 0 || hours < 0) {
+                err= "مقادیر نمی توانند منفی باشند"
+                displayDismiss(DISMISSLEVELS.ERROR, err,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
+                isValid = false
+                return 
+            }
+
+            
+            // check emptyness 
+            if ($(this).find(".deadline-day").val()==="" || $(this).find(".deadline-hour").val()==="") {
+                err= "مقادیر نمی تواند خالی باشد"
+                displayDismiss(DISMISSLEVELS.ERROR, err,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
+                isValid = false
+                return
+            }
+
+            // check numeric value 
+            if (isNaN(days) || isNaN(hours)) {
+                err= "مقادیر باید به صورت عددی وارد شوند"
+                displayDismiss(DISMISSLEVELS.ERROR, err,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
+                isValid = false
+                return
+            }
+            
+            // check boundry
+            if (hours < 0 || hours >= 24) {
+                err= "ساعت تعیین شده مجاز نیست"
+                displayDismiss(DISMISSLEVELS.ERROR, err,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
+                isValid = false
+                return
+            }
+
+            // +1 is for fanavaran pytz bug
+            deadlines.push({mealType:mealType, days:days, hours:hours+1})
+        })
+
+        if (!isValid) return
+
+        
+        let notifyPersonnel = $("#deadline-notification").prop("checked")   
+        let data = {notifyPersonnel:notifyPersonnel, deadlines: deadlines}
+        
+        $.ajax({
+            url: addPrefixTo(`administrative/deadlines/`),
+            method: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            statusCode:{
+                200: function (data) {
+                    let em="تغییرات اعمال شدند"
+                    displayDismiss(DISMISSLEVELS.SUCCESS, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
+                    $("#deadlines-modal").click()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Deadline change submission failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
+                displayDismiss(DISMISSLEVELS.ERROR, "مشکلی در اعمال تغییرات روی مهلت های سیستم پیش آمده است", DISMISSDURATIONS.DISPLAY_TIME_TEN)
+            }
+        });
+    })
+
+    
 });
 

@@ -16,7 +16,7 @@
     </div>
 
 
-    {#    -------------------#}
+    {#-------------------#}
 
     <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch"
             data-dropdown-placement="bottom"
@@ -79,6 +79,33 @@
             aria-labelledby="dropdownDefaultButton">
         </ul>
     </div>
+    
+    {#----------#}
+    <button id="settings-dropdownDefaultButton" data-dropdown-toggle="settings-dropdown"
+            class="text-gray-800 bg-blue-100 hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center"
+            type="button"> تنظیمات 
+        <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true"
+             xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="2"
+                  d="m1 1 4 4 4-4"/>
+        </svg>
+    </button>
+
+    <!-- settings-Dropdown menu -->
+    <div id="settings-dropdown"
+         class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-64">
+        <ul id="settings-wrapper" class="py-2 text-xs text-gray-700"
+            aria-labelledby="settings-dropdownDefaultButton">
+            <li>
+                <a id="s-deadlines" href="#" class="block px-4 py-2 hover:bg-gray-100">مهلت سفارش گیری</a>
+            </li>
+        </ul>
+    </div>
+    
+
+
     <div class="cursor-pointer hidden">
         تغییر به سمت پرسنل
     </div>

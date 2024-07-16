@@ -22,6 +22,7 @@ Prices are in Toman everywhere.
 
 from django.db import models
 from django.forms.models import model_to_dict
+from django.template.loader import render_to_string
 
 
 class Logger(models.Model):
@@ -348,10 +349,12 @@ class Deadlines(Logger):
                             "Personnel", flat=True
                         )
                     )
-                    message = (
-                        f"مهلت ثبت سفارش {records[0].get_MealType_display()} "
-                        f"به {new_days} روز و {new_hours} ساعت تغییر یافت."
-                    )
+                    # message = (
+                    #     f"مهلت ثبت سفارش {records[0].get_MealType_display()} "
+                    #     f"به {new_days} روز و {new_hours} ساعت تغییر یافت."
+                    # )
+                    message = render_to_string("emails/changedDeadline.html", dict(changed=None, deadlines=deadlines))
+
                     subject = "تغییر مهلت ثبت سفارش"
 
                     from .utils import send_email_notif
