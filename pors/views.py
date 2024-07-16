@@ -22,10 +22,10 @@ from .messages import Message
 from .models import (
     AdminManipulationReason,
     Category,
+    Comment,
     DailyMenuItem,
     Deadlines,
     Item,
-    Comment,
     ItemsOrdersPerDay,
     Order,
     Subsidy,
@@ -744,7 +744,7 @@ def remove_item_feedback(request, user, override_user, item_id: int):
     return valid_request(request, message, "نظر شما با موفقیت حذف شد.")
 
 
-@api_view(["GET", "POST", "DELETE"])
+@api_view(["GET", "POST", "DELETE", "PATCH"])
 @check([is_open_for_personnel])
 @authenticate()
 def comments(
@@ -772,7 +772,9 @@ def comments(
 
         if not item.valid_for_feedback(user):
             return invalid_request(
-                request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+                request,
+                message,
+                "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
             )
 
         serializer = CommentSerializer(data=request.data)
@@ -782,8 +784,18 @@ def comments(
         cm_id = item.add_comment(user, **serializer.validated_data)
         return Response({"id": cm_id.id}, status.HTTP_201_CREATED)
 
-    else:
+    elif request.method == "DELETE":
         cm = get_object_or_404(Comment, pk=comment_id, User=user)
-        cm.delete()
 
         return valid_request(request, message, "کامنت با موفقیت حذف شد.")
+
+    elif request.method == "PATCH":
+        cm = get_object_or_404(Comment, pk=comment_id, User=user)
+        serializer = CommentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return invalid_request(request, message, "", serializer.errors)
+
+        cm.update(serializer.validated_data["Text"])
+        return valid_request(
+            request, message, "کامنت شما با موفیت تغییر یافت."
+        )

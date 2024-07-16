@@ -706,6 +706,15 @@ class Comment(Logger):
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Text = models.TextField()
     Created = models.CharField(default=localnow_str, max_length=20)
+    Updated = models.CharField(default=localnow_str, max_length=20)
+
+    def update(self, new_text: str):
+        if self.Text == new_text:
+            return
+        
+        self.Text = new_text
+        self.Updated = localnow_str()
+        self.save()
 
 
 class Feedback(Logger):

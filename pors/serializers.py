@@ -332,4 +332,5 @@ class CommentSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     user = serializers.CharField(read_only=True, source="User.FullName")
     created = serializers.CharField(read_only=True, source="Created")
+    updated = serializers.CharField(read_only=True, source="Updated")
     text = serializers.CharField(max_length=500, source="Text")
