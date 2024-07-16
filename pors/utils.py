@@ -4,12 +4,14 @@ import io
 import json
 import re
 from hashlib import sha256
+from threading import Thread
 from typing import Optional
 from urllib.parse import urlunparse
 
 import jdatetime
 import pytz
 import xlsxwriter
+from django.core.mail import send_mail
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -551,3 +553,36 @@ def add_mealtype_building(order_row, schema: dict):
 def profile_url(username):
     path = HR_PROFILE_PATH + username
     return urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
+
+
+def send_email_notif(
+    subject: str, message: str, emails: list[str], max_tries: int = 1
+):
+    email_thread = Thread(
+        target=_send_mail,
+        args=(subject, message, emails, max_tries),
+    )
+    email_thread.start()
+
+
+def _send_mail(
+    subject: str, message: str, emails: list[str], max_tries: int
+):
+    total_tries = 0
+    success = 0
+
+    while success == 0:
+        try:
+            success = send_mail(subject, message, "pors@iraneit.com", emails)
+        except Exception as e:
+            total_tries += 1
+
+            if total_tries < max_tries:
+                continue
+            else:
+                m.ActionLog.objects.log(
+                    action_type=m.ActionLog.ActionTypeChoices.CREATE,
+                    log_msg=f"An error occured while tried to send email "
+                    f"notif, {str(e)}",
+                )
+                break

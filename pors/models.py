@@ -20,9 +20,6 @@ should be recorded in the ActionLog table.
 Prices are in Toman everywhere.
 """
 
-from threading import Thread
-
-from django.core.mail import send_mail
 from django.db import models
 from django.forms.models import model_to_dict
 
@@ -308,67 +305,57 @@ class Deadlines(Logger):
     Hour = models.PositiveSmallIntegerField(
         default=0,
     )
-    weekday_persian = {
-        0: "شنبه",
-        1: "یکشنبه",
-        2: "دوشنبه",
-        3: "سه‌شنبه",
-        4: "چهارشنبه",
-        5: "پنج‌شنبه",
-        6: "جمعه",
-    }
 
     def update(new_deadlines: list[dict], admin_user: User):
-        changed_deadlines: list[dict] = list()
         old_data = dict()
 
         for deadline in new_deadlines["deadlines"]:
-            changed = False
             meal_type = deadline["MealType"]
-            record = Deadlines.objects.filter(MealType=meal_type).first()
-            prev_days = record.Days
-            prev_hours = record.Hour
-
-            for key, value in deadline.items():
-                if getattr(record, key) != value:
-                    changed = True
-                    setattr(record, key, value)
-            if changed:
-                changed_deadlines.append(record)
-                old_data[record.id] = (prev_days, prev_hours)
-
-        Deadlines.objects.bulk_update(changed_deadlines, ["Days", "Hour"])
-
-        for deadline in changed_deadlines:
-            ActionLog.objects.log(
-                action_type=ActionLog.ActionTypeChoices.UPDATE,
-                user=admin_user,
-                log_msg=f"Deadline for mealtype {deadline.MealType} changed",
-                record_id=deadline.id,
-                old_data={
-                    "Days": old_data[deadline.id][0],
-                    "Hour": old_data[deadline.id][1],
-                },
+            records = Deadlines.objects.filter(MealType=meal_type).exclude(
+                WeekDay=0
             )
-            if new_deadlines["notifyPersonnel"]:
-                deadline.send_change_notif()
 
-    def send_change_notif(self):
-        emails = list(
-            User.objects.filter(IsActive=True).values_list(
-                "Personnel", flat=True
-            )
-        )
-        message = (
-            f"مهلت ثبت سفارش {MealTypeChoices._value2member_map_[self.MealType].label} "
-            f"به {self.Days} روز و {self.Hour} ساعت تغییر یافت."
-        )
+            # using record[0] since all records with same mealtype are
+            # going to have same deadlines.
+            prev_days = records[0].Days
+            prev_hours = records[0].Hour
 
-        thread = Thread(
-            target=send_mail,
-            args=("تغییر مهلت ثبت سفارش", message, "pors_admin@eit", emails),
-        )
-        thread.start()
+            new_days = deadline["Days"]
+            new_hours = deadline["Hour"]
+
+            if new_days != prev_days or new_hours != prev_hours:
+                old_data[meal_type] = (prev_days, prev_hours)
+
+                records.update(Days=new_days, Hour=new_hours)
+                Deadlines.objects.filter(WeekDay=0, MealType=meal_type).update(
+                    Days=new_days + 2, Hour=new_hours
+                )
+
+                ActionLog.objects.log(
+                    action_type=ActionLog.ActionTypeChoices.UPDATE,
+                    user=admin_user,
+                    log_msg=f"Deadline for mealtype {meal_type} changed",
+                    old_data={
+                        "Days": old_data[meal_type][0],
+                        "Hour": old_data[meal_type][1],
+                    },
+                )
+
+                if new_deadlines["notifyPersonnel"]:
+
+                    emails = list(
+                        User.objects.filter(IsActive=True).values_list(
+                            "Personnel", flat=True
+                        )
+                    )
+                    message = (
+                        f"مهلت ثبت سفارش {records[0].get_MealType_display()} "
+                        f"به {new_days} روز و {new_hours} ساعت تغییر یافت."
+                    )
+                    subject = "تغییر مهلت ثبت سفارش"
+
+                    from .utils import send_email_notif
+                    send_email_notif(subject, message, emails, 3)
 
 
 class Order(models.Model):

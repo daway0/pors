@@ -2,8 +2,6 @@ import json
 from typing import Optional
 
 import jdatetime
-from django.db.models import Sum, Value
-from django.db.models.functions import Coalesce
 
 from . import models as m
 from . import serializers as s

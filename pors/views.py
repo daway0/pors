@@ -651,7 +651,7 @@ def admin_manipulation_reasons(request, user, override_user):
 @authenticate(privileged_users=True)
 def deadlines(request, user, override_user):
     if request.method == "GET":
-        deadlines = Deadlines.objects.filter(WeekDay=0)
+        deadlines = Deadlines.objects.filter(WeekDay=1)
         serializer = DeadlineSerializer(deadlines, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
