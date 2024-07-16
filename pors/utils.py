@@ -556,17 +556,25 @@ def profile_url(username):
 
 
 def send_email_notif(
-    subject: str, message: str, emails: list[str], max_tries: int = 1
+    subject: str,
+    message: str,
+    emails: list[str],
+    reason: m.EmailReason,
+    max_tries: int = 1,
 ):
     email_thread = Thread(
         target=_send_mail,
-        args=(subject, message, emails, max_tries),
+        args=(subject, message, emails, max_tries, reason),
     )
     email_thread.start()
 
 
 def _send_mail(
-    subject: str, message: str, emails: list[str], max_tries: int
+    subject: str,
+    message: str,
+    emails: list[str],
+    max_tries: int,
+    reason=m.EmailReason,
 ):
     total_tries = 0
     success = 0
@@ -574,6 +582,10 @@ def _send_mail(
     while success == 0:
         try:
             success = send_mail(subject, message, "pors@iraneit.com", emails)
+            m.ActionLog.objects.log(
+                    action_type=m.ActionLog.ActionTypeChoices.CREATE,
+                    log_msg=f"[{reason.value}], email notif for sent successfully"
+            )
         except Exception as e:
             total_tries += 1
 
@@ -582,7 +594,7 @@ def _send_mail(
             else:
                 m.ActionLog.objects.log(
                     action_type=m.ActionLog.ActionTypeChoices.CREATE,
-                    log_msg=f"An error occured while tried to send email "
-                    f"notif, {str(e)}",
+                    log_msg=f"[{reason.value}], An error occured while tried to send email "
+                    f"notif\nError:{str(e)}",
                 )
                 break

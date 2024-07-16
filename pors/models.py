@@ -23,7 +23,7 @@ Prices are in Toman everywhere.
 from django.db import models
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
-
+from enum import Enum
 
 class Logger(models.Model):
     # todo doc
@@ -293,6 +293,11 @@ class Item(models.Model):
 
     def __str__(self):
         return self.ItemName
+    
+
+class EmailReason(Enum):
+    DEADLINE = "DEADLINE"
+    ADMIN_ACTION = "ADMIN_ACTION"
 
 
 class Deadlines(Logger):
@@ -318,6 +323,7 @@ class Deadlines(Logger):
 
         old_data = dict()
         changed = list()
+        email_notif = new_deadlines["notifyPersonnel"]
 
         for deadline in new_deadlines["deadlines"]:
             meal_type = deadline["MealType"]
@@ -345,7 +351,7 @@ class Deadlines(Logger):
                 ActionLog.objects.log(
                     action_type=ActionLog.ActionTypeChoices.UPDATE,
                     user=admin_user,
-                    log_msg=f"Deadline for mealtype {meal_type} changed",
+                    log_msg=f"Deadline for mealtype {meal_type} changed, with email notify {email_notif}",
                     old_data={
                         "Days": old_data[meal_type][0],
                         "Hour": old_data[meal_type][1],
@@ -357,7 +363,7 @@ class Deadlines(Logger):
                 changed.append(deadline)
 
         # sending email if anything changed and admin demands it.
-        if new_deadlines["notifyPersonnel"] and len(changed) > 0:
+        if email_notif and len(changed) > 0:
             emails = list(
                 User.objects.filter(IsActive=True).values_list(
                     "Personnel", flat=True
@@ -370,7 +376,8 @@ class Deadlines(Logger):
             subject = "تغییر مهلت ثبت سفارش"
 
             from .utils import send_email_notif
-            send_email_notif(subject, message, emails, 3)
+
+            send_email_notif(subject, message, emails, EmailReason.DEADLINE, 0)
 
 
 class Order(models.Model):
