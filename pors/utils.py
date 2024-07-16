@@ -11,6 +11,7 @@ from urllib.parse import urlunparse
 import jdatetime
 import pytz
 import xlsxwriter
+from openpyxl.utils import get_column_letter
 from django.core.mail import send_mail
 from django.db import connection
 from django.db.models import QuerySet
@@ -27,6 +28,14 @@ HR_SCHEME = "http"
 HR_HOST = "192.168.20.81"
 HR_PORT = "14000"
 HR_PROFILE_PATH = "/media/HR/PersonalPhoto/"
+
+REPORT_DATE_TIME = {
+            "bold": True,
+            "font_name": "Tahoma",
+            "font_size": 10,
+            "bg_color": "#cce6ff",
+            "border": 1,
+        }
 
 
 def localnow() -> jdatetime.datetime:
@@ -188,10 +197,18 @@ def execute_raw_sql_with_params(query: str, params: tuple) -> list:
         result = [dict(zip(columns, row)) for row in cursor.fetchall()]
     return result
 
+def report_generated_date_and_time():
+    # wrting date and time that report generated 
+    report_gen_at = localnow().strftime("%Y%m%d %H:%M:%S")
+    return f"این گزارش  در {report_gen_at} از سیستم دریافت شده است"
 
 def queryset_to_xlsx_response_food_provider_ordering(
     queryset, persian_headers, providers
 ):
+    # get the max col letter 
+    query_col_number = len(queryset[0])
+    end_col = get_column_letter(query_col_number)
+
     # Create an in-memory output file for the new workbook.
     output = io.BytesIO()
 
@@ -213,14 +230,24 @@ def queryset_to_xlsx_response_food_provider_ordering(
         }
     )
 
+    date_time_format = workbook.add_format(REPORT_DATE_TIME)
+
+    
     # spilting qs to providers
     providers_qs = {}
     for provider in providers:
         providers_qs[provider] = queryset.filter(FoodProviderPersian=provider)
 
-    main_row_number = 0
+    msg = report_generated_date_and_time()
+    worksheet.merge_range(
+        f"A1:{end_col}1",
+        msg,
+        date_time_format)
+
+    main_row_number = 1
     for provider, qs in providers_qs.items():
-        worksheet.write(main_row_number, 0, provider, header_format)
+        merge_range = f'A{main_row_number + 1}:{end_col}{main_row_number + 1}'  
+        worksheet.merge_range(merge_range, provider, header_format)
         main_row_number += 1
 
         # Write Persian headers to the first row.
@@ -264,12 +291,18 @@ def queryset_to_xlsx_response_food_provider_ordering(
 
 
 def queryset_to_xlsx_response(queryset, persian_headers):
+    # get the max col letter 
+    query_col_number = len(queryset[0])
+    end_col = get_column_letter(query_col_number)
+    
     # Create an in-memory output file for the new workbook.
     output = io.BytesIO()
 
     # Create a new Excel workbook and add a worksheet.
     workbook = xlsxwriter.Workbook(output, {"in_memory": True})
-    worksheet = workbook.add_worksheet()
+    worksheet_BRF = workbook.add_worksheet("صبحانه")
+    worksheet_LNC = workbook.add_worksheet("ناهار")
+
 
     # Define a format for the table that sets the font.
     table_font = workbook.add_format({"font_name": "Tahoma", "font_size": 10})
@@ -285,17 +318,37 @@ def queryset_to_xlsx_response(queryset, persian_headers):
         }
     )
 
+    date_time_format = workbook.add_format(REPORT_DATE_TIME)
+
+    # wrting date and time that report generated 
+    msg = report_generated_date_and_time()
+
+    worksheet_BRF.merge_range(f"A1:{end_col}1",msg,date_time_format)
+    worksheet_LNC.merge_range(f"A1:{end_col}1",msg,date_time_format)
+
     # Write Persian headers to the first row.
     for col_num, header in enumerate(persian_headers):
-        worksheet.write(0, col_num, header, header_format)
+        worksheet_BRF.write(1, col_num, header, header_format)
+        worksheet_LNC.write(1, col_num, header, header_format)
 
     col_widths = [len(header) for header in persian_headers]
 
-    # Write data to the sheet.
-    for row_num, obj in enumerate(queryset, start=1):
+    # Write data to the sheet Breakfast.
+    for row_num, obj in enumerate(queryset.filter(MealType=m.MealTypeChoices.BREAKFAST), start=2):
         for col_num, data in enumerate(obj.values()):
             value = str(data)  # Ensure value is a string
-            worksheet.write_string(
+            worksheet_BRF.write_string(
+                row_num, col_num, value, table_font
+            )  # Write as text
+
+            # update col width
+            col_widths[col_num] = max(col_widths[col_num], len(value))
+
+    # Write data to the sheet Lunch.
+    for row_num, obj in enumerate(queryset.filter(MealType=m.MealTypeChoices.LAUNCH), start=2):
+        for col_num, data in enumerate(obj.values()):
+            value = str(data)  # Ensure value is a string
+            worksheet_LNC.write_string(
                 row_num, col_num, value, table_font
             )  # Write as text
 
@@ -304,7 +357,8 @@ def queryset_to_xlsx_response(queryset, persian_headers):
 
     # Adjust col len
     for col_num, width in enumerate(col_widths):
-        worksheet.set_column(col_num, col_num, width + 2)
+        worksheet_BRF.set_column(col_num, col_num, width + 2)
+        worksheet_LNC.set_column(col_num, col_num, width + 2)
 
     # Close the workbook.
     workbook.close()
