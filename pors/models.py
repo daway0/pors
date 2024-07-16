@@ -308,12 +308,21 @@ class Deadlines(Logger):
     )
 
     def update(new_deadlines: list[dict], admin_user: User):
+        """
+        Updaing deadlines, then sending email notifications to users.
+
+        'new_deadlines' may be duplicate, so we need to check and find out
+        which deadline is actually new, saving new ones in 'changed',
+        then sending email with new changed deadlines at once.
+        """
+
         old_data = dict()
+        changed = list()
 
         for deadline in new_deadlines["deadlines"]:
             meal_type = deadline["MealType"]
             records = Deadlines.objects.filter(MealType=meal_type).exclude(
-                WeekDay=0
+                WeekDay__in=[0, 5, 6]
             )
 
             # using record[0] since all records with same mealtype are
@@ -324,6 +333,7 @@ class Deadlines(Logger):
             new_days = deadline["Days"]
             new_hours = deadline["Hour"]
 
+            # checking if anything has changed
             if new_days != prev_days or new_hours != prev_hours:
                 old_data[meal_type] = (prev_days, prev_hours)
 
@@ -342,23 +352,25 @@ class Deadlines(Logger):
                     },
                 )
 
-                if new_deadlines["notifyPersonnel"]:
+                # for template parsing, see changedDeadline.html
+                deadline["MealType"] = records[0].get_MealType_display()
+                changed.append(deadline)
 
-                    emails = list(
-                        User.objects.filter(IsActive=True).values_list(
-                            "Personnel", flat=True
-                        )
-                    )
-                    # message = (
-                    #     f"مهلت ثبت سفارش {records[0].get_MealType_display()} "
-                    #     f"به {new_days} روز و {new_hours} ساعت تغییر یافت."
-                    # )
-                    message = render_to_string("emails/changedDeadline.html", dict(changed=None, deadlines=deadlines))
+        # sending email if anything changed and admin demands it.
+        if new_deadlines["notifyPersonnel"] and len(changed) > 0:
+            emails = list(
+                User.objects.filter(IsActive=True).values_list(
+                    "Personnel", flat=True
+                )
+            )
+            message = render_to_string(
+                "emails/changedDeadline.html",
+                dict(deadlines=changed),
+            )
+            subject = "تغییر مهلت ثبت سفارش"
 
-                    subject = "تغییر مهلت ثبت سفارش"
-
-                    from .utils import send_email_notif
-                    send_email_notif(subject, message, emails, 3)
+            from .utils import send_email_notif
+            send_email_notif(subject, message, emails, 3)
 
 
 class Order(models.Model):
