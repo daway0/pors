@@ -103,6 +103,7 @@ class User(models.Model):
 
     # todo
     IsActive = models.BooleanField(default=True)
+    EmailNotif = models.BooleanField(default=False)
 
     # HR ConstValue Table Code (For Cache purposes)
     LastDeliveryBuilding = models.CharField(
