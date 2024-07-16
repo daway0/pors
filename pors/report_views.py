@@ -33,6 +33,7 @@ def food_provider_daily_ordering_report(request, user: m.User, override_user: m.
         "ItemTotalCount",
         "DeliveryBuildingPersian",
         "FoodProviderPersian",
+        "DeliveryDate"
     )
     if not queryset:
         return u.raise_report_notfound(message, request)
@@ -42,7 +43,8 @@ def food_provider_daily_ordering_report(request, user: m.User, override_user: m.
         "آیتم",
         "تعداد",
         "محل تحویل",
-        "تامین کننده"
+        "تامین کننده",
+        "تاریخ سفارش"
     ], providers)
 
     m.ActionLog.objects.log(
@@ -81,6 +83,9 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
         "LastName",
         "ItemName",
         "Quantity",
+        "MealType",
+        "CurrentPrice",
+        "Provider",
         "DeliveryDate",
         "DeliveryBuildingPersian",
         "DeliveryFloorPersian"
@@ -95,6 +100,9 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
         "نام خانوادگی",
         "ایتم",
         "تعداد",
+        "وعده غذایی",
+        "هزینه",
+        "تامین کننده",
         "زمان تحویل",
         "ساختمان تحویل",
         "طبقه تحویل"
@@ -252,6 +260,9 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
         "LastName",
         "ItemName",
         "Quantity",
+        "MealType",
+        "CurrentPrice",
+        "Provider",
         "DeliveryDate",
         "DeliveryBuildingPersian",
         "DeliveryFloorPersian",
@@ -266,6 +277,9 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
         "نام خانوادگی",
         "ایتم",
         "تعداد",
+        "وعده غذایی",
+        "هزینه",
+        "تامین کننده",
         "زمان تحویل",
         "ساختمان تحویل",
         "طبقه تحویل"
