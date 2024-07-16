@@ -308,13 +308,16 @@ class AdminReasonserializer(serializers.Serializer):
 
 
 class DeadlineSerializer(serializers.Serializer):
-    id = serializers.PrimaryKeyRelatedField(
-        queryset=m.Deadlines.objects.exclude(WeekDay__in=[5, 6])
-    )
     days = serializers.IntegerField(source="Days", min_value=0)
     hours = serializers.IntegerField(source="Hour", min_value=0, max_value=24)
-    weekday = serializers.IntegerField(source="WeekDay", read_only=True)
-    mealType = serializers.CharField(source="MealType", read_only=True)
+    # weekday = serializers.IntegerField(source="WeekDay", read_only=True)
+    mealType = serializers.CharField(source="MealType")
+    
+    def validate_mealType(self, type: str):
+        if type not in m.MealTypeChoices.values:
+            raise serializers.ValidationError("invalid meal type.")
+        
+        return type
 
 
 class UpdateDeadlineSerializer(serializers.Serializer):

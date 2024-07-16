@@ -324,13 +324,12 @@ class Deadlines(Logger):
 
         for deadline in new_deadlines["deadlines"]:
             changed = False
-            record = deadline["id"]
+            meal_type = deadline["MealType"]
+            record = Deadlines.objects.filter(MealType=meal_type).first()
             prev_days = record.Days
             prev_hours = record.Hour
 
             for key, value in deadline.items():
-                if key == "id":
-                    continue
                 if getattr(record, key) != value:
                     changed = True
                     setattr(record, key, value)
@@ -344,7 +343,7 @@ class Deadlines(Logger):
             ActionLog.objects.log(
                 action_type=ActionLog.ActionTypeChoices.UPDATE,
                 user=admin_user,
-                log_msg=f"Deadline for weekday {deadline.WeekDay} changed",
+                log_msg=f"Deadline for mealtype {deadline.MealType} changed",
                 record_id=deadline.id,
                 old_data={
                     "Days": old_data[deadline.id][0],
@@ -361,7 +360,7 @@ class Deadlines(Logger):
             )
         )
         message = (
-            f"مهلت ثبت سفارش روز {Deadlines.weekday_persian[self.WeekDay]} "
+            f"مهلت ثبت سفارش {MealTypeChoices._value2member_map_[self.MealType].label} "
             f"به {self.Days} روز و {self.Hour} ساعت تغییر یافت."
         )
 
