@@ -24,7 +24,7 @@
     </p>
     <p>
         این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در 
-        <a href={{ link }}>سفارش {{ meal_type }} {{  weekday|weekday_word }} مورخ {{ delivery_date }}</a>
+        <a dir="ltr" href={{ link }}>سفارش {{ meal_type }} {{  weekday|weekday_word }} مورخ <span dir="ltr">{{ delivery_date }}</span></a>
         اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
     </p>
     {% if removed_item %}
