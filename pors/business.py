@@ -20,6 +20,7 @@ from .utils import (
     split_dates,
     split_json_dates,
     validate_date,
+    str_date_to_jdate
 )
 
 
@@ -238,6 +239,10 @@ class OverrideUserValidator:
     def _send_email_notif(self, context: dict):
         if not self._is_admin() or not self.user.EmailNotif:
             return
+
+        date: str = context["delivery_date"]
+        weekday = str_date_to_jdate(date).weekday()
+        context["weekday"] = weekday
 
         message = render_to_string("emails/adminAction.html", context)
         send_email_notif(
@@ -1246,12 +1251,13 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         )
 
         report = m.PersonnelDailyReport.objects.filter(
-                    Personnel=self.user,
-                    DeliveryDate=self.date,
-                    MealType=self.meal_type,
-                )
+            Personnel=self.user,
+            DeliveryDate=self.date,
+            MealType=self.meal_type,
+        )
         self._send_email_notif(
             {
+                "full_name": self.user.FullName,
                 "link": f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.meal_type}",
                 "delivery_date": self.date,
                 "meal_type": m.MealTypeChoices(self.meal_type).label,

@@ -23,45 +23,45 @@
         با سلام و احترام،
     </p>
     <p>
-        این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در <a href={{ link }}>سفارش {{ meal_type }} مورخ {{ delivery_date|english_to_persian_number }}</a> اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
+        این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در 
+        <a href={{ link }}>سفارش {{ meal_type }} {{  weekday|weekday_word }} مورخ {{ delivery_date }}</a>
+        اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
     </p>
     {% if removed_item %}
     <ul>
-        <li>{{removed_item.ItemName}} حذف شد.</li>
+        <b><li>{{removed_item.ItemName}} حذف شد.</li></b>
     </ul>
     {% endif %}
     {% if new_item%}
     <ul>
-    <li>{{ new_item.ItemName }} اضافه شد.</li>
+    <b><li>{{ new_item.ItemName }} اضافه شد.</li></b>
     </ul>
     {% endif %}
     {% if building %}
     <ul>
-    <li>محل تحویل {{ meal_type }} به {{ building}} {{floor|english_to_persian_number}} تغییر یافت</li>
+    <b><li>محل تحویل {{ meal_type }} به {{ building}} {{floor|english_to_persian_number}} تغییر یافت</li></b>
     </ul>
     {% endif %}
     {% if increase_quantity_item%}
     <ul>
-    <li>{{ increase_quantity_item.ItemName }} بیشتر شد.</li>
+    <b><li>{{ increase_quantity_item.ItemName }} بیشتر شد.</li></b>
     </ul>
     {% endif %}
     {% if decrease_quantity_item%}
     <ul>
-    <li>{{ decrease_quantity_item.ItemName }} کمتر شد.</li>
+    <b><li>{{ decrease_quantity_item.ItemName }} کمتر شد.</li></b>
     </ul>
     {% endif %}
-    <br />
     {% if report %}
     <p>
     در ادامه، سفارش‌ {{ meal_type }} شما در جدول زیر آمده است:
     </p>
-    <br />
     <table style="width:50%">
         <tr>
           <th>نام آیتم</th>
           <th>تامین کننده</th>
-          <th>مقدار</th>
-          <th>محل سفارش</th>
+          <th>تعداد</th>
+          <th>محل تحویل</th>
         </tr>
         {% for item in report %}
         <tr>

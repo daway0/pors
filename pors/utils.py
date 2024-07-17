@@ -634,13 +634,12 @@ def _send_mail(
     reason=m.EmailReason,
 ):
     email = EmailMessage(
-        subject=subject, body=message, to=emails, bcc=settings.EMAIL_HOST_USER
+        subject=subject, body=message, to=emails, bcc=[settings.EMAIL_HOST_USER], from_email=settings.EMAIL_HOST_USER
     )
     email.content_subtype = "html"
 
     total_tries = 0
     success = 0
-
     while success == 0:
         try:
             success = email.send()
@@ -660,3 +659,9 @@ def _send_mail(
                     f"notif\nError:{str(e)}",
                 )
                 break
+
+
+def str_date_to_jdate(date: str) -> jdatetime.date:
+    year, month, day = split_dates(date, mode="all")
+
+    return jdatetime.date(year, month, day)

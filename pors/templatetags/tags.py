@@ -15,6 +15,16 @@ persian_numbers = {
     "9": "۹",
 }
 
+persian_weekdays = {
+    "0": "شنبه",
+    "1": "یک‌شنبه",
+    "2": "دوشنبه",
+    "3": "سه‌شنبه",
+    "4": "چهار‌شنبه",
+    "5": "بنج‌شنبه",
+    "6": "جمعه",
+}
+
 
 @register.filter()
 def english_to_persian_number(value) -> str:
@@ -22,3 +32,8 @@ def english_to_persian_number(value) -> str:
         persian_numbers.get(char, char) for char in str(value)
     )
     return output_string
+
+
+@register.filter()
+def weekday_word(weeknumber) -> str:
+    return persian_weekdays.get(str(weeknumber))
