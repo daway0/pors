@@ -1,3 +1,4 @@
+{% load tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,8 +28,8 @@
             <span>
                 {% if deadline.Days == 0 %}همان روز{% endif %}
                 {% if deadline.Days == 1 %}روز قبل{% endif %}
-                {% if deadline.Days > 1 %}{{deadline.Days}} روز قبل{% endif %} 
-                حداکثر تا ساعت {{deadline.Hour}}
+                {% if deadline.Days > 1 %}{{deadline.Days|english_to_persian_number}} روز قبل{% endif %} 
+                حداکثر تا ساعت {{deadline.Hour|english_to_persian_number}}
             </span>
         </p>
     {% endfor %}

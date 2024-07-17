@@ -1,3 +1,4 @@
+{% load tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +23,7 @@
         با سلام و احترام،
     </p>
     <p>
-        این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در <a href={{ link }}>سفارش {{ meal_type }} مورخ {{ delivery_date }}</a> اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
+        این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در <a href={{ link }}>سفارش {{ meal_type }} مورخ {{ delivery_date|english_to_persian_number }}</a> اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
     </p>
     {% if removed_item %}
     <ul>
@@ -64,7 +65,7 @@
         <tr>
           <td>{{ item.ItemName }}</td>
           <td>{{ item.Provider }}</td>
-          <td>{{ item.Quantity }}</td>
+          <td>{{ item.Quantity|english_to_persian_number }}</td>
           <td>{{ item.DeliveryBuildingPersian }} {{ item.DeliveryFloorPersian }}</td>
         </tr>
         {% endfor %}
