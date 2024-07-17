@@ -35,9 +35,9 @@
     <li>{{ new_item.ItemName }} اضافه شد.</li>
     </ul>
     {% endif %}
-    {% if new_delivery_building %}
+    {% if building %}
     <ul>
-    <li>محل تحویل {{ meal_type }} به {{ report.DeliveryBuildingPersian}} {{report.DeliveryFloorPersian}} تغییر یافت</li>
+    <li>محل تحویل {{ meal_type }} به {{ building}} {{floor|english_to_persian_number}} تغییر یافت</li>
     </ul>
     {% endif %}
     {% if increase_quantity_item%}
@@ -52,7 +52,9 @@
     {% endif %}
     <br />
     {% if report %}
+    <p>
     در ادامه، سفارش‌ {{ meal_type }} شما در جدول زیر آمده است:
+    </p>
     <br />
     <table style="width:50%">
         <tr>
@@ -66,13 +68,15 @@
           <td>{{ item.ItemName }}</td>
           <td>{{ item.Provider }}</td>
           <td>{{ item.Quantity|english_to_persian_number }}</td>
-          <td>{{ item.DeliveryBuildingPersian }} {{ item.DeliveryFloorPersian }}</td>
+          <td>{{ item.DeliveryBuildingPersian }} {{ item.DeliveryFloorPersian|english_to_persian_number }}</td>
         </tr>
         {% endfor %}
     </table>
     <br />
     {% else %}
+    <p>
     در حال حاضر هیچ سفارشی برای وعده {{ meal_type }} ثبت نشده است.
+    </p>
     {% endif %}
     <p>
         با تشکر از همکاری و توجه شما.

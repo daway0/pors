@@ -27,6 +27,7 @@ from .messages import Message
 HR_SCHEME = "http"
 HR_HOST = "192.168.20.81"
 HR_PORT = "14000"
+SERVER_PORT = "26000"
 HR_PROFILE_PATH = "/media/HR/PersonalPhoto/"
 
 REPORT_DATE_TIME = {
