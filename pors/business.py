@@ -2,6 +2,8 @@ import json
 from typing import Optional
 
 import jdatetime
+from django.template.loader import render_to_string
+from django.urls import reverse
 
 from . import models as m
 from . import serializers as s
@@ -11,6 +13,7 @@ from .utils import (
     first_and_last_day_date,
     get_specific_deadline,
     localnow,
+    send_email_notif,
     split_dates,
     split_json_dates,
     validate_date,
@@ -228,6 +231,14 @@ class OverrideUserValidator:
         if not self.admin_user:
             return False
         return True
+
+    def _send_email_notif(self, message: str):
+        send_email_notif(
+            "تغییر سفارش",
+            message,
+            [self.user.EmailAddress],
+            m.EmailReason.ADMIN_ACTION,
+        )
 
 
 class ValidateRemove:
@@ -544,6 +555,8 @@ class ValidateOrder(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
+
         instance = m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
@@ -561,26 +574,59 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            return
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": m.MealTypeChoices.LAUNCH.label,
+                    "increase_quantity_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=m.MealTypeChoices.LAUNCH,
+                    ),
+                },
+            )
 
-        m.OrderItem(
-            Personnel=self.user.Personnel,
-            DeliveryDate=self.date,
-            DeliveryBuilding=self.user.LastDeliveryBuilding,
-            DeliveryFloor=self.user.LastDeliveryFloor,
-            Item=self.item,
-            Quantity=1,
-            PricePerOne=self.item.CurrentPrice,
-        ).save(
-            log=(
-                f"Launch Item {self.item.ItemName} just added to order for"
-                f" {self.date}"
-            ),
-            user=self.user.Personnel,
-            admin=self.admin_user,
-            reason=self.reason,
-            comment=self.comment,
-        )
+        else:
+            new_item = m.OrderItem(
+                Personnel=self.user.Personnel,
+                DeliveryDate=self.date,
+                DeliveryBuilding=self.user.LastDeliveryBuilding,
+                DeliveryFloor=self.user.LastDeliveryFloor,
+                Item=self.item,
+                Quantity=1,
+                PricePerOne=self.item.CurrentPrice,
+            )
+            new_item.save(
+                log=(
+                    f"Launch Item {self.item.ItemName} just added to order for"
+                    f" {self.date}"
+                ),
+                user=self.user.Personnel,
+                admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
+            )
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": m.MealTypeChoices.LAUNCH.label,
+                    "new_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=m.MealTypeChoices.LAUNCH,
+                    ),
+                },
+            )
+
+        self._send_email_notif(email_message)
 
     def remove_order(self):
         """
@@ -599,6 +645,7 @@ class ValidateOrder(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
             self.order_item.save(
@@ -611,6 +658,21 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": self.item.get_MealType_display(),
+                    "decrease_quantity_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=self.item.MealType,
+                    ),
+                },
+            )
         else:
             self.order_item.delete(
                 log=(
@@ -622,6 +684,22 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": self.item.get_MealType_display(),
+                    "removed_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=self.item.MealType,
+                    ),
+                },
+            )
+        self._send_email_notif(email_message)
 
 
 class ValidateBreakfast(OverrideUserValidator):
@@ -778,6 +856,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
         instance = m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
@@ -795,25 +874,56 @@ class ValidateBreakfast(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            return
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": m.MealTypeChoices.BREAKFAST.label,
+                    "increase_quantity_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=m.MealTypeChoices.BREAKFAST,
+                    ),
+                },
+            )
 
-        m.OrderItem(
-            Personnel=self.user.Personnel,
-            DeliveryDate=self.date,
-            DeliveryBuilding=self.user.LastDeliveryBuilding,
-            DeliveryFloor=self.user.LastDeliveryFloor,
-            Item=self.item,
-            PricePerOne=self.item.CurrentPrice,
-        ).save(
-            log=(
-                f"Breakfast Item {self.item.ItemName} just added to the order"
-                f" for {self.date}"
-            ),
-            user=self.user.Personnel,
-            admin=self.admin_user,
-            reason=self.reason,
-            comment=self.comment,
-        )
+        else:
+            m.OrderItem(
+                Personnel=self.user.Personnel,
+                DeliveryDate=self.date,
+                DeliveryBuilding=self.user.LastDeliveryBuilding,
+                DeliveryFloor=self.user.LastDeliveryFloor,
+                Item=self.item,
+                PricePerOne=self.item.CurrentPrice,
+            ).save(
+                log=(
+                    f"Breakfast Item {self.item.ItemName} just added to the order"
+                    f" for {self.date}"
+                ),
+                user=self.user.Personnel,
+                admin=self.admin_user,
+                reason=self.reason,
+                comment=self.comment,
+            )
+            email_message = render_to_string(
+                "emails/adminAction.html",
+                {
+                    "full_name":self.user.FullName,
+                    "link": link,
+                    "delivery_date": self.date,
+                    "meal_type": m.MealTypeChoices.BREAKFAST.label,
+                    "new_item": self.item,
+                    "report": m.PersonnelDailyReport.objects.filter(
+                        Personnel=self.user,
+                        DeliveryDate=self.date,
+                        MealType=m.MealTypeChoices.BREAKFAST,
+                    ),
+                },
+            )
+        self._send_email_notif(email_message)
 
 
 class ValidateAddMenuItem:
@@ -973,6 +1083,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         self.message: str = ""
         self.error: str = ""
         self.date: str = ""
+        self.meal_type: m.MealTypeChoices.value = ""
         self.new_delivery_building: str = ""
         self.new_delivery_floor: str = ""
         self.order: m.Order = m.Order.objects.none()
@@ -1136,6 +1247,22 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,
         )
+
+        email_message = render_to_string(
+            "emails/adminAction.html",
+            {
+                "link": f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.meal_type}",
+                "delivery_date": self.date,
+                "meal_type": m.MealTypeChoices(self.meal_type).label,
+                "new_delivery_building": True,
+                "report": m.PersonnelDailyReport.objects.filter(
+                    Personnel=self.user,
+                    DeliveryDate=self.date,
+                    MealType=self.meal_type,
+                ),
+            },
+        )
+        self._send_email_notif(email_message)
 
         # manual log insertion
         # todo doc

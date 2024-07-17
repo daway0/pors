@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاع‌رسانی درباره تغییر سفارش</title>
+    <style>
+        body {
+            font-family: Tahoma;
+            text-align: right;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body dir="rtl">
+    <p>
+    {{full_name}} گرامی،
+    </p>
+    <p>
+        با سلام و احترام،
+    </p>
+    <p>
+        این ایمیل به منظور اطلاع‌رسانی به شما درباره تغییراتی است که در <a href={{ link }}>سفارش {{ meal_type }} مورخ {{ delivery_date }}</a> اعمال شده است. لطفاً جزئیات تغییرات را در زیر مشاهده فرمایید:
+    </p>
+    {% if removed_item %}
+    <ul>
+        <li>{{removed_item.ItemName}} حذف شد.</li>
+    </ul>
+    {% endif %}
+    {% if new_item%}
+    <ul>
+    <li>{{ new_item.ItemName }} اضافه شد.</li>
+    </ul>
+    {% endif %}
+    {% if new_delivery_building %}
+    <ul>
+    <li>محل تحویل {{ meal_type }} به {{ report.DeliveryBuildingPersian}} {{report.DeliveryFloorPersian}} تغییر یافت</li>
+    </ul>
+    {% endif %}
+    {% if increase_quantity_item%}
+    <ul>
+    <li>{{ increase_quantity_item.ItemName }} بیشتر شد.</li>
+    </ul>
+    {% endif %}
+    {% if decrease_quantity_item%}
+    <ul>
+    <li>{{ decrease_quantity_item.ItemName }} کمتر شد.</li>
+    </ul>
+    {% endif %}
+    <br />
+    {% if report %}
+    در ادامه، سفارش‌ {{ meal_type }} شما در جدول زیر آمده است:
+    <br />
+    <table style="width:50%">
+        <tr>
+          <th>نام آیتم</th>
+          <th>تامین کننده</th>
+          <th>مقدار</th>
+          <th>محل سفارش</th>
+        </tr>
+        {% for item in report %}
+        <tr>
+          <td>{{ item.ItemName }}</td>
+          <td>{{ item.Provider }}</td>
+          <td>{{ item.Quantity }}</td>
+          <td>{{ item.DeliveryBuildingPersian }} {{ item.DeliveryFloorPersian }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br />
+    {% else %}
+    در حال حاضر هیچ سفارشی برای وعده {{ meal_type }} ثبت نشده است.
+    {% endif %}
+    <p>
+        با تشکر از همکاری و توجه شما.
+    </p>
+</body>
+</html>
