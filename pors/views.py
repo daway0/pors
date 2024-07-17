@@ -525,11 +525,11 @@ def auth_gateway(request):
     # todo shipment
     # token = find_token(request)
     # personnel = get_token_data(token, "username")
-    #
-    # email = get_token_data(token, "user_Email")
+    # picture_name = get_token_data(token, "user_user_image_name")
+    # email = get_token_data(token, "user_Email").lower()
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
-    # profile = profile_url(personnel)
+    # profile = profile_url(picture_name)
 
     personnel = "e.rezaee@eit"
     full_name = "erfan rezaee"

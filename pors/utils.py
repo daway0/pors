@@ -605,8 +605,8 @@ def add_mealtype_building(order_row, schema: dict):
         schema["breakfastDeliveryFloor"] = order_row["DeliveryFloor"]
 
 
-def profile_url(username):
-    path = HR_PROFILE_PATH + username
+def profile_url(filename):
+    path = HR_PROFILE_PATH + filename 
     return urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
 
 
