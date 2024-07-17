@@ -90,7 +90,8 @@ let actionReasonObj = {}
 let currentDeliveryChangingMealType = "LNC"
 let BRFOrderItemsCount = undefined
 let LNCOrderItemsCount = undefined
-const bpUsers = ["padidar.guest@eit","gandi.guest@eit"]
+let specificOrderMealType = undefined
+const bpUsers = ["padidar.guest@eit", "gandi.guest@eit"]
 
 function getDeliveryPlaceTitleByCode(code) {
     for (const building of deliveryPlaces) {
@@ -273,8 +274,8 @@ function zfill(number, width) {
 }
 
 function catchResponseMessagesToDisplay(messages) {
-    if (messages===undefined) return
-    messages.forEach(function (msg){
+    if (messages === undefined) return
+    messages.forEach(function (msg) {
         displayDismiss(DISMISSLEVELS[msg.level], convertToPersianNumber(msg.message), DISMISSDURATIONS[msg.displayDuration])
     })
 }
@@ -482,6 +483,26 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
 }
 
 
+function changeMenuTypeDisplay(e) {
+    let mustAdd = "text-blue-900 bg-blue-100 shadow-md"
+    let mustRemove = "text-gray-500 bg-white"
+
+    // با فرض اینکه دوتا منو داریم فعلا اگه چندتا شد باید ارایه شه
+    let other = e.attr("id") === "BRF-menu" ? "#LNC-menu" : "#BRF-menu"
+    let selectedMenu = e.attr("id") === "BRF-menu" ? "BRF" : "LNC"
+
+    // تغییر منوی انتخابی پیشفرض
+    selectedMenuToDisplay = selectedMenu
+
+    e.removeClass(mustRemove).addClass(mustAdd)
+    e.find("svg").removeClass("fill-gray-500").addClass("fill-blue-900")
+    $(other).removeClass(mustAdd).addClass(mustRemove)
+    $(other).find("svg").removeClass("fill-blue-900").addClass("fill-gray-500")
+
+    let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
+    selectDayOnCalendar(sd)
+}
+
 function loadOrder(day, month, year) {
     let requestedDate = toShamsiFormat({ year: year, month: month, day: day })
     let selectedMenu = menuItems.find(function (entry) {
@@ -661,15 +682,15 @@ function orderDeliveryPlace(dateObj, mealType) {
         } else return "مشخص نشده"
     }
 
-    
-    if (`${prefix}DeliveryBuilding` in order){
+
+    if (`${prefix}DeliveryBuilding` in order) {
         let deliveryBuilding = getDeliveryPlaceTitleByCode(order[`${prefix}DeliveryBuilding`])
         let deliveryFloor = getDeliveryPlaceTitleByCode(order[`${prefix}DeliveryFloor`])
-    
+
         return deliveryBuilding + " " + deliveryFloor
     }
     return latestDeliveryPlace
-    
+
 }
 
 function billDisplay(show) {
@@ -691,8 +712,8 @@ function updateOrderBillDetail() {
     let debt = 0
     let BRFdeliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate, "BRF"))
     let LNCdeliveryPlace = convertToPersianNumber(orderDeliveryPlace(selectedDate, "LNC"))
-    let $BRFDeliveryRow= $("#brf-delivery-place-row")
-    let $LNCDeliveryRow= $("#lnc-delivery-place-row")
+    let $BRFDeliveryRow = $("#brf-delivery-place-row")
+    let $LNCDeliveryRow = $("#lnc-delivery-place-row")
     let $BRFDeliveryEdit = $("#BRF-location-modal-trigger")
     let $LNCDeliveryEdit = $("#LNC-location-modal-trigger")
     let h = "hidden"
@@ -700,14 +721,14 @@ function updateOrderBillDetail() {
 
     // check if is editable or not
     let isOpenFor = canPersonnelChangeDeliveryPlace(selectedDate)
-    if (BRFOrderItemsCount > 0){
+    if (BRFOrderItemsCount > 0) {
         $BRFDeliveryRow.removeClass("hidden")
         !isOpenFor.BRF ? $BRFDeliveryEdit.addClass(h) : $BRFDeliveryEdit.removeClass(h)
     } else {
         $BRFDeliveryRow.addClass("hidden")
     }
 
-    if (LNCOrderItemsCount > 0){
+    if (LNCOrderItemsCount > 0) {
         $LNCDeliveryRow.removeClass("hidden")
         !isOpenFor.LNC ? $LNCDeliveryEdit.addClass(h) : $LNCDeliveryEdit.removeClass(h)
     } else {
@@ -716,7 +737,7 @@ function updateOrderBillDetail() {
 
     // admin cannot change delivery place for guest users! 
     // check if user is in bypass users and admin is in god mode, hidden deliveryplace
-    if (godMode && bpUsers.includes(userName)){
+    if (godMode && bpUsers.includes(userName)) {
         $BRFDeliveryEdit.addClass("hidden")
         $LNCDeliveryEdit.addClass("hidden")
     }
@@ -866,13 +887,13 @@ function updateOrderItemsQuantity() {
     let sumLNCOrderedItem = 0;
     let $items = $("#menu-items-container li");
     $items.each(function () {
-        if ($(this).attr("data-item-serve-time")==="BRF") {
+        if ($(this).attr("data-item-serve-time") === "BRF") {
             sumBRFOrderedItem += parseInt($(this).attr("data-item-order-count"));
         } else {
             sumLNCOrderedItem += parseInt($(this).attr("data-item-order-count"));
         }
     });
-    
+
     BRFOrderItemsCount = sumBRFOrderedItem
     LNCOrderItemsCount = sumLNCOrderedItem
 
@@ -1094,12 +1115,28 @@ $(document).ready(function () {
             if (latestFloor != null && latestBuilding != null) {
                 latestDeliveryPlace = `${getDeliveryPlaceTitleByCode(latestBuilding)} ${getDeliveryPlaceTitleByCode(latestFloor)}`
             }
-            
+
             loadUserBasicInfo()
             displayAdminButtonToAdminPersonnel()
             makeDeliveryBuildingModal()
 
-            selectedDate = currentDate
+            //  If an order is specified in the query params,
+            //  the appropriate calendar should be created instead of default
+            //  so we have to check this. 
+            let queryParams = new URLSearchParams(window.location.search)
+            let orderCode = queryParams.get("order")
+            let specificOrderDate = {}
+            if (orderCode) {
+                specificOrderDate.year = parseInt(orderCode.substring(0, 4))
+                specificOrderDate.month = parseInt(orderCode.substring(4, 6))
+                specificOrderDate.day = parseInt(orderCode.substring(6, 8))
+                specificOrderMealType = orderCode.substring(8)
+                
+                selectedDate = specificOrderDate
+            } else {
+                selectedDate = currentDate
+            }
+
 
             // در صورتی که سیستم قابل استفاده نبود و می خواست از دسترس
             // خارج شه
@@ -1116,7 +1153,8 @@ $(document).ready(function () {
             $.ajax({
                 url: addPrefixTo(
                     addOverrideUsernameIfIsAdmin(
-                        `calendar/?year=${currentDate.year}&month=${currentDate.month}`,
+                        `calendar/?year=${specificOrderDate.year || currentDate.year}
+                        &month=${specificOrderDate.month || currentDate.month}`,
                         userName
                     )),
                 method: 'GET',
@@ -1148,22 +1186,12 @@ $(document).ready(function () {
                     )
                     updateDropdownCalendarMonth()
                     updateSelectedDayOnCalendar(toShamsiFormat(selectedDate))
+
                     // انتخاب کردن روز فعلی به عنوان پیشفرض
                     let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
                     selectDayOnCalendar(sd)
+                    if (specificOrderMealType) changeMenuTypeDisplay($(`#${specificOrderMealType}-menu`))
 
-
-                    // منوی غذا امروز نیز نمایش داده میشود
-                    loadMenu(
-                        currentDate.day,
-                        currentDate.month,
-                        currentDate.year
-                    )
-                    loadOrder(
-                        currentDate.day,
-                        currentDate.month,
-                        currentDate.year
-                    )
                     document.body.style.zoom = "85%"
                     finishLoadingDisplay()
                     catchResponseMessagesToDisplay(data.messages)
@@ -1427,24 +1455,7 @@ $(document).ready(function () {
 
     // دکمه انتخاب منو برای نمایش منوی انتخابی (فعلا ناهار و صبحانه رو داریم)
     $(document).on('click', '.separate-menu', function () {
-        let mustAdd = "text-blue-900 bg-blue-100 shadow-md"
-        let mustRemove = "text-gray-500 bg-white"
-
-        // با فرض اینکه دوتا منو داریم فعلا اگه چندتا شد باید ارایه شه
-        let other = $(this).attr("id") === "BRF-menu" ? "#LNC-menu" : "#BRF-menu"
-        let selectedMenu = $(this).attr("id") === "BRF-menu" ? "BRF" : "LNC"
-
-        // تغییر منوی انتخابی پیشفرض
-        selectedMenuToDisplay = selectedMenu
-
-        $(this).removeClass(mustRemove).addClass(mustAdd)
-        $(this).find("svg").removeClass("fill-gray-500").addClass("fill-blue-900")
-        $(other).removeClass(mustAdd).addClass(mustRemove)
-        $(other).find("svg").removeClass("fill-blue-900").addClass("fill-gray-500")
-
-        let sd = $(`#dayBlocksWrapper div[data-date="${toShamsiFormat(selectedDate)}"]`)
-        selectDayOnCalendar(sd)
+        changeMenuTypeDisplay($(this))
     })
-
 
 });
