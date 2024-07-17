@@ -430,10 +430,10 @@ function makeDeadlineModal(data) {
                             <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
                         </svg>
                         </div>
-                        <input disabled value="${obj.days!==0? convertToPersianNumber(obj.days):""} ${obj.days===0 ? todayTitle:pastDays} ساعت ${convertToPersianNumber(obj.hours-1)} " type="text"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pr-8 py-2.5 px-0.5" placeholder="تعداد روز ">
+                        <input disabled value="${obj.days!==0? convertToPersianNumber(obj.days):""} ${obj.days===0 ? todayTitle:pastDays} ساعت ${convertToPersianNumber(obj.hours)} " type="text"  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pr-8 py-2.5 px-0.5" placeholder="تعداد روز ">
                     </div>
                     <input value="${obj.days}" type="text" data-days="${obj.days}" aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-day border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/4 p-2.5 " placeholder="10" required />
-                    <input value="${obj.hours-1}" type="text" data-hours="${obj.hours-1}" aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-hour  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/4 p-2.5 " placeholder="10" required />
+                    <input value="${obj.hours}" type="text" data-hours="${obj.hours}" aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-hour  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/4 p-2.5 " placeholder="10" required />
                 </div>`
     })
     $modal.empty()
@@ -1297,7 +1297,7 @@ $(document).ready(function () {
         $(".deadline-row").each(function () {
             let mealType = $(this).attr("data-mealtype")
             let days = parseInt($(this).find(".deadline-day").val())
-            let hours = parseInt($(this).find(".deadline-hour").val())+1 
+            let hours = parseInt($(this).find(".deadline-hour").val()) 
             liveDeadlines.push({days:days, hours:hours, mealType:mealType})
         })
         const newDealine = JSON.stringify(liveDeadlines)
@@ -1348,15 +1348,14 @@ $(document).ready(function () {
             }
             
             // check boundry
-            if (hours < 0 || hours >= 24) {
+            if (hours < 0 || hours > 24) {
                 err= "ساعت تعیین شده مجاز نیست"
                 displayDismiss(DISMISSLEVELS.ERROR, err,DISMISSDURATIONS.DISPLAY_TIME_SHORT)
                 isValid = false
                 return
             }
 
-            // +1 is for fanavaran pytz bug
-            deadlines.push({mealType:mealType, days:days, hours:hours+1})
+            deadlines.push({mealType:mealType, days:days, hours:hours})
         })
 
         if (!isValid) return
