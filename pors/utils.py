@@ -11,6 +11,7 @@ from urllib.parse import urlunparse
 import jdatetime
 import pytz
 import xlsxwriter
+from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import connection
 from django.db.models import QuerySet
@@ -607,7 +608,7 @@ def add_mealtype_building(order_row, schema: dict):
 
 
 def profile_url(filename):
-    path = HR_PROFILE_PATH + filename 
+    path = HR_PROFILE_PATH + filename
     return urlunparse((HR_SCHEME, f"{HR_HOST}:{HR_PORT}", path, "", "", ""))
 
 
@@ -632,7 +633,9 @@ def _send_mail(
     max_tries: int,
     reason=m.EmailReason,
 ):
-    email = EmailMessage(subject=subject, body=message, to=emails)
+    email = EmailMessage(
+        subject=subject, body=message, to=emails, bcc=settings.EMAIL_HOST_USER
+    )
     email.content_subtype = "html"
 
     total_tries = 0
