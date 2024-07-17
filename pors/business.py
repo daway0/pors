@@ -232,7 +232,11 @@ class OverrideUserValidator:
             return False
         return True
 
-    def _send_email_notif(self, message: str):
+    def _send_email_notif(self, context: dict):
+        if not self._is_admin() or not self.user.EmailNotif:
+            return
+        
+        message = render_to_string("emails/adminAction.html", context)
         send_email_notif(
             "تغییر سفارش",
             message,
@@ -574,8 +578,7 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -610,8 +613,7 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -625,8 +627,6 @@ class ValidateOrder(OverrideUserValidator):
                     ),
                 },
             )
-
-        self._send_email_notif(email_message)
 
     def remove_order(self):
         """
@@ -658,8 +658,7 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -684,8 +683,7 @@ class ValidateOrder(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -699,7 +697,6 @@ class ValidateOrder(OverrideUserValidator):
                     ),
                 },
             )
-        self._send_email_notif(email_message)
 
 
 class ValidateBreakfast(OverrideUserValidator):
@@ -874,8 +871,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -908,8 +904,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 reason=self.reason,
                 comment=self.comment,
             )
-            email_message = render_to_string(
-                "emails/adminAction.html",
+            self._send_email_notif(
                 {
                     "full_name":self.user.FullName,
                     "link": link,
@@ -923,7 +918,6 @@ class ValidateBreakfast(OverrideUserValidator):
                     ),
                 },
             )
-        self._send_email_notif(email_message)
 
 
 class ValidateAddMenuItem:
@@ -1248,8 +1242,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             DeliveryFloor=self.new_delivery_floor,
         )
 
-        email_message = render_to_string(
-            "emails/adminAction.html",
+        self._send_email_notif(
             {
                 "link": f"{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.meal_type}",
                 "delivery_date": self.date,
@@ -1262,7 +1255,6 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
                 ),
             },
         )
-        self._send_email_notif(email_message)
 
         # manual log insertion
         # todo doc
