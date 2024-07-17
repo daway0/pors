@@ -526,6 +526,7 @@ def auth_gateway(request):
     # token = find_token(request)
     # personnel = get_token_data(token, "username")
     #
+    # email = get_token_data(token, "user_Email")
     # full_name = get_token_data(token, "user_FullName")
     # is_admin = False
     # profile = profile_url(personnel)
@@ -534,6 +535,7 @@ def auth_gateway(request):
     full_name = "erfan rezaee"
     profile = ""
     is_admin = False
+    email = "e.rezaee@iraneit.com"
 
     personnel_user_record = User.objects.filter(Personnel=personnel).first()
 
@@ -566,6 +568,7 @@ def auth_gateway(request):
             Token=token,
             ExpiredAt=cookies_expire_time,
             IsActive=True,
+            EmailAddress=email
         )
 
         response.set_cookie(
