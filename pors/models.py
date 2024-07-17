@@ -20,10 +20,12 @@ should be recorded in the ActionLog table.
 Prices are in Toman everywhere.
 """
 
+from enum import Enum
+
 from django.db import models
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
-from enum import Enum
+
 
 class Logger(models.Model):
     # todo doc
@@ -104,6 +106,7 @@ class User(models.Model):
     # todo
     IsActive = models.BooleanField(default=True)
     EmailNotif = models.BooleanField(default=False)
+    EmailAddress = models.CharField(max_length=250)
 
     # HR ConstValue Table Code (For Cache purposes)
     LastDeliveryBuilding = models.CharField(
@@ -294,7 +297,7 @@ class Item(models.Model):
 
     def __str__(self):
         return self.ItemName
-    
+
 
 class EmailReason(Enum):
     DEADLINE = "DEADLINE"
@@ -366,8 +369,8 @@ class Deadlines(Logger):
         # sending email if anything changed and admin demands it.
         if email_notif and len(changed) > 0:
             emails = list(
-                User.objects.filter(IsActive=True).values_list(
-                    "Personnel", flat=True
+                User.objects.filter(EmailNotif=True).values_list(
+                    "EmailAddress", flat=True
                 )
             )
             message = render_to_string(

@@ -38,12 +38,12 @@ from .serializers import (
     CategorySerializer,
     Deadline,
     DeadlineSerializer,
-    UpdateDeadlineSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
+    UpdateDeadlineSerializer,
     UserSerializer,
 )
 from .utils import (
@@ -535,9 +535,7 @@ def auth_gateway(request):
     profile = ""
     is_admin = False
 
-    personnel_user_record = User.objects.filter(
-        Personnel=personnel, IsActive=True
-    ).first()
+    personnel_user_record = User.objects.filter(Personnel=personnel).first()
 
     now = localnow()
 
@@ -574,6 +572,20 @@ def auth_gateway(request):
             "token", token, path=cookies_path, max_age=max_age, samesite="lax"
         )
         return response
+
+    elif not personnel_user_record.IsActive:
+        # Personnel user record is inactive for any reason, they shall not
+        # continue and must contact system admin for changin theyr state to
+        # active
+        message.add_message(
+            request,
+            "حساب کاربری شما غیر فعال است، لطفا با ادمین سیستم تماس بگیرید.",
+            Message.ERROR,
+        )
+        return Response(
+            {"messages": message.messages(request)},
+            status.HTTP_400_BAD_REQUEST,
+        )
 
     elif personnel_user_record.ExpiredAt < now.strftime("%Y/%m/%d"):
         # In this scenario, personnel's token is expired,
