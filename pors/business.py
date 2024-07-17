@@ -555,7 +555,7 @@ class ValidateOrder(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
-        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
 
         instance = m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
@@ -645,7 +645,7 @@ class ValidateOrder(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
-        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
         if self.order_item.Quantity > 1:
             self.order_item.Quantity -= 1
             self.order_item.save(
@@ -856,7 +856,7 @@ class ValidateBreakfast(OverrideUserValidator):
                 "This method is only available if provided data is valid."
             )
 
-        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.item.MealType}"
+        link = f"{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
         instance = m.OrderItem.objects.filter(
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
@@ -1251,7 +1251,7 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
         email_message = render_to_string(
             "emails/adminAction.html",
             {
-                "link": f"{reverse('pors:personnel_panel')}?order={self.date.replace("/", "")}{self.meal_type}",
+                "link": f"{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.meal_type}",
                 "delivery_date": self.date,
                 "meal_type": m.MealTypeChoices(self.meal_type).label,
                 "new_delivery_building": True,
