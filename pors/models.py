@@ -381,7 +381,7 @@ class Deadlines(Logger):
 
             from .utils import send_email_notif
 
-            send_email_notif(subject, message, emails, EmailReason.DEADLINE, 0)
+            send_email_notif(subject, message, emails, EmailReason.DEADLINE)
 
 
 class Order(models.Model):

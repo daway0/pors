@@ -617,7 +617,7 @@ def send_email_notif(
     message: str,
     emails: list[str],
     reason: m.EmailReason,
-    max_tries: int = 1,
+    max_tries: int = 2,
 ):
     email_thread = Thread(
         target=_send_mail,
