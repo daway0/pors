@@ -100,9 +100,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'PersonnelService',        
-        'USER': 'sa',
-        'PASSWORD': 'Master123',
+        'NAME': 'master',        
+        # 'USER': 'sa',
+        # 'PASSWORD': 'Master123',
         'HOST': 'localhost',
         'PORT': '1433',
 

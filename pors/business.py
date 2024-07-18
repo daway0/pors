@@ -1,6 +1,6 @@
 import json
 from threading import Thread
-from typing import Callable, Optional
+from typing import Optional
 
 import jdatetime
 from django.template.loader import render_to_string
@@ -20,8 +20,8 @@ from .utils import (
     send_email_notif,
     split_dates,
     split_json_dates,
+    str_date_to_jdate,
     validate_date,
-    str_date_to_jdate
 )
 
 
@@ -553,7 +553,6 @@ class ValidateOrder(OverrideUserValidator):
             self.message = "شما نمی‌توانید بیشتر 1 غذای اصلی سفارش دهید."
             raise ValueError("You cannot submit more than 1 primary item.")
 
-    @OverrideUserValidator.email_notif
     def create_order(self):
         """
         Submitting order.
@@ -850,7 +849,6 @@ class ValidateBreakfast(OverrideUserValidator):
                 "Personnel cannot submit more than 1 breakfast" " item(s)."
             )
 
-    @OverrideUserValidator.email_notif
     def create_breakfast_order(self):
         """
         Creating breakfast order for personnel
