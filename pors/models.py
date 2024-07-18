@@ -29,7 +29,7 @@ from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 
 
-def localnow_str() -> jdatetime.datetime:
+def localnow_str() -> str:
     utc_now = jdatetime.datetime.now(tz=pytz.utc)
     local_timezone = pytz.timezone("Asia/Tehran")
     return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
@@ -660,7 +660,7 @@ class ActionLog(models.Model):
         UPDATE = "U", "update"
         DELETE = "D", "delete"
 
-    ActionAt = models.DateTimeField(auto_now_add=True)
+    ActionAt = models.CharField(max_length=20, default=localnow_str)
 
     # If the system automatically logs an action, the user should be
     # recorded as  'SYSTEM'
