@@ -75,4 +75,25 @@ urlpatterns = [
         views.item,
         name="item",
     ),
+    path("items/<int:item_id>/like/", views.item_like, name="item_like"),
+    path(
+        "items/<int:item_id>/diss-like/",
+        views.item_diss_like,
+        name="item_diss_like",
+    ),
+    path(
+        "items/<int:item_id>/reset/",
+        views.remove_item_feedback,
+        name="remove_item_feedback",
+    ),
+    path(
+        "items/<int:item_id>/comments/",
+        views.comments,
+        name="comments",
+    ),
+    path(
+        "comments/<int:comment_id>/",
+        views.comments,
+        name="delete_comment",
+    ),
 ]

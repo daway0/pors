@@ -23,6 +23,7 @@ from .messages import Message
 from .models import (
     AdminManipulationReason,
     Category,
+    Comment,
     DailyMenuItem,
     Deadlines,
     Item,
@@ -36,6 +37,7 @@ from .serializers import (
     AdminManipulationReasonsSerializer,
     AllItemSerializer,
     CategorySerializer,
+    CommentSerializer,
     Deadline,
     DeadlineSerializer,
     FirstPageSerializer,
@@ -52,8 +54,10 @@ from .utils import (
     first_and_last_day_date,
     generate_token_hash,
     get_deadlines,
+    invalid_request,
     localnow,
     split_dates,
+    valid_request,
 )
 
 # todo shipment
@@ -568,7 +572,7 @@ def auth_gateway(request):
             Token=token,
             ExpiredAt=cookies_expire_time,
             IsActive=True,
-            EmailAddress=email
+            EmailAddress=email,
         )
 
         response.set_cookie(
@@ -714,4 +718,138 @@ def item(request, user, override_user, item_id=None):
         form.create(form.cleaned_data)
         return render(
             request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
+        )
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def item_like(request, user, override_user, item_id: int):
+    """
+    Responsible for liking specific item.
+
+    Users cannot submit feedback for items they haven't ordered in past month
+    or they have already submitted a feedback for it.
+    """
+
+    item = get_object_or_404(Item, pk=item_id)
+
+    if not item.valid_for_feedback(user):
+        return invalid_request(
+            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+        )
+
+    liked = item.like(user)
+    if liked is None:
+        return invalid_request(
+            request, message, "شما در حال حاضر برای این آیتم نظر ثبت کرده‌اید."
+        )
+
+    return valid_request(request, message, "آیتم با موفقیت لایک شد.")
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def item_diss_like(request, user, override_user, item_id: int):
+    """
+    Responsible for liking specific item.
+
+    Users cannot submit feedback for items they haven't ordered in past month
+    or they have already submitted a feedback for it.
+    """
+
+    item = get_object_or_404(Item, pk=item_id)
+
+    if not item.valid_for_feedback(user):
+        return invalid_request(
+            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+        )
+
+    diss_liked = item.diss_like(user)
+    if diss_liked is None:
+        return invalid_request(
+            request, message, "شما در حال حاضر برای این آیتم نظر ثبت کرده‌اید."
+        )
+
+    return valid_request(request, message, "آیتم با موفقیت دیس‌لایک شد.")
+
+
+@api_view(["POST"])
+@check([is_open_for_personnel])
+@authenticate()
+def remove_item_feedback(request, user, override_user, item_id: int):
+    """
+    Removing feedback (like/diss_like) from a specific item.
+
+    Type is not important since users cannot like and diss like
+    an item simultaneously.
+    """
+
+    item = get_object_or_404(Item, pk=item_id)
+    deleted_id = item.remove_feedback(user)
+    if deleted_id == 0:
+        return invalid_request(
+            request,
+            message,
+            "شما در حال حاضر برای این آیتم نظری ثبت نکرده‌اید.",
+        )
+
+    return valid_request(request, message, "نظر شما با موفقیت حذف شد.")
+
+
+@api_view(["GET", "POST", "DELETE", "PATCH"])
+@check([is_open_for_personnel])
+@authenticate()
+def comments(
+    request, user, override_user, item_id: int = None, comment_id: int = None
+):
+    """
+    Responsible for list/add/deleting comments for a specific item.
+
+    GET:
+        Listing all comments for that item.
+    POST:
+        Adding comment (Must have ordered this item in last 30 days).
+    Delete:
+        Deleting a specific comment (comment_id) from item.
+    """
+
+    if request.method == "GET":
+        comments = CommentSerializer(
+            Comment.objects.filter(Item=item_id), many=True
+        )
+        return Response(comments.data, status=status.HTTP_200_OK)
+
+    elif request.method == "POST":
+        item = get_object_or_404(Item, pk=item_id)
+
+        if not item.valid_for_feedback(user):
+            return invalid_request(
+                request,
+                message,
+                "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
+            )
+
+        serializer = CommentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+        cm_id = item.add_comment(user, **serializer.validated_data)
+        return Response({"id": cm_id.id}, status.HTTP_201_CREATED)
+
+    elif request.method == "DELETE":
+        cm = get_object_or_404(Comment, pk=comment_id, User=user)
+
+        return valid_request(request, message, "کامنت با موفقیت حذف شد.")
+
+    elif request.method == "PATCH":
+        cm = get_object_or_404(Comment, pk=comment_id, User=user)
+        serializer = CommentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return invalid_request(request, message, "", serializer.errors)
+
+        cm.update(serializer.validated_data["Text"])
+        return valid_request(
+            request, message, "کامنت شما با موفیت تغییر یافت."
         )

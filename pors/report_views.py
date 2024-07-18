@@ -229,11 +229,11 @@ def item_ordering_personnel_list_report(
         "ساختمان تحویل",
         "طبقه تحویل"
     ])
-
+    item = m.Item.objects.filter(id=item_id).first()
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
-        f"Item Orders report generated for item {item_id} for {date}",
+        f"Item Orders report generated for item {item.ItemName} for {date}",
         m.PersonnelDailyReport
     )
 

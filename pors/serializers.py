@@ -24,6 +24,9 @@ class AllItemSerializer(serializers.ModelSerializer):
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
     itemProvider = serializers.CharField(source="ItemProvider")
+    totalLikes = serializers.IntegerField(source="Total_Likes")
+    TotalDissLikes = serializers.IntegerField(source="Total_Diss_Likes")
+    TotalComments = serializers.IntegerField(source="Total_Comments")
 
     class Meta:
         model = m.Item
@@ -38,6 +41,9 @@ class AllItemSerializer(serializers.ModelSerializer):
             "itemDesc",
             "isActive",
             "itemProvider",
+            "totalLikes",
+            "TotalDissLikes",
+            "TotalComments",
         )
 
 
@@ -316,10 +322,18 @@ class DeadlineSerializer(serializers.Serializer):
     def validate_mealType(self, type: str):
         if type not in m.MealTypeChoices.values:
             raise serializers.ValidationError("invalid meal type.")
-        
+
         return type
 
 
 class UpdateDeadlineSerializer(serializers.Serializer):
     notifyPersonnel = serializers.BooleanField()
     deadlines = DeadlineSerializer(many=True)
+
+
+class CommentSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    user = serializers.CharField(read_only=True, source="User.FullName")
+    created = serializers.CharField(read_only=True, source="Created")
+    updated = serializers.CharField(read_only=True, source="Updated")
+    text = serializers.CharField(max_length=500, source="Text")

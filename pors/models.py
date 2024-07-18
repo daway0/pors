@@ -22,9 +22,25 @@ Prices are in Toman everywhere.
 
 from enum import Enum
 
+import jdatetime
+import pytz
 from django.db import models
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
+
+
+def localnow_str() -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc)
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
+
+
+def localnow_minus_days(days_to_go_back: int) -> jdatetime.datetime:
+    utc_now = jdatetime.datetime.now(tz=pytz.utc) - jdatetime.timedelta(
+        days=days_to_go_back
+    )
+    local_timezone = pytz.timezone("Asia/Tehran")
+    return utc_now.astimezone(local_timezone).strftime("%Y/%m/%d %H:%M:%S")
 
 
 class Logger(models.Model):
@@ -294,6 +310,77 @@ class Item(models.Model):
     ItemProvider = models.ForeignKey(
         "ItemProvider", on_delete=models.SET_NULL, null=True
     )
+
+    @property
+    def Total_Likes(self):
+        return Feedback.objects.filter(
+            Item=self, Type=ItemLikeType.LIKE
+        ).count()
+
+    @property
+    def Total_Diss_Likes(self):
+        return Feedback.objects.filter(
+            Item=self, Type=ItemLikeType.DISS_LIKE
+        ).count()
+
+    @property
+    def Total_Comments(self):
+        return Comment.objects.filter(Item=self).count()
+
+    def like(self, user: User) -> "Feedback":
+        if Feedback.objects.filter(User=user):
+            return
+
+        record = Feedback(
+            Item=self,
+            User=user,
+            Type=ItemLikeType.LIKE,
+        )
+        record.save(
+            user=user.Personnel,
+            log=f"{user.Personnel} just liked item {self.ItemName}",
+        )
+        return record
+
+    def diss_like(self, user: User) -> "Feedback":
+        if Feedback.objects.filter(User=user):
+            return
+
+        record = Feedback(
+            Item=self,
+            User=user,
+            Type=ItemLikeType.DISS_LIKE,
+        )
+        record.save(
+            user=user.Personnel,
+            log=f"{user.Personnel} just diss liked item {self.ItemName}",
+        )
+        return record
+
+    def remove_feedback(self, user: User):
+        return Feedback.objects.filter(User=user).delete()[0]
+
+    def add_comment(self, user: User, Text: str) -> "Comment":
+        record = Comment(Item=self, User=user, Text=Text)
+        record.save(
+            user=user.Personnel,
+            log=f"just added a comment for {self.ItemName},\n {Text}",
+        )
+        return record
+
+    def valid_for_feedback(self, user: User) -> bool:
+        """
+        Validating if user is able to submit feedback for this item.
+
+        User must have ordered this item in last 30 days in order to be able
+        to submit feedback for it.
+        """
+
+        return OrderItem.objects.filter(
+            Item=self,
+            Personnel=user.Personnel,
+            DeliveryDate__range=[localnow_minus_days(30), localnow_str()],
+        ).exists()
 
     def __str__(self):
         return self.ItemName
@@ -670,3 +757,31 @@ class HR_constvalue(models.Model):
 class AdminManipulationReason(models.Model):
     Title = models.CharField(max_length=350)
     ReasonCode = models.CharField(max_length=50, null=True)
+
+
+class ItemLikeType(models.TextChoices):
+    LIKE = "L", "دوست داشتم"
+    DISS_LIKE = "D", "دوست نداشتم"
+
+
+class Comment(Logger):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE)
+    Text = models.TextField()
+    Created = models.CharField(default=localnow_str, max_length=20)
+    Updated = models.CharField(default=localnow_str, max_length=20)
+
+    def update(self, new_text: str):
+        if self.Text == new_text:
+            return
+        
+        self.Text = new_text
+        self.Updated = localnow_str()
+        self.save()
+
+
+class Feedback(Logger):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE)
+    Type = models.CharField(choices=ItemLikeType.choices, max_length=1)
+    Created = models.CharField(default=localnow_str, max_length=20)
