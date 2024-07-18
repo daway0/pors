@@ -306,20 +306,63 @@ class AdminReasonserializer(serializers.Serializer):
 
         return reason
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if data["reason"].Title.lower() == "other" and not data.get("comment"):
+            raise ValueError(
+                "you must provide a comment when using other's reason"
+            )
+
+        return data
+
 
 class DeadlineSerializer(serializers.Serializer):
     days = serializers.IntegerField(source="Days", min_value=0)
     hours = serializers.IntegerField(source="Hour", min_value=0, max_value=24)
     # weekday = serializers.IntegerField(source="WeekDay", read_only=True)
     mealType = serializers.CharField(source="MealType")
-    
+
     def validate_mealType(self, type: str):
         if type not in m.MealTypeChoices.values:
             raise serializers.ValidationError("invalid meal type.")
-        
+
         return type
 
 
 class UpdateDeadlineSerializer(serializers.Serializer):
     notifyPersonnel = serializers.BooleanField()
     deadlines = DeadlineSerializer(many=True)
+
+
+class NoteSerializer(serializers.Serializer):
+    date = serializers.CharField(max_length=10)
+    note = serializers.CharField(
+        max_length=1000, required=False, allow_null=True
+    )
+    reason = serializers.IntegerField()
+    comment = serializers.CharField(max_length=250, required=False)
+
+    def validate_reason(self, id):
+        reason = m.AdminManipulationReason.objects.filter(pk=id).first()
+        if reason is None:
+            raise serializers.ValidationError("invalid id")
+
+        return reason
+
+    def validate_date(self, date):
+        date = u.validate_date(date)
+        if date is None:
+            raise serializers.ValidationError("invalid date value.")
+
+        return date
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if data["reason"].ReasonCode.lower() == "other" and not data.get("comment"):
+            raise serializers.ValidationError(
+                "you must provide a comment when using other's reason"
+            )
+
+        return data

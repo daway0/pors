@@ -223,7 +223,7 @@ class OverrideUserValidator:
 
         if s_data.validated_data[
             "reason"
-        ].Title == "other" and not s_data.validated_data.get("comment"):
+        ].Title.lower() == "other" and not s_data.validated_data.get("comment"):
             raise ValueError(
                 "you must provide a comment when using other's reason"
             )

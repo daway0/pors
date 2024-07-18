@@ -28,6 +28,7 @@ from .models import (
     Item,
     ItemsOrdersPerDay,
     Order,
+    OrderItem,
     Subsidy,
     SystemSetting,
     User,
@@ -41,6 +42,7 @@ from .serializers import (
     FirstPageSerializer,
     ListedDaysWithMenu,
     MenuItemSerializer,
+    NoteSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
     UpdateDeadlineSerializer,
@@ -568,7 +570,7 @@ def auth_gateway(request):
             Token=token,
             ExpiredAt=cookies_expire_time,
             IsActive=True,
-            EmailAddress=email
+            EmailAddress=email,
         )
 
         response.set_cookie(
@@ -715,3 +717,23 @@ def item(request, user, override_user, item_id=None):
         return render(
             request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
         )
+
+
+@api_view(["POST"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def note(request, user, override_user):
+    if not override_user:
+        return Response({"error": "you must provide override_username"})
+
+    serializer = NoteSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    got_updated = OrderItem.update_note(
+        override_user, user, **serializer.validated_data
+    )
+    if not got_updated:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status=status.HTTP_200_OK)

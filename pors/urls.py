@@ -75,4 +75,5 @@ urlpatterns = [
         views.item,
         name="item",
     ),
+    path("administrative/notes/", views.note, name="note"),
 ]

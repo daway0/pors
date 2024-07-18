@@ -451,6 +451,38 @@ class OrderItem(Logger):
     # Taken from the current item price (Item/CurrentPrice) and entered here.
     # Technical redundancy
     PricePerOne = models.PositiveIntegerField()
+    Note = models.TextField(null=True, blank=True)
+
+    @staticmethod
+    def update_note(
+        personnel: User,
+        admin_user: User,
+        date: str,
+        note: str,
+        reason: "AdminManipulationReason",
+        comment: str = None,
+    ) -> bool:
+
+        order_items = OrderItem.objects.filter(
+            Personnel=personnel, DeliveryDate=date
+        )
+        if not order_items.exists():
+            return False
+
+        old_note = {"Note": order_items[0].Note}
+        order_items.update(Note=note)
+
+        ActionLog.objects.log(
+            action_type=ActionLog.ActionTypeChoices.CREATE,
+            log_msg=f"notes got updated for date {date}",
+            model=OrderItem,
+            old_data=old_note,
+            user=personnel,
+            admin=admin_user,
+            reason=reason,
+            comment=comment,
+        )
+        return True
 
     class Meta:
         constraints = [
