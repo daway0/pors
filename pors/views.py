@@ -147,13 +147,22 @@ def remove_item_from_menu(request, user: User, override_user: User):
     )
 
 
-class AllItems(ListAPIView):
+@api_view(["GET"])
+@check([is_open_for_personnel])
+@authenticate()
+def all_items(request, user: User, override_user: User):
     """
     Returning list of all items from database.
     """
 
-    queryset = Item.objects.filter()
-    serializer_class = AllItemSerializer
+    with open("./pors/SQLs/ItemsWithFeedback.sql", mode="r") as f:
+        query = f.read()
+
+    params = (user.pk, user.pk)
+    items_with_feedback = execute_raw_sql_with_params(query, params)
+
+    serializer = AllItemSerializer(items_with_feedback, many=True)
+    return Response(serializer.data)
 
 
 class Categories(ListAPIView):
@@ -734,10 +743,10 @@ def item_like(request, user, override_user, item_id: int):
 
     item = get_object_or_404(Item, pk=item_id)
 
-    if not item.valid_for_feedback(user):
-        return invalid_request(
-            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
-        )
+    # if not item.valid_for_feedback(user):
+    #     return invalid_request(
+    #         request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+    #     )
 
     liked = item.like(user)
     if liked is None:
@@ -761,10 +770,10 @@ def item_diss_like(request, user, override_user, item_id: int):
 
     item = get_object_or_404(Item, pk=item_id)
 
-    if not item.valid_for_feedback(user):
-        return invalid_request(
-            request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
-        )
+    # if not item.valid_for_feedback(user):
+    #     return invalid_request(
+    #         request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
+    #     )
 
     diss_liked = item.diss_like(user)
     if diss_liked is None:

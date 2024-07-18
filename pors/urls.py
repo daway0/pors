@@ -21,7 +21,7 @@ urlpatterns = [
     path("panel/", views.first_page, name="apanel"),
     path(
         "all-items/",
-        views.AllItems.as_view(),
+        views.all_items,
         name="all_items",
     ),
     path(

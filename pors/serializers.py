@@ -13,20 +13,24 @@ Deadline = namedtuple("Deadline", "Days Hour")
 class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
     image = serializers.CharField(source="Image")
-    category = serializers.SlugRelatedField(
-        slug_field="CategoryName",
-        queryset=m.Category.objects.all().values("CategoryName"),
-        source="Category",
+    category = serializers.CharField(
+        source="CategoryName",
     )
     currentPrice = serializers.IntegerField(source="CurrentPrice")
-    mealType = serializers.CharField(source="get_MealType_display")
+    mealType = serializers.SerializerMethodField(source="MealType")
     serveTime = serializers.CharField(source="MealType")
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
-    itemProvider = serializers.CharField(source="ItemProvider")
-    totalLikes = serializers.IntegerField(source="Total_Likes")
-    TotalDissLikes = serializers.IntegerField(source="Total_Diss_Likes")
-    TotalComments = serializers.IntegerField(source="Total_Comments")
+    itemProvider = serializers.IntegerField(source="ItemProvider_id")
+    totalLikes = serializers.IntegerField(source="TotalLikes")
+    totalDissLikes = serializers.IntegerField(source="TotalDissLikes")
+    totalComments = serializers.IntegerField(source="TotalComments")
+    isLiked = serializers.BooleanField(source="IsLiked")
+    isDissLiked = serializers.BooleanField(source="IsDissLiked")
+    isCommented = serializers.BooleanField(source="IsCommented")
+
+    def get_mealType(self, item):
+        return m.MealTypeChoices(item["MealType"]).label
 
     class Meta:
         model = m.Item
@@ -42,8 +46,11 @@ class AllItemSerializer(serializers.ModelSerializer):
             "isActive",
             "itemProvider",
             "totalLikes",
-            "TotalDissLikes",
-            "TotalComments",
+            "totalDissLikes",
+            "totalComments",
+            "isLiked",
+            "isDissLiked",
+            "isCommented",
         )
 
 
@@ -318,7 +325,7 @@ class DeadlineSerializer(serializers.Serializer):
     hours = serializers.IntegerField(source="Hour", min_value=0, max_value=24)
     # weekday = serializers.IntegerField(source="WeekDay", read_only=True)
     mealType = serializers.CharField(source="MealType")
-    
+
     def validate_mealType(self, type: str):
         if type not in m.MealTypeChoices.values:
             raise serializers.ValidationError("invalid meal type.")

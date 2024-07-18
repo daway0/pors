@@ -328,7 +328,7 @@ class Item(models.Model):
         return Comment.objects.filter(Item=self).count()
 
     def like(self, user: User) -> "Feedback":
-        if Feedback.objects.filter(User=user):
+        if Feedback.objects.filter(User=user, Item=self):
             return
 
         record = Feedback(
@@ -343,7 +343,7 @@ class Item(models.Model):
         return record
 
     def diss_like(self, user: User) -> "Feedback":
-        if Feedback.objects.filter(User=user):
+        if Feedback.objects.filter(User=user, Item=self):
             return
 
         record = Feedback(
@@ -358,7 +358,7 @@ class Item(models.Model):
         return record
 
     def remove_feedback(self, user: User):
-        return Feedback.objects.filter(User=user).delete()[0]
+        return Feedback.objects.filter(User=user, Item=self).delete()[0]
 
     def add_comment(self, user: User, Text: str) -> "Comment":
         record = Comment(Item=self, User=user, Text=Text)
@@ -785,3 +785,15 @@ class Feedback(Logger):
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     Type = models.CharField(choices=ItemLikeType.choices, max_length=1)
     Created = models.CharField(default=localnow_str, max_length=20)
+
+
+class ItemFeedbacks(models.Model):
+    Id = models.PositiveIntegerField(primary_key=True)
+    Item = models.PositiveBigIntegerField()
+    TotalLikes = models.PositiveIntegerField()
+    TotalDissLikes = models.PositiveIntegerField()
+    TotalComments = models.PositiveIntegerField()
+
+    class Meta:
+        managed = False
+        db_table = "ItemFeedbacks"
