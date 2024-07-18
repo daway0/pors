@@ -21,7 +21,7 @@ class AllItemSerializer(serializers.ModelSerializer):
     serveTime = serializers.CharField(source="MealType")
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
-    itemProvider = serializers.IntegerField(source="ItemProvider_id")
+    itemProvider = serializers.CharField()
     totalLikes = serializers.IntegerField(source="TotalLikes")
     totalDissLikes = serializers.IntegerField(source="TotalDissLikes")
     totalComments = serializers.IntegerField(source="TotalComments")
