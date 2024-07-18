@@ -341,7 +341,42 @@ function calendarDayBlock(dayNumberStyle, dayNumber, dayOfWeek, monthNumber, yea
                             </div>`
 }
 
-function menuItemBlock(selected, id, serveTime, itemName, pic, itemDesc, price, itemCount = 0, editable = true, itemProvider) {
+function menuItemBlock(
+    selected,
+    id,
+    serveTime,
+    itemName,
+    pic,
+    itemDesc,
+    price,
+    itemCount = 0,
+    editable = true,
+    itemProvider,
+    totalLikes,
+    totalDissLikes,
+    totalComments,
+    isLiked,
+    isDissLiked,
+    isCommented
+) {
+    let feedback = ""
+    if (!godMode){
+        feedback = `<div class="flex flex-row gap-0 items-center">
+        <span data-feedback-count="${totalLikes}" data-byme="${isLiked ? 1:0}" class="like-item cursor-pointer flex items-center flex-row gap-0 ${isLiked ? "text-blue-700 scale-110" : "text-gray-500"} py-0.5 text-xs group hover:text-blue-700 hover:scale-110">
+            <svg  class="w-4 h-4 ${isLiked ? "fill-blue-700" : "fill-gray-500"} group-hover:fill-blue-700" viewBox="0 0 30 30" id="up-direction" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path id="primary" d="M20.65,8.78,13.3,2.48a2,2,0,0,0-2.6,0L3.35,8.78a1,1,0,0,0-.11,1.41l2.6,3a1,1,0,0,0,.68.35,1.06,1.06,0,0,0,.73-.24L9,11.84V20a2,2,0,0,0,2,2h2a2,2,0,0,0,2-2V11.84l1.75,1.5a1.06,1.06,0,0,0,.73.24,1,1,0,0,0,.68-.35l2.6-3A1,1,0,0,0,20.65,8.78Z" ></path></g></svg>
+            <span class="fb-real-count">${convertToPersianNumber(totalLikes)}</span> 
+        </span>    
+        <span data-feedback-count="${totalDissLikes}" data-byme="${isDissLiked ? 1:0}" class="disslike-item cursor-pointer  flex items-center  flex-row gap-0 ${isDissLiked ? "text-red-700 scale-110" : "text-gray-500"} py-0.5 text-xs group hover:text-red-700 hover:scale-110">
+            <svg class="w-4 h-4 ${isDissLiked ? "fill-red-700" : "fill-gray-500"} group-hover:fill-red-700" viewBox="0 0 30 30" id="down-direction" data-name="Flat Color" xmlns="http://www.w3.org/2000/svg" class="icon flat-color"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path id="primary" d="M20.76,13.81l-2.6-3a1,1,0,0,0-1.41-.11L15,12.16V4a2,2,0,0,0-2-2H11A2,2,0,0,0,9,4v8.16l-1.75-1.5a1,1,0,0,0-1.41.11l-2.6,3a1,1,0,0,0,.11,1.41l7.35,6.3a2,2,0,0,0,2.6,0l7.35-6.3A1,1,0,0,0,20.76,13.81Z"></path></g></svg>    
+            <span class="fb-real-count">${convertToPersianNumber(totalDissLikes)}</span>   
+        </span> 
+        <span data-feedback-count="${totalComments}" data-byme="${isCommented ? 1:0}" class="comment-item mr-2 cursor-pointer  flex items-center  flex-row gap-0.5 ${isCommented ? "text-gray-700 scale-110" : "text-gray-500"} py-0.5 text-xs group hover:text-gray-700 hover:scale-110">
+        <svg class="w-3 h-3 ${isCommented ? "fill-gray-700" : "fill-gray-500"} group-hover:fill-gray-700" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>comment-blank-solid</title> <g id="Layer_2" data-name="Layer 2"> <g id="invisible_box" data-name="invisible box"> <rect  fill="none"></rect> <rect fill="none"></rect> </g> <g id="icons_Q2" data-name="icons Q2"> <path d="M42,4H6A2,2,0,0,0,4,6V42a2,2,0,0,0,2,2,2,2,0,0,0,1.4-.6L15.2,36H42a2,2,0,0,0,2-2V6a2,2,0,0,0-2-2Z"></path> </g> </g> </g></svg>    
+        <span class="fb-real-count">${convertToPersianNumber(totalComments)}</span>  
+        </span> 
+    </div>   
+    <span class="text-gray-400 py-0.5 text-xs">|</span>`
+    }
     let minus = `
     <div class="ml-2">
                         <img class="!cursor-pointer remove-item w-6 h-6"
@@ -398,11 +433,14 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                 </div>
             </div>
             <div class="flex justify-between items-center">
-            <div class="flex flex-row gap-2 py-2 items-center">
-                <span class="flex items-center  flex-row gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs">
-                    <svg class="w-4 h-4 fill-black" viewBox="0 -18.83 122.88 122.88" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="enable-background:new 0 0 122.88 85.22" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style> <g> <path class="st0" d="M82.08,7.33h35.4c1.35,0,2.46,1.11,2.46,2.46V30.4h0.24c1.49,0,2.7,1.22,2.7,2.7v3.01 c0,1.51-1.24,2.74-2.74,2.74h-19c14.12,1.26,22.19,14.39,21.31,31.46h-12.56c-0.01,8.23-6.69,14.89-14.92,14.89 c-8.23,0-14.91-6.67-14.92-14.89H41.68c-0.01-0.27-0.02-0.53-0.03-0.8c0.03,1.81-0.08,3.73-0.34,5.78L7.87,59.54L0,55.82 c6.32-7.19,13.94-10.21,23.16-8.13c1.42,0.36,2.76,0.78,4.03,1.26c-1.3-0.5-2.67-0.92-4.11-1.28l10.52-34.65l-4.75-0.09l0,0 c-0.98-0.02-2.04,0.25-2.71-0.23c-1.16-0.03-2.17-0.73-2.87-1.83c-0.63-0.98-1.01-2.32-1.01-3.78c0-1.46,0.39-2.8,1.01-3.78 c0.52-0.81,1.2-1.4,1.98-1.67c0.01-0.16,0.02-0.27,0.04-0.3c1.12-1.79,3.3-1.25,5.24-1.25l1.89,0.12c1.37,0.17,2.71,0.62,4,1.36 l2.16,1.21h1.75l5.88,1.14c1.92,0.37,2.2,0.21,1.75,2.58c-0.06,0.3-0.13,0.6-0.23,0.89c-0.58,1.73-1.04,1.09-2.83,0.72l-5.51-1.14 c0.21,2.22-0.49,4.94-1.48,8.12c3.17,2.68,4.59,6.5,2.43,11.53l-5.26,16.21C43.9,49.08,49.2,54.74,49.5,64.03h11.67 c7.19-5.45,6-15.15-1.89-21.35v-3.82h0v-5.84c0.01-1.85,1-2.68,2.84-2.63h17.5V9.79C79.62,8.44,80.73,7.33,82.08,7.33L82.08,7.33z M90.68,26.67h18.21c0.14,0,0.26,0.12,0.26,0.26v0.52c0,0.14-0.12,0.26-0.26,0.26H90.68c-0.14,0-0.26-0.12-0.26-0.26v-0.52 C90.42,26.79,90.53,26.67,90.68,26.67L90.68,26.67z M100.54,15.35c5.33,0.43,9.19,4.44,8.52,9.72H90.5 c-0.65-5.31,3.22-9.33,8.59-9.72v-1.49h-1.48c-0.15,0-0.27-0.12-0.27-0.27v-0.97c0-0.15,0.12-0.27,0.27-0.27h4.37 c0.15,0,0.27,0.12,0.27,0.27v0.97c0,0.15-0.12,0.27-0.27,0.27h-1.45V15.35L100.54,15.35L100.54,15.35z M7.91,59.56l13.3,6.3 l-4.32-1.98c-2.97,0.63-5.19,3.27-5.19,6.42c0,3.63,2.94,6.57,6.57,6.57c3.63,0,6.57-2.94,6.57-6.57c0-1.12-0.28-2.17-0.77-3.1 l9.08,4.3c-0.61,7.68-7.04,13.72-14.87,13.72c-8.24,0-14.92-6.68-14.92-14.92C3.34,66.08,5.09,62.27,7.91,59.56L7.91,59.56 L7.91,59.56z M25.27,4.2c0.06,1.92,0.19,4.39,0.28,6.05c-0.16-0.14-0.32-0.32-0.46-0.55c-0.42-0.65-0.67-1.58-0.67-2.62 s0.26-1.97,0.67-2.62C25.15,4.37,25.21,4.28,25.27,4.2L25.27,4.2z M88.4,70.32h13.14c-0.01,3.62-2.95,6.54-6.57,6.54 C91.35,76.87,88.41,73.94,88.4,70.32L88.4,70.32L88.4,70.32z"></path> </g> </g></svg>
+            <div class="flex flex-row gap-2 py-2 items-center ">
+                ${feedback}
+                <span class="flex items-center  flex-row gap-1 text-gray-500 py-0.5 text-xs">
+                    <svg class="w-4 h-4 fill-gray-500" viewBox="0 -18.83 122.88 122.88" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="enable-background:new 0 0 122.88 85.22" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style> <g> <path class="st0" d="M82.08,7.33h35.4c1.35,0,2.46,1.11,2.46,2.46V30.4h0.24c1.49,0,2.7,1.22,2.7,2.7v3.01 c0,1.51-1.24,2.74-2.74,2.74h-19c14.12,1.26,22.19,14.39,21.31,31.46h-12.56c-0.01,8.23-6.69,14.89-14.92,14.89 c-8.23,0-14.91-6.67-14.92-14.89H41.68c-0.01-0.27-0.02-0.53-0.03-0.8c0.03,1.81-0.08,3.73-0.34,5.78L7.87,59.54L0,55.82 c6.32-7.19,13.94-10.21,23.16-8.13c1.42,0.36,2.76,0.78,4.03,1.26c-1.3-0.5-2.67-0.92-4.11-1.28l10.52-34.65l-4.75-0.09l0,0 c-0.98-0.02-2.04,0.25-2.71-0.23c-1.16-0.03-2.17-0.73-2.87-1.83c-0.63-0.98-1.01-2.32-1.01-3.78c0-1.46,0.39-2.8,1.01-3.78 c0.52-0.81,1.2-1.4,1.98-1.67c0.01-0.16,0.02-0.27,0.04-0.3c1.12-1.79,3.3-1.25,5.24-1.25l1.89,0.12c1.37,0.17,2.71,0.62,4,1.36 l2.16,1.21h1.75l5.88,1.14c1.92,0.37,2.2,0.21,1.75,2.58c-0.06,0.3-0.13,0.6-0.23,0.89c-0.58,1.73-1.04,1.09-2.83,0.72l-5.51-1.14 c0.21,2.22-0.49,4.94-1.48,8.12c3.17,2.68,4.59,6.5,2.43,11.53l-5.26,16.21C43.9,49.08,49.2,54.74,49.5,64.03h11.67 c7.19-5.45,6-15.15-1.89-21.35v-3.82h0v-5.84c0.01-1.85,1-2.68,2.84-2.63h17.5V9.79C79.62,8.44,80.73,7.33,82.08,7.33L82.08,7.33z M90.68,26.67h18.21c0.14,0,0.26,0.12,0.26,0.26v0.52c0,0.14-0.12,0.26-0.26,0.26H90.68c-0.14,0-0.26-0.12-0.26-0.26v-0.52 C90.42,26.79,90.53,26.67,90.68,26.67L90.68,26.67z M100.54,15.35c5.33,0.43,9.19,4.44,8.52,9.72H90.5 c-0.65-5.31,3.22-9.33,8.59-9.72v-1.49h-1.48c-0.15,0-0.27-0.12-0.27-0.27v-0.97c0-0.15,0.12-0.27,0.27-0.27h4.37 c0.15,0,0.27,0.12,0.27,0.27v0.97c0,0.15-0.12,0.27-0.27,0.27h-1.45V15.35L100.54,15.35L100.54,15.35z M7.91,59.56l13.3,6.3 l-4.32-1.98c-2.97,0.63-5.19,3.27-5.19,6.42c0,3.63,2.94,6.57,6.57,6.57c3.63,0,6.57-2.94,6.57-6.57c0-1.12-0.28-2.17-0.77-3.1 l9.08,4.3c-0.61,7.68-7.04,13.72-14.87,13.72c-8.24,0-14.92-6.68-14.92-14.92C3.34,66.08,5.09,62.27,7.91,59.56L7.91,59.56 L7.91,59.56z M25.27,4.2c0.06,1.92,0.19,4.39,0.28,6.05c-0.16-0.14-0.32-0.32-0.46-0.55c-0.42-0.65-0.67-1.58-0.67-2.62 s0.26-1.97,0.67-2.62C25.15,4.37,25.21,4.28,25.27,4.2L25.27,4.2z M88.4,70.32h13.14c-0.01,3.62-2.95,6.54-6.57,6.54 C91.35,76.87,88.41,73.94,88.4,70.32L88.4,70.32L88.4,70.32z"></path> </g> </g></svg>
                     ${convertToPersianNumber(itemProvider)}    
                 </span>
+                
+                
             </div>
                 <div class="">
                                             <span class="text-sm">${insertCommas(convertToPersianNumber(price))}<span
@@ -476,12 +514,25 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
             price,
             quantity,
             editableItem,
-            selectedMenuItem.itemProvider
+            selectedMenuItem.itemProvider,
+            selectedMenuItem.totalLikes,
+            selectedMenuItem.totalDissLikes,
+            selectedMenuItem.totalComments,
+            selectedMenuItem.isLiked,
+            selectedMenuItem.isDissLiked,
+            selectedMenuItem.isCommented
         )
     })
     return HTML
 }
 
+function changeItemFeedback(newDataObj, itemId) {
+    // changes all Items data
+    let selectedMenuItem = allItems.find(item => item.id === itemId);
+    for (const mustChange in newDataObj) {
+        selectedMenuItem[mustChange] = newDataObj[mustChange]
+    }
+}
 
 function changeMenuTypeDisplay(e) {
     let mustAdd = "text-blue-900 bg-blue-100 shadow-md"
@@ -638,6 +689,19 @@ function makeCalendar(startDayOfWeek, endDayOfMonth, holidays, daysWithMenu, mon
     $("#dayBlocksWrapper").attr("data-year", yearNumber)
 
 
+}
+
+
+function changeFeedbackSectionHighligh(highlight, e, like) {
+    let addColor = like === true ? "blue" : "red" 
+
+    if (highlight){ 
+        e.addClass(`text-${addColor}-700 scale-110`).removeClass(`text-gray-500`)
+        e.find("svg").addClass(`fill-${addColor}-700 scale-110`).removeClass(`fill-gray-500`)
+        return
+    } 
+    e.addClass(`text-gray-500`).removeClass(`text-${addColor}-700 scale-110`)
+    e.find("svg").addClass(`fill-gray-500`).removeClass(`fill-${addColor}-700 scale-110`)
 }
 
 function getSubsidy() {
@@ -1451,11 +1515,253 @@ $(document).ready(function () {
         $("#floor-place-modal").click()
     })
 
-
-
     // دکمه انتخاب منو برای نمایش منوی انتخابی (فعلا ناهار و صبحانه رو داریم)
     $(document).on('click', '.separate-menu', function () {
         changeMenuTypeDisplay($(this))
     })
 
+    $(document).on('click', '.like-item', function () {
+        
+        let $likeFeedback = $(this)
+        let $likeFeedbackCount = $likeFeedback.find(".fb-real-count")
+        let $dissLikeFeedback = $(this).parent().find(".disslike-item")
+        let $disslikeFeedbackCount = $dissLikeFeedback.find(".fb-real-count")
+        let totalLikes = parseInt($likeFeedback.attr("data-feedback-count"))
+        let totalDissLikes = parseInt($dissLikeFeedback.attr("data-feedback-count"))
+        let isLiked = parseInt($likeFeedback.attr("data-byme"))
+        let isDissLiked = parseInt($dissLikeFeedback.attr("data-byme")) 
+        let itemId = parseInt($likeFeedback.parents("li").attr("data-item-id"))
+
+        if (isLiked===0 && isDissLiked===0){
+            // call like
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/like/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        ++totalLikes
+                        $likeFeedback.attr("data-byme", 1)
+                        $likeFeedback.attr("data-feedback-count", totalLikes)
+                        changeFeedbackSectionHighligh(true, $likeFeedback, true)
+                        $likeFeedbackCount.text(convertToPersianNumber(totalLikes))
+                        changeItemFeedback({totalLikes:totalLikes, isLiked:true}, itemId) 
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+
+        if (isLiked===0 && isDissLiked===1){
+            // call reset then like
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/reset/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        $.ajax({
+                            url: addPrefixTo(`items/${itemId}/like/`),
+                            method: 'POST',
+                            contentType: 'application/json',
+                            statusCode: {
+                                200: function (data) {
+                                    ++totalLikes
+                                    --totalDissLikes
+                                    $likeFeedback.attr("data-byme", 1)
+                                    $likeFeedback.attr("data-feedback-count", totalLikes)
+                                    $dissLikeFeedback.attr("data-byme", 0)
+                                    $dissLikeFeedback.attr("data-feedback-count", totalDissLikes)
+                                    
+                                    changeFeedbackSectionHighligh(true, $likeFeedback, true)
+                                    changeFeedbackSectionHighligh(false, $dissLikeFeedback, false)
+
+                                    $likeFeedbackCount.text(convertToPersianNumber(totalLikes))
+                                    $disslikeFeedbackCount.text(convertToPersianNumber(totalDissLikes))
+
+                                    changeItemFeedback(
+                                        {
+                                            totalLikes:totalLikes,
+                                            isLiked:true,
+                                            totalDissLikes:totalDissLikes,
+                                            isDissLiked:false
+                                        }
+                                        ,itemId) 
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Like item didnt work !', status, 'and' +
+                                    ' error:', error, 'detail:', xhr.responseJSON);
+                                checkErrorRelatedToAuth(xhr.status)
+                                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                            }
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+
+        if (isLiked===1 && isDissLiked===0){
+            // just reset
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/reset/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        --totalLikes
+                        $likeFeedback.attr("data-byme", 0)
+                        $likeFeedback.attr("data-feedback-count", totalLikes)
+                        changeFeedbackSectionHighligh(false, $likeFeedback, true)
+                        $likeFeedbackCount.text(convertToPersianNumber(totalLikes))
+                        changeItemFeedback({totalLikes:totalLikes, isLiked:false}, itemId) 
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+    })
+    
+    $(document).on('click', '.disslike-item', function () {
+        let $likeFeedback =$(this).parent().find(".like-item") 
+        let $likeFeedbackCount = $likeFeedback.find(".fb-real-count")
+        let $dissLikeFeedback = $(this)
+        let $disslikeFeedbackCount = $dissLikeFeedback.find(".fb-real-count")
+        let totalLikes = parseInt($likeFeedback.attr("data-feedback-count"))
+        let totalDissLikes = parseInt($dissLikeFeedback.attr("data-feedback-count"))
+        let isLiked = parseInt($likeFeedback.attr("data-byme"))
+        let isDissLiked = parseInt($dissLikeFeedback.attr("data-byme")) 
+        let itemId = parseInt($likeFeedback.parents("li").attr("data-item-id"))
+
+        if (isLiked===0 && isDissLiked===0){
+            // call disslike
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/diss-like/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        ++totalDissLikes
+                        $dissLikeFeedback.attr("data-byme", 1)
+                        $dissLikeFeedback.attr("data-feedback-count", totalDissLikes)
+                        changeFeedbackSectionHighligh(true, $dissLikeFeedback, false)
+                        $disslikeFeedbackCount.text(convertToPersianNumber(totalDissLikes))
+                        changeItemFeedback({totalDissLikes:totalDissLikes, isDissLiked:true}, itemId) 
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+
+        if (isDissLiked===0 && isLiked===1){
+            // call reset then disslike
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/reset/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        $.ajax({
+                            url: addPrefixTo(`items/${itemId}/diss-like/`),
+                            method: 'POST',
+                            contentType: 'application/json',
+                            statusCode: {
+                                200: function (data) {
+                                    ++totalDissLikes
+                                    --totalLikes
+                                    $dissLikeFeedback.attr("data-byme", 1)
+                                    $dissLikeFeedback.attr("data-feedback-count", totalDissLikes)
+                                    $likeFeedback.attr("data-byme", 0)
+                                    $likeFeedback.attr("data-feedback-count", totalLikes)
+                                    
+                                    changeFeedbackSectionHighligh(true, $dissLikeFeedback, false)
+                                    changeFeedbackSectionHighligh(false, $likeFeedback, true)
+
+                                    $likeFeedbackCount.text(convertToPersianNumber(totalLikes))
+                                    $disslikeFeedbackCount.text(convertToPersianNumber(totalDissLikes))
+
+                                    changeItemFeedback(
+                                        {
+                                            totalLikes:totalLikes,
+                                            isLiked:false,
+                                            totalDissLikes:totalDissLikes,
+                                            isDissLiked:true
+                                        }
+                                        ,itemId) 
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Like item didnt work !', status, 'and' +
+                                    ' error:', error, 'detail:', xhr.responseJSON);
+                                checkErrorRelatedToAuth(xhr.status)
+                                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                            }
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+
+        if (isDissLiked===1 && isLiked===0){
+            // just reset
+            $.ajax({
+                url: addPrefixTo(`items/${itemId}/reset/`),
+                method: 'POST',
+                contentType: 'application/json',
+                statusCode: {
+                    200: function (data) {
+                        --totalDissLikes
+                        $dissLikeFeedback.attr("data-byme", 0)
+                        $dissLikeFeedback.attr("data-feedback-count", totalDissLikes)
+                        changeFeedbackSectionHighligh(false, $dissLikeFeedback, false)
+                        $disslikeFeedbackCount.text(convertToPersianNumber(totalDissLikes))
+                        changeItemFeedback({totalDissLikes:totalDissLikes, isDissLiked:false}, itemId) 
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Like item didnt work !', status, 'and' +
+                        ' error:', error, 'detail:', xhr.responseJSON);
+                    checkErrorRelatedToAuth(xhr.status)
+                    catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+                }
+            });
+            return
+        }
+    })
+    
+    $(document).on('click', '.comment-item', function () {
+        alert("comment")
+    })
 });
