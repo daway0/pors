@@ -1385,6 +1385,74 @@ $(document).ready(function () {
         });
     })
 
+    $(document).on('click', '#add-new-item-to-system', function () {
+        $.ajax({
+            url: addPrefixTo('administrative/items/'),
+            type: 'GET',
+            success: function(response) {
+                $('.new-item-form-container').html(response);
+                $("#add-new-item-modal").click()
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching HTML content: ' + textStatus, errorThrown);
+                alert('Error loading content. Please try again.');
+            }
+        });
+    })
+
+
+    $(document).on('submit', '#add-item-form', function(event) {
+        event.preventDefault(); // Prevent the form from submitting the default way
+
+        // Create a FormData object
+        var formData = new FormData(this); // 'this' refers to the form element
+
+        // Get the file input element and the selected file
+        var fileInput = $('#id_Image')[0];
+        var file = fileInput.files[0];
+
+        // Check if a file is selected
+        if (!file) {
+            alert('Please select a file.');
+            return;
+        }
+
+        // Check the file extension (must be an image)
+        var validExtensions = ['image/jpeg', 'image/png', 'image/gif'];
+        if ($.inArray(file.type, validExtensions) === -1) {
+            alert('Invalid file type. Only JPEG, PNG, and GIF files are allowed.');
+            return;
+        }
+
+        // Check the file size (must be less than 2MB)
+        var maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+            alert('File size exceeds 2MB.');
+            return;
+        }
+
+        // Append the image file to the FormData object
+        formData.append('Image', file);
+
+        // Use jQuery's ajax method to send the form data via XHR
+        $.ajax({
+            url: addPrefixTo('administrative/items/'), // Your server-side upload URL
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                console.log('Image and form data uploaded successfully');
+                // Handle the server response here
+                alert('Image and form data uploaded successfully');
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error uploading image and form data: ' + textStatus, errorThrown);
+                alert('Error uploading image and form data: ' + textStatus);
+            }
+        });
+    });
+
     
 });
 

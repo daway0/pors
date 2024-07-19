@@ -308,7 +308,7 @@ class Item(models.Model):
     CurrentPrice = models.PositiveIntegerField()
 
     ItemProvider = models.ForeignKey(
-        "ItemProvider", on_delete=models.SET_NULL, null=True
+        "ItemProvider", on_delete=models.CASCADE
     )
 
     @property

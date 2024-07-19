@@ -71,7 +71,12 @@ urlpatterns = [
     ),
     path("administrative/deadlines/", views.deadlines, name="deadlines"),
     path(
-        "items/<int:item_id>/",
+        "administrative/items/",
+        views.item,
+        name="item_empty_form",
+    ),
+    path(
+        "administrative/items/<int:item_id>/",
         views.item,
         name="item",
     ),

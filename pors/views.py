@@ -17,7 +17,7 @@ from .decorators import (
     is_open_for_admins,
     is_open_for_personnel,
 )
-from .forms import CreateItemForm
+from .forms import ItemFormCreate
 from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
@@ -699,14 +699,14 @@ def deadlines(request, user, override_user):
 def item(request, user, override_user, item_id=None):
     if request.method == "GET":
         if item_id is None:
-            form = CreateItemForm()
+            form = ItemFormCreate()
         else:
             item = get_object_or_404(Item, pk=item_id)
-            form = CreateItemForm(item)
+            form = ItemFormCreate(item)
 
         return render(request, "test.html", {"form": form})
 
-    form = CreateItemForm(data=request.POST)
+    form = ItemFormCreate(data=request.POST, files=request.FILES)
     if not form.is_valid():
         return render(
             request,
