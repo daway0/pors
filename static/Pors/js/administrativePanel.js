@@ -1385,7 +1385,7 @@ $(document).ready(function () {
         });
     })
 
-    $(document).on('click', '#add-new-item-to-system', function () {
+    $(document).on('click', '#s-add-new-item-to-system', function () {
         $.ajax({
             url: addPrefixTo('administrative/items/'),
             type: 'GET',
@@ -1402,53 +1402,94 @@ $(document).ready(function () {
 
 
     $(document).on('submit', '#add-item-form', function(event) {
-        event.preventDefault(); // Prevent the form from submitting the default way
+        event.preventDefault();
+        
+        let formData = new FormData(this)
 
-        // Create a FormData object
-        var formData = new FormData(this); // 'this' refers to the form element
-
-        // Get the file input element and the selected file
         var fileInput = $('#id_Image')[0];
         var file = fileInput.files[0];
 
-        // Check if a file is selected
+        if ($("#id_ItemName").val().trim()==="")
+            {
+                em = "لطفا برای آیتم نام مناسب انتخاب کنید"
+                displayDismiss(
+                    DISMISSLEVELS.ERROR,
+                    em,
+                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
+        
+                return;
+            }
+        
+        if ($("#id_ItemDesc").val().trim()==="")
+            {
+                em = "لطفا برای آیتم توضیحات مناسب وارد کنید"
+                displayDismiss(
+                    DISMISSLEVELS.ERROR,
+                    em,
+                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                return;
+            }
+
         if (!file) {
-            alert('Please select a file.');
+            em = "لطفا برای آیتم عکس انتخاب کنید"
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                em,
+                DISMISSDURATIONS.DISPLAY_TIME_TEN)
             return;
         }
 
         // Check the file extension (must be an image)
-        var validExtensions = ['image/jpeg', 'image/png', 'image/gif'];
+        var validExtensions = [
+            'image/jpeg',
+            'image/png',
+            'image/gif'
+        ]
         if ($.inArray(file.type, validExtensions) === -1) {
-            alert('Invalid file type. Only JPEG, PNG, and GIF files are allowed.');
+            em= 'فرمت عکس انتخابی شما مجاز نمی باشد. باید از PNG, JPEG و GIF استفاده کنید'
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                em,
+                DISMISSDURATIONS.DISPLAY_TIME_TEN)
             return;
         }
 
-        // Check the file size (must be less than 2MB)
-        var maxSize = 2 * 1024 * 1024; // 2MB
+        var maxSize = 1 * 1024 * 1024; // 1MB
         if (file.size > maxSize) {
-            alert('File size exceeds 2MB.');
+            em= "حجم عکس انتخابی بیشتر از 1 مگابایت است. امکان آپلود وجود ندارد"
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                convertToPersianNumber(em),
+                DISMISSDURATIONS.DISPLAY_TIME_TEN)
             return;
         }
 
-        // Append the image file to the FormData object
         formData.append('Image', file);
-
-        // Use jQuery's ajax method to send the form data via XHR
+        console.log(formData)
         $.ajax({
-            url: addPrefixTo('administrative/items/'), // Your server-side upload URL
+            url: addPrefixTo('administrative/items/'), 
             type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
-            success: function(response) {
-                console.log('Image and form data uploaded successfully');
-                // Handle the server response here
-                alert('Image and form data uploaded successfully');
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error('Error uploading image and form data: ' + textStatus, errorThrown);
-                alert('Error uploading image and form data: ' + textStatus);
+            success: function(data) {
+                loadAvailableItem()
+
+                // load New Item Image
+                let imgElement = $('<img>').attr('src', data.image);
+                $('#dump-image-container').append(imgElement);
+
+                $("#add-new-item-modal").click()
+                em= "آیتم با موفقیت به لیست غذاهای قابل انتخاب سیستم اضافه شد"
+                displayDismiss(
+                    DISMISSLEVELS.SUCCESS,
+                    convertToPersianNumber(em),
+                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                },
+            error: function(xhr, status, error) {
+                console.error('NEW ITEM ADDITION FAILED', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
+                displayDismiss(DISMISSLEVELS.ERROR,"مشکلی هنگام افزودن آیتم به سیستم پیش آمده است", DISMISSDURATIONS.DISPLAY_TIME_TEN)
             }
         });
     });

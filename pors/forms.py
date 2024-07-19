@@ -45,6 +45,7 @@ class CreateItemForm(forms.ModelForm):
                 attrs={
                     "class": f"{common_class} h-16",
                     "placeholder": "توضیحات آیتم را وارد کنید",
+                    "required": "required" 
                 }
             ),
             "CurrentPrice": forms.NumberInput(
@@ -91,7 +92,7 @@ class CreateItemForm(forms.ModelForm):
     def create(self, validated_data):
         item = m.Item.objects.create(**validated_data)
         m.ItemPriceHistory(
-            Item=item,
+            Item_id=item.id,
             Price=item.CurrentPrice,
             FromDate=localnow().strftime("%Y/%m/%d"),
         ).save()

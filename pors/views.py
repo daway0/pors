@@ -1,6 +1,7 @@
 from random import getrandbits
 
 from django.db.models import Q
+from django.http import JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -704,13 +705,13 @@ def item(request, user, override_user, item_id=None):
             item = get_object_or_404(Item, pk=item_id)
             form = CreateItemForm(instance=item)
 
-        return render(request, "test.html", {"form": form})
+        return render(request, "newItemForm.html", {"form": form})
 
     form = CreateItemForm(data=request.POST, files=request.FILES)
     if not form.is_valid():
         return render(
             request,
-            "test.html",
+            "newItemForm.html",
             {"form": form, "errors": form.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -719,15 +720,12 @@ def item(request, user, override_user, item_id=None):
         item = get_object_or_404(Item, pk=item_id)
 
         form.update(form.cleaned_data, item)
-        return render(
-            request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
-        )
+        return HttpResponse(status=200)
 
     else:
-        form.create(form.cleaned_data)
-        return render(
-            request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
-        )
+        created_item = form.create(form.cleaned_data)
+        str_image_address = str(created_item.Image) 
+        return JsonResponse({"image":str_image_address}, status=200)
 
 
 @api_view(["POST"])
