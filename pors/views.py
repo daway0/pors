@@ -154,6 +154,8 @@ def all_items(request, user: User, override_user: User):
     """
     Returning list of all items from database.
     """
+    if override_user:
+        user = override_user
 
     with open("./pors/SQLs/ItemsWithFeedback.sql", mode="r") as f:
         query = f.read()
@@ -544,7 +546,7 @@ def auth_gateway(request):
     # is_admin = False
     # profile = profile_url(picture_name)
 
-    personnel = "e.rezaee@eit"
+    personnel = "m.morsali@eit"
     full_name = "erfan rezaee"
     profile = ""
     is_admin = False
@@ -740,6 +742,8 @@ def item_like(request, user, override_user, item_id: int):
     Users cannot submit feedback for items they haven't ordered in past month
     or they have already submitted a feedback for it.
     """
+    if override_user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
     item = get_object_or_404(Item, pk=item_id)
 
@@ -767,6 +771,8 @@ def item_diss_like(request, user, override_user, item_id: int):
     Users cannot submit feedback for items they haven't ordered in past month
     or they have already submitted a feedback for it.
     """
+    if override_user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
     item = get_object_or_404(Item, pk=item_id)
 
@@ -794,6 +800,8 @@ def remove_item_feedback(request, user, override_user, item_id: int):
     Type is not important since users cannot like and diss like
     an item simultaneously.
     """
+    if override_user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
     item = get_object_or_404(Item, pk=item_id)
     deleted_id = item.remove_feedback(user)
@@ -823,6 +831,8 @@ def comments(
     Delete:
         Deleting a specific comment (comment_id) from item.
     """
+    if override_user:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
     if request.method == "GET":
         comments = CommentSerializer(

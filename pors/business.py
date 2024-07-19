@@ -1,8 +1,8 @@
 import json
-from threading import Thread
 from typing import Optional
 
 import jdatetime
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -1250,27 +1250,30 @@ class ValidateDeliveryBuilding(OverrideUserValidator):
             DeliveryBuilding=self.new_delivery_building,
             DeliveryFloor=self.new_delivery_floor,
         )
+        if self._is_admin():
 
-        report = m.PersonnelDailyReport.objects.filter(
-            Personnel=self.user,
-            DeliveryDate=self.date,
-            MealType=self.meal_type,
-        )
-        self._send_email_notif(
-            {
-                "full_name": self.user.FullName,
-                "link": f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.meal_type}",
-                "delivery_date": self.date,
-                "meal_type": m.MealTypeChoices(self.meal_type).label,
-                "building": report[0].DeliveryBuildingPersian,
-                "floor": report[0].DeliveryFloorPersian,
-                "report": m.PersonnelDailyReport.objects.filter(
-                    Personnel=self.user,
-                    DeliveryDate=self.date,
-                    MealType=self.meal_type,
-                ),
-            },
-        )
+            qs = m.HR_constvalue.objects.filter(
+                Q(Code=self.new_delivery_building)
+                | Q(Code=self.new_delivery_floor)
+            )
+            report = m.PersonnelDailyReport.objects.filter(
+                Personnel=self.user,
+                DeliveryDate=self.date,
+                MealType=self.meal_type,
+            )
+            self._send_email_notif(
+                {
+                    "full_name": self.user.FullName,
+                    "link": f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.meal_type}",
+                    "delivery_date": self.date,
+                    "meal_type": m.MealTypeChoices(self.meal_type).label,
+                    "building": qs.get(
+                        Code=self.new_delivery_building
+                    ).Caption,
+                    "floor": qs.get(Code=self.new_delivery_floor).Caption,
+                    "report": report,
+                },
+            )
 
         # manual log insertion
         # todo doc
