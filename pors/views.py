@@ -702,7 +702,7 @@ def item(request, user, override_user, item_id=None):
             form = CreateItemForm()
         else:
             item = get_object_or_404(Item, pk=item_id)
-            form = CreateItemForm(item)
+            form = CreateItemForm(instance=item)
 
         return render(request, "test.html", {"form": form})
 
@@ -711,16 +711,14 @@ def item(request, user, override_user, item_id=None):
         return render(
             request,
             "test.html",
-            {"form": form},
+            {"form": form, "errors": form.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if item_id is not None:
         item = get_object_or_404(Item, pk=item_id)
-        for field, value in form.cleaned_data.items():
-            setattr(item, field, value)
 
-        item.save()
+        form.update(form.cleaned_data, item)
         return render(
             request, "test.html", {"message": "آیتم با موفقیت تغییر یافت."}
         )

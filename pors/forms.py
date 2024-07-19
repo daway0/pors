@@ -3,6 +3,8 @@ import re
 from django import forms
 
 from . import models as m
+from .utils import localnow
+
 
 class CreateItemForm(forms.ModelForm):
     class Meta:
@@ -67,7 +69,10 @@ class CreateItemForm(forms.ModelForm):
         return price
 
     def clean_Image(self):
-        img = self.cleaned_data["Image"]
+        img = self.cleaned_data.get("Image")
+        if img is None:
+            return
+
         if img.size > (1024 * 1000):
             raise forms.ValidationError("image size is too big.")
 
@@ -84,4 +89,34 @@ class CreateItemForm(forms.ModelForm):
         return img
 
     def create(self, validated_data):
-        return m.Item.objects.create(**validated_data)
+        item = m.Item.objects.create(**validated_data)
+        m.ItemPriceHistory(
+            Item=item,
+            Price=item.CurrentPrice,
+            FromDate=localnow().strftime("%Y/%m/%d"),
+        ).save()
+        return item
+
+    def update(self, validated_data: dict, item: m.Item):
+        validated_data.pop("id", None)
+        price = validated_data.get("CurrentPrice")
+        current_price = item.CurrentPrice
+
+        for field, value in validated_data.items():
+            setattr(item, field, value)
+        item.save()
+
+        if price != current_price:
+            now = localnow().strftime("%Y/%m/%d")
+            old_price_history = m.ItemPriceHistory.objects.filter(
+                Item=item, UntilDate=None
+            ).first()
+            if old_price_history is not None:
+                old_price_history.UntilDate = now
+                old_price_history.save()
+
+            m.ItemPriceHistory(
+                Item=item,
+                Price=price,
+                FromDate=now,
+            ).save()
