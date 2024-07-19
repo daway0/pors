@@ -124,8 +124,7 @@ class OrderItemSerializer(serializers.Serializer):
     description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
-    # deliveryBuilding = serializers.CharField(source="DeliveryBuilding")
-    # deliveryFloor = serializers.CharField(source="DeliveryFloor")
+    note = serializers.CharField(max_length=1000, source="Note")
 
 
 class OrderSerializer(serializers.Serializer):

@@ -221,13 +221,6 @@ class OverrideUserValidator:
         if not s_data.is_valid():
             raise ValueError(s_data.errors)
 
-        if s_data.validated_data[
-            "reason"
-        ].Title.lower() == "other" and not s_data.validated_data.get("comment"):
-            raise ValueError(
-                "you must provide a comment when using other's reason"
-            )
-
         self.reason = s_data.validated_data["reason"]
         self.comment = s_data.validated_data.get("comment")
 
