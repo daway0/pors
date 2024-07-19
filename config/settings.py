@@ -100,9 +100,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'master',        
-        # 'USER': 'sa',
-        # 'PASSWORD': 'Master123',
+        'NAME': 'PersonnelService',        
+        'USER': 'sa',
+        'PASSWORD': 'Master123',
         'HOST': 'localhost',
         'PORT': '1433',
 
@@ -160,17 +160,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# todo shipment
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # EMAIL_HOST = 
-
 EMAIL_HOST_USER = "pors@iraneit.com"
-
 # BCC_EMAIL = 
-
 # EMAIL_HOST_PASSWORD = 
-
 # EMAIL_PORT = 
-
 # EMAIL_USE_TLS = True
