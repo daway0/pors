@@ -101,4 +101,5 @@ urlpatterns = [
         views.comments,
         name="delete_comment",
     ),
+    path("administrative/notes/", views.note, name="note"),
 ]

@@ -768,6 +768,22 @@ function billDisplay(show) {
     billDetail.addClass("hidden")
 }
 
+function orderNoteDisplay(show) {
+    if (show){
+        $("#order-comment").removeClass("hidden")
+    } else {
+        $("#order-comment").addClass("hidden")
+    }
+}
+
+function updateOrderNoteExistanceStatus(note) {
+    if (note){
+        $("#order-has-comment").removeClass("hidden")
+    } else {
+        $("#order-has-comment").addClass("hidden")
+    }
+}
+
 function updateOrderBillDetail() {
     let orderItems = $(`#menu-items-container li`)
     let total = 0
@@ -828,6 +844,21 @@ function updateOrderBillDetail() {
 
     $("#brf-delivery-place").text(BRFdeliveryPlace)
     $("#lnc-delivery-place").text(LNCdeliveryPlace)
+
+    // check order note option visiablity
+    if (godMode && bpUsers.includes(userName)){
+        orderNoteDisplay(true)
+        
+        // check the order has note, 
+        let order = orders.find(function (orderObj) {
+            return orderObj.orderDate === toShamsiFormat(selectedDate)
+        })
+        
+        if (order===undefined) return
+        updateOrderNoteExistanceStatus(order.note)
+
+    }
+
 }
 
 function updateItemMenuDetails(id, quantity) {
@@ -1759,4 +1790,44 @@ $(document).ready(function () {
     $(document).on('click', '.comment-item', function () {
         alert("comment")
     })
+    // Order comment modal 
+    $(document).on('click', '#order-comment', function () {
+        $("#order-comment-modal").click()
+    })
+
+    $(document).on('click', '#order-comment-submit', function () {
+        let note = $("#order-comment-textarea").val().trim()
+        $.ajax({
+            // *******must edit*******
+            url: addPrefixTo(`administrative/deadlines/`),
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(
+                Object.assign({}, {
+                    "note": note,
+                    "date": toShamsiFormat(selectedDate)
+                }, actionReasonObj)
+            ),
+            statusCode:{
+                200: function (data) {
+                    let em="یادداشت با موفقیت به روزرسانی شد"
+                    displayDismiss(DISMISSLEVELS.SUCCESS, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
+                    // ****
+                    updateOrders(selectedDate.month, selectedDate.year)
+                    
+                    // update comment exsistance display
+                    updateOrderNoteExistanceStatus(note)
+                    // ****
+                    $("#order-comment-modal").click()
+                    catchResponseMessagesToDisplay(data.messages)
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Deadline change submission failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
+                displayDismiss(DISMISSLEVELS.ERROR, "مشکلی در اعمال تغییرات روی یادداشت سفارش پیش آمده است", DISMISSDURATIONS.DISPLAY_TIME_TEN)
+            }
+        });
+    })
+    
 });

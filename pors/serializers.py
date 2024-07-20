@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 from django.conf import settings
 from rest_framework import serializers
 
@@ -140,8 +141,7 @@ class OrderItemSerializer(serializers.Serializer):
     description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
-    # deliveryBuilding = serializers.CharField(source="DeliveryBuilding")
-    # deliveryFloor = serializers.CharField(source="DeliveryFloor")
+    note = serializers.CharField(max_length=1000, source="Note")
 
 
 class OrderSerializer(serializers.Serializer):
@@ -322,6 +322,16 @@ class AdminReasonserializer(serializers.Serializer):
 
         return reason
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if data["reason"].Title.lower() == "other" and not data.get("comment"):
+            raise ValueError(
+                "you must provide a comment when using other's reason"
+            )
+
+        return data
+
 
 class DeadlineSerializer(serializers.Serializer):
     days = serializers.IntegerField(source="Days", min_value=0)
@@ -347,3 +357,36 @@ class CommentSerializer(serializers.Serializer):
     created = serializers.CharField(read_only=True, source="Created")
     updated = serializers.CharField(read_only=True, source="Updated")
     text = serializers.CharField(max_length=500, source="Text")
+
+
+class NoteSerializer(serializers.Serializer):
+    date = serializers.CharField(max_length=10)
+    note = serializers.CharField(
+        max_length=1000, required=False, allow_null=True
+    )
+    reason = serializers.IntegerField()
+    comment = serializers.CharField(max_length=250, required=False)
+
+    def validate_reason(self, id):
+        reason = m.AdminManipulationReason.objects.filter(pk=id).first()
+        if reason is None:
+            raise serializers.ValidationError("invalid id")
+
+        return reason
+
+    def validate_date(self, date):
+        date = u.validate_date(date)
+        if date is None:
+            raise serializers.ValidationError("invalid date value.")
+
+        return date
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if data["reason"].ReasonCode.lower() == "other" and not data.get("comment"):
+            raise serializers.ValidationError(
+                "you must provide a comment when using other's reason"
+            )
+
+        return data
