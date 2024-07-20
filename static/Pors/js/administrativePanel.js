@@ -661,7 +661,6 @@ function selectDayOnCalendar(e) {
     updateHasMenuCalendarDayBlock()
 
     if (canAdminChangeMenu()){
-        console.log(canAdminChangeMenu())
         changeVisibilityAddMenuItemDropDown(false)
         updateAvailableItemForThisDay()
     } else {
@@ -1302,7 +1301,6 @@ $(document).ready(function () {
             liveDeadlines.push({days:days, hours:hours, mealType:mealType})
         })
         const newDealine = JSON.stringify(liveDeadlines)
-        console.log(newDealine, oldDealine)
         if (newDealine === oldDealine){
             disableDeadlineSubmitButton()
             return
@@ -1466,7 +1464,6 @@ $(document).ready(function () {
         }
 
         formData.append('Image', file);
-        console.log(formData)
         $.ajax({
             url: addPrefixTo('administrative/items/'), 
             type: 'POST',

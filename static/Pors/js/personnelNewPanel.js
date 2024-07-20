@@ -959,9 +959,6 @@ function updateOrderItemsQuantity() {
 
     BRFOrderItemsCount = sumBRFOrderedItem
     LNCOrderItemsCount = sumLNCOrderedItem
-
-    console.log(BRFOrderItemsCount, LNCOrderItemsCount);
-
 }
 function orderTotalItemsQuantity(serveTime) {
     // serveTime یا BRF یا LNC
