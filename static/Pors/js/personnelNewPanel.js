@@ -402,6 +402,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                 <img
                         src="${pic}"
                         alt=""
+                        onerror="imgError(this);"
                         class="h-16 w-16 rounded object-cover self-start"
                 />
 

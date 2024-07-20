@@ -326,6 +326,7 @@ function menuItemBlock(id, itemName, pic, orderedByCount, itemProvider) {
         <img
                 src="${pic}"
                 alt=""
+                onerror="imgError(this);"
                 class="h-16 w-16 rounded object-cover self-start"
         />
         <div class="w-8/12">
