@@ -1,5 +1,5 @@
 from collections import namedtuple
-
+from django.conf import settings
 from rest_framework import serializers
 
 from . import business as b
@@ -12,7 +12,7 @@ Deadline = namedtuple("Deadline", "Days Hour")
 
 class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
-    image = serializers.CharField(source="Image")
+    image = serializers.SerializerMethodField(source="Image")
     category = serializers.CharField(
         source="CategoryName",
     )
@@ -31,6 +31,9 @@ class AllItemSerializer(serializers.ModelSerializer):
 
     def get_mealType(self, item):
         return m.MealTypeChoices(item["MealType"]).label
+
+    def get_image(self, item):
+        return f"{settings.MEDIA_URL}{item['Image']}"
 
     class Meta:
         model = m.Item
