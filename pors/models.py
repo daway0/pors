@@ -297,7 +297,7 @@ class Item(models.Model):
 
     # If no image is uploaded, the system automatically sets a default image
     Image = models.ImageField(
-        upload_to="media/items/",
+        upload_to="Pors/ItemImages/",
         null=True,
         blank=True,
     )
