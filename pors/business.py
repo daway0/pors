@@ -2,7 +2,8 @@ import json
 from typing import Optional
 
 import jdatetime
-from django.db.models import Q
+from django.db import IntegrityError, transaction
+from django.db.models import F, Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -51,7 +52,6 @@ def validate_request(data: dict) -> tuple[str, int]:
         item = int(item)
     except ValueError:
         raise ValueError("invalid 'item' value.")
-
     return date, item
 
 
@@ -402,6 +402,7 @@ class ValidateOrder(OverrideUserValidator):
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
         self.order_item: m.OrderItem = m.OrderItem.objects.none()
+        self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
 
     def is_valid(self, create=False, remove=False):
         """
@@ -454,18 +455,26 @@ class ValidateOrder(OverrideUserValidator):
         Fetch and storing item in self.item if it was valid.
         """
 
-        is_item_available = m.DailyMenuItem.objects.filter(
+        menu_item = m.DailyMenuItem.objects.filter(
             Item=self.item,
             AvailableDate=self.date,
             IsActive=True,
             Item__IsActive=True,
             Item__MealType=m.Item.MealTypeChoices.LAUNCH,
         ).first()
-        if not is_item_available:
+        if not menu_item:
             self.message = "آیتم مورد نظر در تاریخ داده شده موجود نمی‌باشد."
             raise ValueError("item is not available in corresponding date.")
 
+        if (
+            menu_item.TotalOrdersLeft is not None
+            and menu_item.TotalOrdersLeft == 0
+        ):
+            self.message = "آیتم مورد نظر ناموجود می‌باشد."
+            raise ValueError("item's maximum orders is reached.")
+
         self.item = m.Item.objects.filter(pk=self.item).first()
+        self.menu_item = menu_item
 
     def _validate_default_delivery_building(self):
         """
@@ -554,6 +563,13 @@ class ValidateOrder(OverrideUserValidator):
 
         Warnings:
             DO NOT use this method before checking `is_valid` method.
+
+        Raises:
+            ValueError: Can raise in situations where multiple users are
+                submiting order for a same item at one, and the item's order
+                limit is at edge. to avoid race conditions, database won't
+                allow for negative values, therefore an IntegrityError
+                will be raised.
         """
 
         if self.error:
@@ -563,72 +579,79 @@ class ValidateOrder(OverrideUserValidator):
 
         link = f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
 
-        instance = m.OrderItem.objects.filter(
-            Personnel=self.user.Personnel,
-            DeliveryDate=self.date,
-            Item=self.item,
-        ).first()
-        if instance:
-            instance.Quantity += 1
-            instance.save(
-                log=(
-                    f"Launch Item {self.item.ItemName}'s Quantity just"
-                    f" increased by 1 for {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": m.MealTypeChoices.LAUNCH.label,
-                    "increase_quantity_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
-                        DeliveryDate=self.date,
-                        MealType=m.MealTypeChoices.LAUNCH,
-                    ),
-                },
-            )
+        try:
+            with transaction.atomic():
+                self.menu_item.TotalOrdersLeft = F("TotalOrdersLeft") - 1
+                self.menu_item.save()
+                instance = m.OrderItem.objects.filter(
+                    Personnel=self.user.Personnel,
+                    DeliveryDate=self.date,
+                    Item=self.item,
+                ).first()
+                if instance:
+                    instance.Quantity += 1
+                    instance.save(
+                        log=(
+                            f"Launch Item {self.item.ItemName}'s Quantity just"
+                            f" increased by 1 for {self.date}"
+                        ),
+                        user=self.user.Personnel,
+                        admin=self.admin_user,
+                        reason=self.reason,
+                        comment=self.comment,
+                    )
+                    self._send_email_notif(
+                        {
+                            "full_name": self.user.FullName,
+                            "link": link,
+                            "delivery_date": self.date,
+                            "meal_type": m.MealTypeChoices.LAUNCH.label,
+                            "increase_quantity_item": self.item,
+                            "report": m.PersonnelDailyReport.objects.filter(
+                                Personnel=self.user,
+                                DeliveryDate=self.date,
+                                MealType=m.MealTypeChoices.LAUNCH,
+                            ),
+                        },
+                    )
 
-        else:
-            new_item = m.OrderItem(
-                Personnel=self.user.Personnel,
-                DeliveryDate=self.date,
-                DeliveryBuilding=self.user.LastDeliveryBuilding,
-                DeliveryFloor=self.user.LastDeliveryFloor,
-                Item=self.item,
-                Quantity=1,
-                PricePerOne=self.item.CurrentPrice,
-            )
-            new_item.save(
-                log=(
-                    f"Launch Item {self.item.ItemName} just added to order for"
-                    f" {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": m.MealTypeChoices.LAUNCH.label,
-                    "new_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
+                else:
+                    new_item = m.OrderItem(
+                        Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
-                        MealType=m.MealTypeChoices.LAUNCH,
-                    ),
-                },
-            )
+                        DeliveryBuilding=self.user.LastDeliveryBuilding,
+                        DeliveryFloor=self.user.LastDeliveryFloor,
+                        Item=self.item,
+                        Quantity=1,
+                        PricePerOne=self.item.CurrentPrice,
+                    )
+                    new_item.save(
+                        log=(
+                            f"Launch Item {self.item.ItemName} just added to order for"
+                            f" {self.date}"
+                        ),
+                        user=self.user.Personnel,
+                        admin=self.admin_user,
+                        reason=self.reason,
+                        comment=self.comment,
+                    )
+                    self._send_email_notif(
+                        {
+                            "full_name": self.user.FullName,
+                            "link": link,
+                            "delivery_date": self.date,
+                            "meal_type": m.MealTypeChoices.LAUNCH.label,
+                            "new_item": self.item,
+                            "report": m.PersonnelDailyReport.objects.filter(
+                                Personnel=self.user,
+                                DeliveryDate=self.date,
+                                MealType=m.MealTypeChoices.LAUNCH,
+                            ),
+                        },
+                    )
+        except IntegrityError:
+            self.message = "آیتم مورد نظر ناموجود می‌باشد."
+            raise ValueError("item's maximum orders is reached.")
 
     def remove_order(self):
         """
@@ -648,57 +671,63 @@ class ValidateOrder(OverrideUserValidator):
             )
 
         link = f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
-        if self.order_item.Quantity > 1:
-            self.order_item.Quantity -= 1
-            self.order_item.save(
-                log=(
-                    f"Item {self.item.ItemName}'s Quantity just decreased by 1"
-                    f" for {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": self.item.get_MealType_display(),
-                    "decrease_quantity_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
-                        DeliveryDate=self.date,
-                        MealType=self.item.MealType,
+
+        with transaction.atomic():
+            m.DailyMenuItem.objects.filter(
+                Item=self.item, AvailableDate=self.date
+            ).update(TotalOrdersLeft=F("TotalOrdersLeft") + 1)
+
+            if self.order_item.Quantity > 1:
+                self.order_item.Quantity -= 1
+                self.order_item.save(
+                    log=(
+                        f"Item {self.item.ItemName}'s Quantity just decreased by 1"
+                        f" for {self.date}"
                     ),
-                },
-            )
-        else:
-            self.order_item.delete(
-                log=(
-                    f"Item {self.item.ItemName} removed from order for"
-                    f" {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": self.item.get_MealType_display(),
-                    "removed_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
-                        DeliveryDate=self.date,
-                        MealType=self.item.MealType,
+                    user=self.user.Personnel,
+                    admin=self.admin_user,
+                    reason=self.reason,
+                    comment=self.comment,
+                )
+                self._send_email_notif(
+                    {
+                        "full_name": self.user.FullName,
+                        "link": link,
+                        "delivery_date": self.date,
+                        "meal_type": self.item.get_MealType_display(),
+                        "decrease_quantity_item": self.item,
+                        "report": m.PersonnelDailyReport.objects.filter(
+                            Personnel=self.user,
+                            DeliveryDate=self.date,
+                            MealType=self.item.MealType,
+                        ),
+                    },
+                )
+            else:
+                self.order_item.delete(
+                    log=(
+                        f"Item {self.item.ItemName} removed from order for"
+                        f" {self.date}"
                     ),
-                },
-            )
+                    user=self.user.Personnel,
+                    admin=self.admin_user,
+                    reason=self.reason,
+                    comment=self.comment,
+                )
+                self._send_email_notif(
+                    {
+                        "full_name": self.user.FullName,
+                        "link": link,
+                        "delivery_date": self.date,
+                        "meal_type": self.item.get_MealType_display(),
+                        "removed_item": self.item,
+                        "report": m.PersonnelDailyReport.objects.filter(
+                            Personnel=self.user,
+                            DeliveryDate=self.date,
+                            MealType=self.item.MealType,
+                        ),
+                    },
+                )
 
 
 class ValidateBreakfast(OverrideUserValidator):
@@ -733,6 +762,7 @@ class ValidateBreakfast(OverrideUserValidator):
         self.error: str = ""
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
+        self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
 
     def is_valid(self):
         """
@@ -769,18 +799,25 @@ class ValidateBreakfast(OverrideUserValidator):
         Fetch and storing item in `self.item` if it was valid.
         """
 
-        is_item_valid = m.DailyMenuItem.objects.filter(
+        menu_item = m.DailyMenuItem.objects.filter(
             Item=self.item,
             AvailableDate=self.date,
             IsActive=True,
             Item__IsActive=True,
             Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
-        )
-        if not is_item_valid:
+        ).first()
+        if not menu_item:
             self.message = "آیتم مورد نظر فعال نمی‌باشد."
             raise ValueError("Item is not valid.")
+        if (
+            menu_item.TotalOrdersLeft is not None
+            and menu_item.TotalOrdersLeft == 0
+        ):
+            self.message = "آیتم مورد نظر ناموجود می‌باشد."
+            raise ValueError("item's maximum orders is reached.")
 
         self.item = m.Item.objects.filter(pk=self.item).first()
+        self.menu_item = menu_item
 
     def _validate_default_delivery_building(self):
         """
@@ -848,6 +885,12 @@ class ValidateBreakfast(OverrideUserValidator):
 
         Warnings:
             DO NOT use this method before checking `is_valid` method.
+        Raises:
+            ValueError: Can raise in situations where multiple users are
+                submiting order for a same item at one, and the item's order
+                limit is at edge. to avoid race conditions, database won't
+                allow for negative values, therefore an IntegrityError
+                will be raised.
         """
 
         if self.error:
@@ -856,70 +899,78 @@ class ValidateBreakfast(OverrideUserValidator):
             )
 
         link = f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={self.date.replace('/', '')}{self.item.MealType}"
-        instance = m.OrderItem.objects.filter(
-            Personnel=self.user.Personnel,
-            DeliveryDate=self.date,
-            Item=self.item,
-        ).first()
-        if instance:
-            instance.Quantity += 1
-            instance.save(
-                log=(
-                    f"Breakfast Item {self.item.ItemName}'s Quantity just"
-                    f" increased by 1 for {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": m.MealTypeChoices.BREAKFAST.label,
-                    "increase_quantity_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
-                        DeliveryDate=self.date,
-                        MealType=m.MealTypeChoices.BREAKFAST,
-                    ),
-                },
-            )
 
-        else:
-            m.OrderItem(
-                Personnel=self.user.Personnel,
-                DeliveryDate=self.date,
-                DeliveryBuilding=self.user.LastDeliveryBuilding,
-                DeliveryFloor=self.user.LastDeliveryFloor,
-                Item=self.item,
-                PricePerOne=self.item.CurrentPrice,
-            ).save(
-                log=(
-                    f"Breakfast Item {self.item.ItemName} just added to the order"
-                    f" for {self.date}"
-                ),
-                user=self.user.Personnel,
-                admin=self.admin_user,
-                reason=self.reason,
-                comment=self.comment,
-            )
-            self._send_email_notif(
-                {
-                    "full_name": self.user.FullName,
-                    "link": link,
-                    "delivery_date": self.date,
-                    "meal_type": m.MealTypeChoices.BREAKFAST.label,
-                    "new_item": self.item,
-                    "report": m.PersonnelDailyReport.objects.filter(
-                        Personnel=self.user,
+        try:
+            with transaction.atomic():
+                self.menu_item.TotalOrdersLeft = F("TotalOrdersLeft") - 1
+                self.menu_item.save()
+                instance = m.OrderItem.objects.filter(
+                    Personnel=self.user.Personnel,
+                    DeliveryDate=self.date,
+                    Item=self.item,
+                ).first()
+                if instance:
+                    instance.Quantity += 1
+                    instance.save(
+                        log=(
+                            f"Breakfast Item {self.item.ItemName}'s Quantity just"
+                            f" increased by 1 for {self.date}"
+                        ),
+                        user=self.user.Personnel,
+                        admin=self.admin_user,
+                        reason=self.reason,
+                        comment=self.comment,
+                    )
+                    self._send_email_notif(
+                        {
+                            "full_name": self.user.FullName,
+                            "link": link,
+                            "delivery_date": self.date,
+                            "meal_type": m.MealTypeChoices.BREAKFAST.label,
+                            "increase_quantity_item": self.item,
+                            "report": m.PersonnelDailyReport.objects.filter(
+                                Personnel=self.user,
+                                DeliveryDate=self.date,
+                                MealType=m.MealTypeChoices.BREAKFAST,
+                            ),
+                        },
+                    )
+
+                else:
+                    m.OrderItem(
+                        Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
-                        MealType=m.MealTypeChoices.BREAKFAST,
-                    ),
-                },
-            )
+                        DeliveryBuilding=self.user.LastDeliveryBuilding,
+                        DeliveryFloor=self.user.LastDeliveryFloor,
+                        Item=self.item,
+                        PricePerOne=self.item.CurrentPrice,
+                    ).save(
+                        log=(
+                            f"Breakfast Item {self.item.ItemName} just added to the order"
+                            f" for {self.date}"
+                        ),
+                        user=self.user.Personnel,
+                        admin=self.admin_user,
+                        reason=self.reason,
+                        comment=self.comment,
+                    )
+                    self._send_email_notif(
+                        {
+                            "full_name": self.user.FullName,
+                            "link": link,
+                            "delivery_date": self.date,
+                            "meal_type": m.MealTypeChoices.BREAKFAST.label,
+                            "new_item": self.item,
+                            "report": m.PersonnelDailyReport.objects.filter(
+                                Personnel=self.user,
+                                DeliveryDate=self.date,
+                                MealType=m.MealTypeChoices.BREAKFAST,
+                            ),
+                        },
+                    )
+        except IntegrityError:
+            self.message = "آیتم مورد نظر ناموجود می‌باشد."
+            raise ValueError("item's maximum orders is reached.")
 
 
 class ValidateAddMenuItem:
@@ -943,13 +994,14 @@ class ValidateAddMenuItem:
         ValueError: If the data violated any validations.
     """
 
-    def __init__(self, request_data: dict, user: m.User) -> None:
-        self.data = request_data
+    def __init__(self, serializer_data: dict, user: m.User) -> None:
+        self.data = serializer_data
         self.user = user
         self.message: str = ""
         self.error: str = ""
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
+        self.total_orders_allowed: Optional[int] = None
 
     def is_valid(self):
         """
@@ -962,7 +1014,11 @@ class ValidateAddMenuItem:
         """
 
         try:
-            self.date, self.item = validate_request(self.data)
+            self.date, self.item, self.total_orders_allowed = (
+                self.data["date"],
+                self.data["item"],
+                self.data.get("totalOrdersAllowed"),
+            )
             self._validate_item()
             self._validate_date()
         except ValueError as e:
@@ -1041,7 +1097,12 @@ class ValidateAddMenuItem:
                 "This method is only available if provided data is valid."
             )
 
-        m.DailyMenuItem(AvailableDate=self.date, Item=self.item).save(
+        m.DailyMenuItem(
+            AvailableDate=self.date,
+            Item=self.item,
+            TotalOrdersAllowed=self.total_orders_allowed,
+            TotalOrdersLeft=self.total_orders_allowed,
+        ).save(
             log=(
                 f"Item {self.item.ItemName} just added to the menu for"
                 f" {self.date}"

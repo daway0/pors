@@ -40,6 +40,7 @@ from .serializers import (
     AllItemSerializer,
     CategorySerializer,
     CommentSerializer,
+    DailyMenuItemSerializer,
     Deadline,
     DeadlineSerializer,
     FirstPageSerializer,
@@ -97,7 +98,16 @@ def add_item_to_menu(request, user: User, override_user: User):
         -  'item' (str): The item which you want to add.
     """
 
-    validator = b.ValidateAddMenuItem(request.data, user)
+    serializer = DailyMenuItemSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است.",
+            serializer.errors,
+        )
+
+    validator = b.ValidateAddMenuItem(serializer.data, user)
     if validator.is_valid():
         validator.add_item()
 
@@ -409,16 +419,21 @@ def create_order_item(request, user: User, override_user: User):
 
     validator = b.ValidateOrder(request.data, user, override_user)
     if validator.is_valid(create=True):
-        validator.create_order()
-        message.add_message(
-            request,
-            "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.",
-            Message.SUCCESS,
-        )
-        return Response(
-            {"messages": message.messages(request)},
-            status.HTTP_201_CREATED,
-        )
+        try:
+            validator.create_order()
+            message.add_message(
+                request,
+                "آیتم مورد نظر با موفقیت در سفارش شما ثبت شد.",
+                Message.SUCCESS,
+            )
+            return Response(
+                {"messages": message.messages(request)},
+                status.HTTP_201_CREATED,
+            )
+        except ValueError:
+            return invalid_request(
+                request, message, validator.message, validator.error
+            )
 
     message.add_message(request, validator.message, Message.ERROR)
     return Response(
@@ -480,13 +495,16 @@ def create_breakfast_order(request, user: User, override_user: User):
 
     validator = b.ValidateBreakfast(request.data, user, override_user)
     if validator.is_valid():
-        validator.create_breakfast_order()
-        message.add_message(
-            request, "صبحانه با موفقیت ثبت شد.", message.SUCCESS
-        )
-        return Response(
-            {"messages": message.messages(request)}, status.HTTP_201_CREATED
-        )
+        try:
+            validator.create_breakfast_order()
+            message.add_message(
+                request, "صبحانه با موفقیت ثبت شد.", message.SUCCESS
+            )
+            return Response(
+                {"messages": message.messages(request)}, status.HTTP_201_CREATED
+            )
+        except ValueError:
+            return invalid_request(request, message, validator.message, validator.error)
 
     message.add_message(request, validator.message, Message.ERROR)
     return Response(
@@ -549,7 +567,7 @@ def auth_gateway(request):
     # is_admin = False
     # profile = profile_url(picture_name)
 
-    personnel = "m.morsali@eit"
+    personnel = "e.rezaee@eit"
     full_name = "erfan rezaee"
     profile = ""
     is_admin = False
@@ -726,8 +744,8 @@ def item(request, user, override_user, item_id=None):
 
     else:
         created_item = form.create(form.cleaned_data)
-        str_image_address = str(created_item.Image) 
-        return JsonResponse({"image":str_image_address}, status=200)
+        str_image_address = str(created_item.Image)
+        return JsonResponse({"image": str_image_address}, status=200)
 
 
 @api_view(["POST"])

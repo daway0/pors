@@ -390,3 +390,16 @@ class NoteSerializer(serializers.Serializer):
             )
 
         return data
+
+
+class DailyMenuItemSerializer(serializers.Serializer):
+    date = serializers.CharField()
+    item = serializers.IntegerField()
+    totalOrdersAllowed = serializers.IntegerField(required=False, min_value=0)
+
+    def validate_date(self, date):
+        date = u.validate_date(date)
+        if date is None:
+            raise serializers.ValidationError("invalid date value.")
+
+        return date

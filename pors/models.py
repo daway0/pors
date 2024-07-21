@@ -307,9 +307,7 @@ class Item(models.Model):
     # ItemPriceHistory table
     CurrentPrice = models.PositiveIntegerField()
 
-    ItemProvider = models.ForeignKey(
-        "ItemProvider", on_delete=models.CASCADE
-    )
+    ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.CASCADE)
 
     @property
     def Total_Likes(self):
@@ -627,6 +625,8 @@ class DailyMenuItem(Logger):
     AvailableDate = models.CharField(max_length=10)
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     IsActive = models.BooleanField(default=True)  # todo
+    TotalOrdersAllowed = models.PositiveIntegerField(null=True, blank=True)
+    TotalOrdersLeft = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -806,7 +806,7 @@ class Comment(Logger):
     def update(self, new_text: str):
         if self.Text == new_text:
             return
-        
+
         self.Text = new_text
         self.Updated = localnow_str()
         self.save()

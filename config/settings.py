@@ -101,8 +101,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PersonnelService',        
-        'USER': 'sa',
-        'PASSWORD': 'Master123',
+        # 'USER': 'sa',
+        # 'PASSWORD': 'Master123',
         'HOST': 'localhost',
         'PORT': '1433',
 
