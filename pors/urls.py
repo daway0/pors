@@ -102,4 +102,5 @@ urlpatterns = [
         name="delete_comment",
     ),
     path("administrative/notes/", views.note, name="note"),
+    path("administrative/menu/<int:menu_id>/", views.menu_item_limit, name="menu_item_limit"),
 ]

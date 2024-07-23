@@ -24,7 +24,7 @@ from enum import Enum
 
 import jdatetime
 import pytz
-from django.db import models
+from django.db import models, transaction
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 
@@ -627,6 +627,32 @@ class DailyMenuItem(Logger):
     IsActive = models.BooleanField(default=True)  # todo
     TotalOrdersAllowed = models.PositiveIntegerField(null=True, blank=True)
     TotalOrdersLeft = models.PositiveIntegerField(null=True, blank=True)
+
+    @staticmethod
+    @transaction.atomic
+    def update_limit(menu_item: "DailyMenuItem", limit: int):
+        menu_item = DailyMenuItem.objects.select_for_update().get(
+            pk=menu_item.pk
+        )
+        if (
+            menu_item.TotalOrdersLeft is not None
+            and limit
+            < menu_item.TotalOrdersAllowed - menu_item.TotalOrdersLeft
+        ):
+            raise ValueError(
+                "محدودیت درخواستی نمی‌تواند از تعداد سفارش‌ها کوچک تر باشد."
+            )
+
+        if menu_item.TotalOrdersAllowed is None:
+            menu_item.TotalOrdersAllowed = limit
+            menu_item.TotalOrdersLeft = limit
+        elif menu_item.TotalOrdersAllowed < limit:
+            menu_item.TotalOrdersLeft += limit - menu_item.TotalOrdersAllowed
+        else:
+            menu_item.TotalOrdersLeft -= menu_item.TotalOrdersAllowed - limit
+
+        menu_item.TotalOrdersAllowed = limit
+        menu_item.save()
 
     class Meta:
         constraints = [

@@ -12,12 +12,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import (
-    authenticate,
-    check,
-    is_open_for_admins,
-    is_open_for_personnel,
-)
+from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
 from .forms import CreateItemForm
 from .general_actions import GeneralCalendar
 from .messages import Message
@@ -45,6 +40,7 @@ from .serializers import (
     DeadlineSerializer,
     FirstPageSerializer,
     ListedDaysWithMenu,
+    MenuItemLimitSerializer,
     MenuItemSerializer,
     NoteSerializer,
     OrderSerializer,
@@ -501,10 +497,13 @@ def create_breakfast_order(request, user: User, override_user: User):
                 request, "صبحانه با موفقیت ثبت شد.", message.SUCCESS
             )
             return Response(
-                {"messages": message.messages(request)}, status.HTTP_201_CREATED
+                {"messages": message.messages(request)},
+                status.HTTP_201_CREATED,
             )
         except ValueError:
-            return invalid_request(request, message, validator.message, validator.error)
+            return invalid_request(
+                request, message, validator.message, validator.error
+            )
 
     message.add_message(request, validator.message, Message.ERROR)
     return Response(
@@ -908,3 +907,25 @@ def note(request, user, override_user):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["PUT"])
+@check([is_open_for_admins])
+@authenticate(privileged_users=True)
+def menu_item_limit(request, user, override_user, menu_id):
+    menu_item = get_object_or_404(DailyMenuItem, pk=menu_id)
+    serializer = MenuItemLimitSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است.",
+            Message.ERROR,
+        )
+
+    try:
+        DailyMenuItem.update_limit(menu_item, **serializer.validated_data)
+    except ValueError as e:
+        return invalid_request(request, message, str(e))
+    
+    return valid_request(request, message, "محدودیت با موفقیت تغییر یافت.")
