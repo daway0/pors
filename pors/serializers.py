@@ -143,7 +143,6 @@ class OrderItemSerializer(serializers.Serializer):
     description = serializers.CharField(source="ItemDesc")
     quantity = serializers.IntegerField(source="Quantity")
     pricePerItem = serializers.IntegerField(source="PricePerOne")
-    note = serializers.CharField(max_length=1000, source="Note")
 
 
 class OrderSerializer(serializers.Serializer):
@@ -164,6 +163,7 @@ class OrderSerializer(serializers.Serializer):
             schema["orderDate"] = object["DeliveryDate"]
 
             u.add_mealtype_building(object, schema)
+            schema["note"] = object["Note"]
 
             schema["orderItems"] = []
             schema["orderItems"].append(serializer)
