@@ -899,7 +899,10 @@ def comments(
 @authenticate(privileged_users=True)
 def note(request, user, override_user):
     if not override_user:
-        return Response({"error": "you must provide override_username"})
+        return Response(
+            {"error": "you must provide override_username"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     serializer = NoteSerializer(data=request.data)
     if not serializer.is_valid():

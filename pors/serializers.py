@@ -328,7 +328,11 @@ class AdminReasonserializer(serializers.Serializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if data["reason"].Title.lower() == "other" and not data.get("comment"):
+        if (
+            data["reason"].ReasonCode is not None
+            and data["reason"].ReasonCode.lower() == "other"
+            and not data.get("comment")
+        ):
             raise ValueError(
                 "you must provide a comment when using other's reason"
             )
@@ -387,8 +391,10 @@ class NoteSerializer(serializers.Serializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if data["reason"].ReasonCode.lower() == "other" and not data.get(
-            "comment"
+        if (
+            data["reason"].ReasonCode is not None
+            and data["reason"].ReasonCode.lower() == "other"
+            and not data.get("comment")
         ):
             raise serializers.ValidationError(
                 "you must provide a comment when using other's reason"
