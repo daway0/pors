@@ -590,6 +590,8 @@ class ItemsOrdersPerDay(models.Model):
     Item = models.PositiveIntegerField()
     Date = models.CharField(max_length=10)
     TotalOrders = models.PositiveIntegerField()
+    TotalOrdersAllowed = models.PositiveIntegerField()
+    TotalOrdersLeft = models.PositiveIntegerField()
 
     class Meta:
         managed = False
@@ -630,10 +632,14 @@ class DailyMenuItem(Logger):
 
     @staticmethod
     @transaction.atomic
-    def update_limit(menu_item: "DailyMenuItem", limit: int):
-        menu_item = DailyMenuItem.objects.select_for_update().get(
-            pk=menu_item.pk
+    def update_limit(item_id: int, date: str, limit: int):
+        menu_item = (
+            DailyMenuItem.objects.select_for_update()
+            .filter(Item=item_id, AvailableDate=date)
+            .first()
         )
+        if menu_item is None:
+            raise ValueError("آیتم درخواستی در تاریخ داده شده موجود نیست.")
         if (
             menu_item.TotalOrdersLeft is not None
             and limit

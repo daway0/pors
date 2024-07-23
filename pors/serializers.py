@@ -79,6 +79,8 @@ class ItemOrderSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="Item")
     allowToRemoveMenuItems = serializers.SerializerMethodField()
     orderedBy = serializers.IntegerField(source="TotalOrders")
+    limit = serializers.IntegerField(source="TotalOrdersAllowed")
+    remaining = serializers.IntegerField(source="TotalOrdersLeft")
 
     def get_allowToRemoveMenuItems(self, obj):
         if obj.TotalOrders > 0:
@@ -99,8 +101,8 @@ class MenuItemSerializer(serializers.Serializer):
 
         for object in obj:
             serializer = ItemOrderSerializer(
-                data={"id": object.Item, "orderedBy": object.TotalOrders},
-            ).initial_data
+                object,
+            ).data
             if current_date_obj.get("date") == object.Date:
                 current_date_obj["items"].append(serializer)
             else:
@@ -223,6 +225,7 @@ class PersonnelSchemaSerializer(serializers.Serializer):
 
 class MenuItems(serializers.Serializer):
     id = serializers.IntegerField(source="Item_id")
+    remaining = serializers.IntegerField(source="TotalOrdersLeft")
 
 
 class PersonnelMenuItemSerializer(serializers.Serializer):
@@ -408,4 +411,6 @@ class DailyMenuItemSerializer(serializers.Serializer):
 
 
 class MenuItemLimitSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField()
+    date = serializers.CharField()
     limit = serializers.IntegerField(min_value=0)

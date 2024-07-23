@@ -12,7 +12,12 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
-from .decorators import authenticate, check, is_open_for_admins, is_open_for_personnel
+from .decorators import (
+    authenticate,
+    check,
+    is_open_for_admins,
+    is_open_for_personnel,
+)
 from .forms import CreateItemForm
 from .general_actions import GeneralCalendar
 from .messages import Message
@@ -245,7 +250,7 @@ def personnel_calendar(request, user: User, override_user: User):
             IsActive=True,
         )
         .order_by("AvailableDate", "Item_id")
-        .values("AvailableDate", "Item_id")
+        .values("AvailableDate", "Item_id", "TotalOrdersLeft")
     )
     menu_items_serialized_data = PersonnelMenuItemSerializer(
         menu_items,
@@ -912,8 +917,7 @@ def note(request, user, override_user):
 @api_view(["PUT"])
 @check([is_open_for_admins])
 @authenticate(privileged_users=True)
-def menu_item_limit(request, user, override_user, menu_id):
-    menu_item = get_object_or_404(DailyMenuItem, pk=menu_id)
+def menu_item_limit(request, user, override_user):
     serializer = MenuItemLimitSerializer(data=request.data)
     if not serializer.is_valid():
         return invalid_request(
@@ -924,8 +928,8 @@ def menu_item_limit(request, user, override_user, menu_id):
         )
 
     try:
-        DailyMenuItem.update_limit(menu_item, **serializer.validated_data)
+        DailyMenuItem.update_limit(**serializer.validated_data)
     except ValueError as e:
         return invalid_request(request, message, str(e))
-    
+
     return valid_request(request, message, "محدودیت با موفقیت تغییر یافت.")
