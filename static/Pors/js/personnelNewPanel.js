@@ -847,7 +847,7 @@ function updateOrderBillDetail() {
     $("#lnc-delivery-place").text(LNCdeliveryPlace)
 
     // check order note option visiablity
-    if (godMode && bpUsers.includes(userName)){
+    if (godMode && bpUsers.includes(userName) && orderTotalItemsQuantity(["BRF", "LNC"])!==0){
         orderNoteDisplay(true)
         
         // check the order has note, 
@@ -855,10 +855,14 @@ function updateOrderBillDetail() {
             return orderObj.orderDate === toShamsiFormat(selectedDate)
         })
         
-        if (order===undefined) return
+        if (order===undefined) {
+            updateOrderNoteExistanceStatus(note=undefined)
+            return 
+        }
         updateOrderNoteExistanceStatus(order.note)
-
+        return 
     }
+    orderNoteDisplay(false)
 
 }
 
@@ -1793,14 +1797,23 @@ $(document).ready(function () {
     })
     // Order comment modal 
     $(document).on('click', '#order-comment', function () {
+        // loading note
+        $("#order-comment-textarea").empty()
+        let order = orders.find(function (orderObj) {
+            return orderObj.orderDate === toShamsiFormat(selectedDate)
+        })
+        let note = ""
+        if (order){
+            note = order.note
+        }
+        $("#order-comment-textarea").val(note)
         $("#order-comment-modal").click()
     })
 
     $(document).on('click', '#order-comment-submit', function () {
-        let note = $("#order-comment-textarea").val().trim()
+        let note = $("#order-comment-textarea").val().trim() || null
         $.ajax({
-            // *******must edit*******
-            url: addPrefixTo(`administrative/deadlines/`),
+            url: addPrefixTo(addOverrideUsernameIfIsAdmin(`administrative/notes/`, userName)),
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(
@@ -1812,13 +1825,13 @@ $(document).ready(function () {
             statusCode:{
                 200: function (data) {
                     let em="یادداشت با موفقیت به روزرسانی شد"
+                    if (note===null) em="یادداشت پاک شد"
                     displayDismiss(DISMISSLEVELS.SUCCESS, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
-                    // ****
                     updateOrders(selectedDate.month, selectedDate.year)
                     
                     // update comment exsistance display
                     updateOrderNoteExistanceStatus(note)
-                    // ****
+                    
                     $("#order-comment-modal").click()
                     catchResponseMessagesToDisplay(data.messages)
                 }
