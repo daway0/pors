@@ -543,8 +543,8 @@ class OrderItem(Logger):
         personnel: User,
         admin_user: User,
         date: str,
-        note: str,
         reason: "AdminManipulationReason",
+        note: str = None,
         comment: str = None,
     ) -> bool:
 

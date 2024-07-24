@@ -368,10 +368,10 @@ class CommentSerializer(serializers.Serializer):
 
 class NoteSerializer(serializers.Serializer):
     date = serializers.CharField(max_length=10)
+    reason = serializers.IntegerField()
     note = serializers.CharField(
         max_length=1000, required=False, allow_null=True
     )
-    reason = serializers.IntegerField()
     comment = serializers.CharField(max_length=250, required=False)
 
     def validate_reason(self, id):
