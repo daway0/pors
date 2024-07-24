@@ -616,6 +616,11 @@ class ValidateOrder(OverrideUserValidator):
                     )
 
                 else:
+                    note = m.OrderItem.objects.filter(
+                        DeliveryDate=self.date,
+                        Personnel=self.user,
+                        Note__isnull=False,
+                    ).first()
                     new_item = m.OrderItem(
                         Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
@@ -624,6 +629,7 @@ class ValidateOrder(OverrideUserValidator):
                         Item=self.item,
                         Quantity=1,
                         PricePerOne=self.item.CurrentPrice,
+                        Note=note.Note if note is not None else None,
                     )
                     new_item.save(
                         log=(
@@ -937,6 +943,11 @@ class ValidateBreakfast(OverrideUserValidator):
                     )
 
                 else:
+                    note = m.OrderItem.objects.filter(
+                        DeliveryDate=self.date,
+                        Personnel=self.user,
+                        Note__isnull=False,
+                    ).first()
                     m.OrderItem(
                         Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
@@ -944,6 +955,7 @@ class ValidateBreakfast(OverrideUserValidator):
                         DeliveryFloor=self.user.LastDeliveryFloor,
                         Item=self.item,
                         PricePerOne=self.item.CurrentPrice,
+                        Note=note.Note if note is not None else None,
                     ).save(
                         log=(
                             f"Breakfast Item {self.item.ItemName} just added to the order"
