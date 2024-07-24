@@ -34,7 +34,7 @@ class AllItemSerializer(serializers.ModelSerializer):
         return m.MealTypeChoices(item["MealType"]).label
 
     def get_image(self, item):
-        return f"{settings.MEDIA_URL}{item['Image']}"
+        return f"{settings.MEDIA_URL}{item['Image']}" if item['Image'] else None
 
     class Meta:
         model = m.Item
