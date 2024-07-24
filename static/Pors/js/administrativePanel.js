@@ -324,7 +324,7 @@ function menuItemBlock(id, itemName, pic, orderedByCount, itemProvider) {
     return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
     <div class="flex items-center gap-4">
         <img
-                src="${pic}"
+                src="${pic || DEFAULTITEMIMAGE}"
                 alt=""
                 onerror="imgError(this);"
                 class="h-16 w-16 rounded object-cover self-start"

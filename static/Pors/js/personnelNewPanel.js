@@ -401,7 +401,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
 
             <div class="flex items-center gap-4">
                 <img
-                        src="${pic}"
+                        src="${pic || DEFAULTITEMIMAGE}"
                         alt=""
                         onerror="imgError(this);"
                         class="h-16 w-16 rounded object-cover self-start"
