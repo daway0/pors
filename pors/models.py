@@ -121,7 +121,7 @@ class User(models.Model):
 
     # todo
     IsActive = models.BooleanField(default=True)
-    EmailNotif = models.BooleanField(default=False)
+    EmailNotif = models.BooleanField(default=True)
     EmailAddress = models.CharField(max_length=250)
 
     # HR ConstValue Table Code (For Cache purposes)
