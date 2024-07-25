@@ -172,6 +172,9 @@ class SystemSetting(models.Model):
 
     # Does the system provide breakfast-related services or not?
     IsSystemOpenForBreakfastSubmission = models.BooleanField(default=True)
+    BRFReminder = models.BooleanField(default=True)
+    LNCReminder = models.BooleanField(default=True)
+    RemindBefore = models.PositiveIntegerField(default=30)
 
 
 class Holiday(models.Model):
@@ -387,6 +390,9 @@ class Item(models.Model):
 class EmailReason(Enum):
     DEADLINE = "DEADLINE"
     ADMIN_ACTION = "ADMIN_ACTION"
+    REMINDER_ALL = "REMINDER_ALL"
+    REMINDER_BRF = "REMINDER_BRF"
+    REMINDER_LNC = "REMINDER_LNC"
 
 
 class Deadlines(Logger):
