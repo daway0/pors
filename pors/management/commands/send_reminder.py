@@ -13,8 +13,8 @@ from pors.utils import (
 
 
 class Command(BaseCommand):
-    help = "send reminder notification to users who haven't "
-    "submitted an order for that day"
+    help = "send reminder notification to users who haven't \
+    submitted an order for that day"
 
     def handle(self, *args, **options):
         reminders, date = self._check_deadlines()

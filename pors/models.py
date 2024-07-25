@@ -21,6 +21,7 @@ Prices are in Toman everywhere.
 """
 
 from enum import Enum
+from json import JSONEncoder
 
 import jdatetime
 import pytz
@@ -698,6 +699,11 @@ class ActionLog(models.Model):
     making changes, this field must be required).
     """
 
+    class Encoder(JSONEncoder):
+        def __init__(self, **kwargs):
+            kwargs.pop("ensure_ascii")
+            super().__init__(ensure_ascii=False, **kwargs)
+
     class LogManager(models.Manager):
         def log(
             self,
@@ -744,7 +750,7 @@ class ActionLog(models.Model):
     # Summary of what happened in this log for system supporter
     # (in the most human-readable word)
     ActionDesc = models.CharField(max_length=1000, null=True)
-    OldData = models.JSONField(null=True)
+    OldData = models.JSONField(null=True, encoder=Encoder)
 
     Admin = models.CharField(max_length=250, null=True)
     ManipulationReasonComment = models.CharField(max_length=250, null=True)
