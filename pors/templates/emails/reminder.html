@@ -1,0 +1,31 @@
+{% load tags %}
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>یادآوری ثبت سفارش غذا</title>
+</head>
+<body dir="rtl">
+    <p>با سلام،</p>
+    <p>همکار گرامی،</p>
+    <p>
+        احتراماً به اطلاع می‌رساند که مهلت ثبت سفارش {{ mealtype }} 
+        برای تاریخ <a href={{link}}>{{ date }}</a> در سیستم پرس به زودی به پایان می‌رسد.
+        لذا خواهشمند است در اسرع وقت نسبت به ثبت سفارش غذای خود اقدام فرمایید تا از خدمات ارائه شده بهره‌مند شوید.
+    </p>
+    {% if brf_deadline %}
+    <p>
+        <strong>مهلت نهایی ثبت سفارش صبحانه: تا ساعت {{ brf_deadline|english_to_persian_number }}</strong>
+    </p>
+    {% endif %}
+    {% if lnc_deadline %}
+    <p>
+        <strong>مهلت نهایی ثبت سفارش ناهار: تا ساعت {{ lnc_deadline|english_to_persian_number }}</strong>
+    </p>
+    {% endif %}
+    <p>با تشکر از همکاری شما،</p>
+    <p style="text-align: center">
+        تیم پرس
+    </p>
+</body>
+</html>

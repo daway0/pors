@@ -16,6 +16,7 @@ from django.core.mail import EmailMessage
 from django.db import connection
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django.urls import reverse
 from openpyxl.utils import get_column_letter
 from persiantools.jdatetime import JalaliDate
 from rest_framework import status
@@ -182,21 +183,27 @@ def validate_date(date: str) -> Optional[str]:
         return None
 
 
-def execute_raw_sql_with_params(query: str, params: tuple) -> list:
+def execute_raw_sql_with_params(
+    query: str, params: tuple, raw: bool = False
+) -> list:
     """
     Executing raw queries via context manager
 
     Args:
         query: the raw query
         params: parameters used in query, avoiding sql injections
+        raw: return list of values only, exclude column names
 
     Returns:
         result: the data retrieved by query
     """
     with connection.cursor() as cursor:
         cursor.execute(query, params)
-        columns = [col[0] for col in cursor.description]
-        result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        if not raw:
+            columns = [col[0] for col in cursor.description]
+            result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        else:
+            result = [row[0] for row in cursor.fetchall()]
     return result
 
 
@@ -655,7 +662,11 @@ def _send_mail(
     reason=m.EmailReason,
 ):
     email = EmailMessage(
-        subject=subject, body=message, to=emails, bcc=[settings.EMAIL_HOST_USER], from_email=settings.EMAIL_HOST_USER
+        subject=subject,
+        body=message,
+        to=emails,
+        bcc=[settings.EMAIL_HOST_USER],
+        from_email=settings.EMAIL_HOST_USER,
     )
     email.content_subtype = "html"
 
@@ -666,7 +677,7 @@ def _send_mail(
             success = email.send()
             m.ActionLog.objects.log(
                 action_type=m.ActionLog.ActionTypeChoices.CREATE,
-                log_msg=f"[{reason.value}], email notif for sent successfully",
+                log_msg=f"[{reason.value}], email notif sent successfully",
             )
         except Exception as e:
             total_tries += 1
@@ -686,3 +697,7 @@ def str_date_to_jdate(date: str) -> jdatetime.date:
     year, month, day = split_dates(date, mode="all")
 
     return jdatetime.date(year, month, day)
+
+
+def order_link(date: str, meal_type: str = "") -> str:
+    return f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={date.replace('/', '')}{meal_type}"
