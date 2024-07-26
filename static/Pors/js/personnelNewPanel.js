@@ -92,6 +92,7 @@ let BRFOrderItemsCount = undefined
 let LNCOrderItemsCount = undefined
 let specificOrderMealType = undefined
 const bpUsers = ["padidar.guest@eit", "gandi.guest@eit"]
+const displayRemainingWarningAfter = 10
 
 function getDeliveryPlaceTitleByCode(code) {
     for (const building of deliveryPlaces) {
@@ -357,9 +358,65 @@ function menuItemBlock(
     totalComments,
     isLiked,
     isDissLiked,
-    isCommented
+    isCommented,
+    remaining
 ) {
+    // remaining null means is unlimited, 
+    if (remaining===null) remaining = 9999
+
+    let foodActions = ""
+    let finishedBadge = '<span class="border rounded rounded-md border-red-800 text-red-800 px-3 py-1 font-bold"> تمام شد</span>'
+    let $itemRemainingCounter  = $(`<span data-remaining="${remaining}" class="item-remaining justify-self-start bg-red-100 text-red-800 text-xs p-1.5 py-0 rounded rounded-full">${convertToPersianNumber(`باقی مانده: ${remaining}`)}</span>`)
     let feedback = ""
+    let $minus = $(`
+            <div class="ml-2">
+                <img class="!cursor-pointer remove-item w-6 h-6" src="${addStaticFilePrefixTo('images/minus-cirlce.svg')}" alt="">
+            </div>`)
+    let $add = $(`
+            <div class="">
+                <img class="!cursor-pointer add-item w-6 h-6" src="${addStaticFilePrefixTo('images/add-circle.svg')}" alt="">
+            </div>`)
+    
+    if (editable && remaining === 0 && selected){
+        // do not show add and just show minus and show the baqimande span
+        foodActions = `
+            ${$minus.prop("outerHTML")}
+            <div class="ml-2">
+                <span class="item-quantity">${convertToPersianNumber(itemCount)}</span>
+            </div>
+            ${$add.find("img").addClass("hidden").prop("outerHTML")}
+        `
+    }
+
+    if (editable && remaining === 0 && !selected){
+        // show tamam shod span and hide the baqimander span, hide add remove buttons
+        foodActions = `
+            ${finishedBadge}
+        `
+        $itemRemainingCounter.addClass("hidden")
+    }
+
+    if (editable && remaining > 0){
+        foodActions = `
+            ${$minus.prop("outerHTML")}
+            <div class="ml-2">
+                <span class="item-quantity">${convertToPersianNumber(itemCount)}</span>
+            </div>
+            ${$add.prop("outerHTML")}
+        `
+        // check the remaining if > 10 do not show it! else show the baqimande span
+        remaining > displayRemainingWarningAfter ? $itemRemainingCounter.addClass("hidden") : $itemRemainingCounter 
+    }
+
+    if (!editable){
+        foodActions = `
+            ${editable ? $minus.prop("outerHTML") : ""}
+                <div class="ml-2">
+                    <span class="item-quantity">${!editable ? "x" : ""} ${convertToPersianNumber(itemCount)}</span>
+                </div>
+            ${editable ? $add.prop("outerHTML") : ""}`
+        $itemRemainingCounter.addClass("hidden")
+    }
 
     if (!godMode){
         feedback = `<div class="flex flex-row gap-1 items-center">
@@ -378,16 +435,6 @@ function menuItemBlock(
     </div>   
     `
     }
-    let minus = `
-    <div class="ml-2">
-                        <img class="!cursor-pointer remove-item w-6 h-6"
-                             src="${addStaticFilePrefixTo('images/minus-cirlce.svg')}" alt="">
-                    </div>`
-    let add = `<div class="">
-                        <img class="!cursor-pointer add-item w-6 h-6"
-                             src="${addStaticFilePrefixTo('images/add-circle.svg')}" alt="">
-                    </div>
-    `
 
     return `
     <li data-item-id="${id}" 
@@ -427,13 +474,7 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                     </div>
                 </div>
                 <div class="flex justify-end w-3/12">
-
-                    ${editable ? minus : ""}
-                    <div class="ml-2">
-                        <span class="item-quantity">${!editable ? "x" : ""} ${convertToPersianNumber(itemCount)}</span>
-                    </div>
-                    ${editable ? add : ""}
-                    
+                    ${foodActions}
                 </div>
             </div>
             <div class="flex justify-between items-center">
@@ -441,7 +482,10 @@ class="flex flex-col gap-0  ${selected ? "bg-blue-100" : "bg-gray-200"}
                     <div class="w-16"></div>
                     <div >${feedback}</div>
                 </div>    
-            <div class="">
+                <div class="w-full flex flex-row-reverse items-center">
+                    ${$itemRemainingCounter.prop("outerHTML")}
+                </div>
+                <div class="w-3/12 flex flex-row-reverse whitespace-nowrap">
                     <span class="text-sm">${insertCommas(convertToPersianNumber(price))}
                         <span class="text-xs text-gray-600">تومان</span>
                     </span>
@@ -484,6 +528,15 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
     items.forEach(function (itemObj) {
         let price = 0
         let selectedMenuItem = allItems.find(item => item.id === itemObj.id);
+    
+        let selectedMenuItems = menuItems.find(function (entry) {
+            return entry.date === toShamsiFormat(selectedDate);
+        }).items;
+
+        let selectedMenuItemRemaining = selectedMenuItems.find(function (entry) {
+            return entry.id === itemObj.id;
+        }).remaining
+
         let quantity = 0
         let editableItem = canPersonnelChangeMenuItem(
             selectedMenuItem.serveTime,
@@ -520,7 +573,8 @@ function makeSelectedMenu(items, openForLaunch, openForBreakfast, ordered) {
             selectedMenuItem.totalComments,
             selectedMenuItem.isLiked,
             selectedMenuItem.isDissLiked,
-            selectedMenuItem.isCommented
+            selectedMenuItem.isCommented,
+            selectedMenuItemRemaining
         )
     })
     return HTML
@@ -887,6 +941,24 @@ function updateItemMenuDetails(id, quantity) {
     changedItem.find(".item-quantity").text(convertToPersianNumber(quantity))
 }
 
+function updateItemRemaining(addRemaining, id){
+    // update item remaining quantity 
+    let $changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
+    let $remaining = $changedItem.find(".item-remaining")
+    let itemRemaining = parseInt($remaining.attr("data-remaining"))
+    addRemaining ? itemRemaining++ : itemRemaining--
+    $remaining.attr("data-remaining", itemRemaining)
+    $remaining.text(`${convertToPersianNumber(`باقی مانده: ${itemRemaining}`)}`)
+
+    // update minus and add visibialty
+    if (itemRemaining===0){
+        $changedItem.find(".add-item").addClass("hidden")
+    } else {
+        $changedItem.find(".add-item").removeClass("hidden")
+    }
+    
+}
+
 function addNewItemToMenu(id) {
     let changedItem = $(`#menu-items-container li[data-item-id='${id}']`)
     let itemQuantity = parseInt(changedItem.attr("data-item-order-count"))
@@ -1139,6 +1211,10 @@ function orderNewItem(itemId, url) {
                 updateOrderItemsQuantity()
                 updateHasOrderedCalendarDayBlock()
                 updateOrderBillDetail()
+
+                // updates related to item remaining
+                updateItemRemaining(false, itemId)
+
                 catchResponseMessagesToDisplay(data.messages)
             }
         },
@@ -1367,6 +1443,10 @@ $(document).ready(function () {
                     updateOrderItemsQuantity()
                     updateHasOrderedCalendarDayBlock()
                     updateOrderBillDetail()
+
+                    // updates related to item remaining
+                    updateItemRemaining(true, id)
+
                     catchResponseMessagesToDisplay(data.messages)
                 }
             },
