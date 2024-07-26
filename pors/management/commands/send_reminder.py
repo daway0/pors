@@ -3,12 +3,20 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 
 from pors.business import get_first_orderable_date, is_date_valid_for_action
-from pors.models import Deadlines, EmailReason, MealTypeChoices, SystemSetting
+from pors.models import (
+    Deadlines,
+    EmailReason,
+    EmailReminderHistory,
+    MealTypeChoices,
+    SystemSetting,
+)
 from pors.utils import (
     execute_raw_sql_with_params,
     localnow,
     order_link,
     send_email_notif,
+    split_dates,
+    weekday_to_word,
 )
 
 
@@ -18,22 +26,49 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         reminders, date = self._check_deadlines()
+        str_date = date.strftime("%Y/%m/%d")
+        history = EmailReminderHistory.objects.filter(RemindDate=str_date)
+
         settings = SystemSetting.objects.first()
         sent = False
+        now = localnow()
+
+        day_diff = date.day - now.day
+        if day_diff == 0:
+            day_word = "امروز"
+        elif day_diff == 1:
+            day_word = "فردا"
+        else:
+            day_word = weekday_to_word(date.weekday())
 
         if all(
             [*reminders.values(), settings.BRFReminder, settings.LNCReminder]
-        ):
+        ) and len(history) < len(MealTypeChoices.values):
+            # Here we send notification for all mealtypes, even if
+            # we already sent a notif for one of them already.
+
             self.stdout.write(
                 self.style.SUCCESS(
                     "Sending email notification for all meal types."
                 )
             )
-            self._send_alltypes_notif(date)
+            self._send_alltypes_notif(date, day_word)
+            EmailReminderHistory.objects.bulk_create(
+                [
+                    EmailReminderHistory(
+                        RemindDate=str_date, MealType=meal_type
+                    )
+                    for meal_type in MealTypeChoices.values
+                ]
+            )
             return
 
         for meal_type, valid in reminders.items():
-            if not valid or not getattr(settings, f"{meal_type}Reminder"):
+            if (
+                not valid
+                or not getattr(settings, f"{meal_type}Reminder")
+                or history.filter(MealType=meal_type).exists()
+            ):
                 continue
             sent = True
             self.stdout.write(
@@ -41,16 +76,22 @@ class Command(BaseCommand):
                     f"Sending email notification for {meal_type}."
                 )
             )
-            self._send_typed_notif(date, meal_type)
+            self._send_typed_notif(date, meal_type, day_word)
+            EmailReminderHistory.objects.create(
+                RemindDate=str_date, MealType=meal_type
+            )
 
         if not sent:
             self.stdout.write(
                 self.style.WARNING(
-                    "Now is not the time for reminder notification."
+                    "Now is not the time for reminder notification "
+                    + "or an email notification has already been sent."
                 )
             )
 
-    def _send_typed_notif(self, date: jdatetime.datetime, meal_type: str):
+    def _send_typed_notif(
+        self, date: jdatetime.datetime, meal_type: str, day_word: str
+    ):
         str_date = date.strftime("%Y/%m/%d")
         with open("./pors/SQLs/UsersWithoutMealTypedOrder.sql", "r") as f:
             query = f.read()
@@ -65,6 +106,7 @@ class Command(BaseCommand):
                 "mealtype": MealTypeChoices(meal_type).label,
                 "date": str_date,
                 "link": link,
+                "day_word": day_word,
                 f"{meal_type.lower()}_deadline": Deadlines.objects.filter(
                     WeekDay=date.weekday(), MealType=meal_type
                 )
@@ -80,10 +122,7 @@ class Command(BaseCommand):
             max_tries=3,
         )
 
-    def _send_alltypes_notif(
-        self,
-        date: jdatetime.datetime,
-    ):
+    def _send_alltypes_notif(self, date: jdatetime.datetime, day_word: str):
         str_date = date.strftime("%Y/%m/%d")
         with open("./pors/SQLs/UsersWithoutOrderAll.sql", "r") as f:
             query = f.read()
@@ -97,6 +136,7 @@ class Command(BaseCommand):
                 "mealtype": " و ".join(MealTypeChoices.labels),
                 "date": str_date,
                 "link": link,
+                "day_word": day_word,
                 "brf_deadline": Deadlines.objects.filter(
                     WeekDay=date.weekday(),
                     MealType=MealTypeChoices.BREAKFAST,

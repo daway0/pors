@@ -10,22 +10,23 @@
     <p>همکار گرامی،</p>
     <p>
         احتراماً به اطلاع می‌رساند که مهلت ثبت سفارش {{ mealtype }} 
-        برای تاریخ <a href={{link}}>{{ date }}</a> در سیستم پرس به زودی به پایان می‌رسد.
+        برای {{ day_word }} مورخ <a href={{link}}>{{ date }}</a> در سیستم پرس به زودی به پایان می‌رسد.
         لذا خواهشمند است در اسرع وقت نسبت به ثبت سفارش غذای خود اقدام فرمایید تا از خدمات ارائه شده بهره‌مند شوید.
     </p>
-    {% if brf_deadline %}
-    <p>
+    {% if brf_deadline and lnc_deadline and brf_deadline == lnc_deadline %}
+        <strong>مهلت نهایی ثبت سفارش صبحانه و ناهار: تا ساعت {{ brf_deadline|english_to_persian_number }}</strong>
+    {% elif brf_deadline and lnc_deadline and brf_deadline != lnc_deadline %}
         <strong>مهلت نهایی ثبت سفارش صبحانه: تا ساعت {{ brf_deadline|english_to_persian_number }}</strong>
-    </p>
-    {% endif %}
-    {% if lnc_deadline %}
-    <p>
+        <br>
         <strong>مهلت نهایی ثبت سفارش ناهار: تا ساعت {{ lnc_deadline|english_to_persian_number }}</strong>
-    </p>
+    {% elif brf_deadline %}
+        <strong>مهلت نهایی ثبت سفارش صبحانه: تا ساعت {{ brf_deadline|english_to_persian_number }}</strong>
+    {% elif lnc_deadline %}
+        <strong>مهلت نهایی ثبت سفارش ناهار: تا ساعت {{ lnc_deadline|english_to_persian_number }}</strong>
     {% endif %}
-    <p>با تشکر از همکاری شما،</p>
+    <p style="text-align: center">با تشکر از همکاری توجه شما،</p>
     <p style="text-align: center">
-        تیم پرس
+        تیم پشتیبانی پرس
     </p>
 </body>
 </html>

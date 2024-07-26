@@ -701,3 +701,16 @@ def str_date_to_jdate(date: str) -> jdatetime.date:
 
 def order_link(date: str, meal_type: str = "") -> str:
     return f"{HR_SCHEME}://{HR_HOST}:{SERVER_PORT}{reverse('pors:personnel_panel')}?order={date.replace('/', '')}{meal_type}"
+
+
+def weekday_to_word(weekday: int) -> str:
+    persian_weekdays = {
+        0: "شنبه",
+        1: "یک‌شنبه",
+        2: "دوشنبه",
+        3: "سه‌شنبه",
+        4: "چهار‌شنبه",
+        5: "بنج‌شنبه",
+        6: "جمعه",
+    }
+    return persian_weekdays.get(weekday)

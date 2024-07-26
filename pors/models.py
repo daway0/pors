@@ -873,3 +873,8 @@ class ItemFeedbacks(models.Model):
     class Meta:
         managed = False
         db_table = "ItemFeedbacks"
+
+
+class EmailReminderHistory(models.Model):
+    RemindDate = models.CharField(max_length=10)
+    MealType = models.CharField(choices=MealTypeChoices.choices, max_length=3)
