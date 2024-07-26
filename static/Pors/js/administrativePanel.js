@@ -1402,68 +1402,75 @@ $(document).ready(function () {
 
     $(document).on('submit', '#add-item-form', function(event) {
         event.preventDefault();
-        
-        let formData = new FormData(this)
-
+    
+        let formData = new FormData(this);
+    
         var fileInput = $('#id_Image')[0];
         var file = fileInput.files[0];
-
-        if ($("#id_ItemName").val().trim()==="")
-            {
-                em = "لطفا برای آیتم نام مناسب انتخاب کنید"
-                displayDismiss(
-                    DISMISSLEVELS.ERROR,
-                    em,
-                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
-        
-                return;
-            }
-        
-        if ($("#id_ItemDesc").val().trim()==="")
-            {
-                em = "لطفا برای آیتم توضیحات مناسب وارد کنید"
-                displayDismiss(
-                    DISMISSLEVELS.ERROR,
-                    em,
-                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
-                return;
-            }
-
-        if (!file) {
-            em = "لطفا برای آیتم عکس انتخاب کنید"
+    
+        if ($("#id_ItemName").val().trim() === "") {
+            em = "لطفا برای آیتم نام مناسب انتخاب کنید";
             displayDismiss(
                 DISMISSLEVELS.ERROR,
                 em,
-                DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                DISMISSDURATIONS.DISPLAY_TIME_TEN
+            );
             return;
         }
-
+    
+        if ($("#id_ItemDesc").val().trim() === "") {
+            em = "لطفا برای آیتم توضیحات مناسب وارد کنید";
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                em,
+                DISMISSDURATIONS.DISPLAY_TIME_TEN
+            );
+            return;
+        }
+    
+        if (!file) {
+            em = "لطفا برای آیتم عکس انتخاب کنید";
+            displayDismiss(
+                DISMISSLEVELS.ERROR,
+                em,
+                DISMISSDURATIONS.DISPLAY_TIME_TEN
+            );
+            return;
+        }
+    
         // Check the file extension (must be an image)
         var validExtensions = [
             'image/jpeg',
             'image/png',
             'image/gif'
-        ]
+        ];
         if ($.inArray(file.type, validExtensions) === -1) {
-            em= 'فرمت عکس انتخابی شما مجاز نمی باشد. باید از PNG, JPEG و GIF استفاده کنید'
+            em = 'فرمت عکس انتخابی شما مجاز نمی باشد. باید از PNG, JPEG و GIF استفاده کنید';
             displayDismiss(
                 DISMISSLEVELS.ERROR,
                 em,
-                DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                DISMISSDURATIONS.DISPLAY_TIME_TEN
+            );
             return;
         }
-
+    
         var maxSize = 1 * 1024 * 1024; // 1MB
         if (file.size > maxSize) {
-            em= "حجم عکس انتخابی بیشتر از 1 مگابایت است. امکان آپلود وجود ندارد"
+            em = "حجم عکس انتخابی بیشتر از 1 مگابایت است. امکان آپلود وجود ندارد";
             displayDismiss(
                 DISMISSLEVELS.ERROR,
                 convertToPersianNumber(em),
-                DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                DISMISSDURATIONS.DISPLAY_TIME_TEN
+            );
             return;
         }
-
-        formData.append('Image', file);
+    
+        // Create a new file with the current timestamp as the name
+        var timestamp = Date.now();
+        var newFileName = timestamp + '.' + file.name.split('.').pop();
+        var newFile = new File([file], newFileName, { type: file.type });
+    
+        formData.append('Image', newFile);
         $.ajax({
             url: addPrefixTo('administrative/items/'), 
             type: 'POST',
@@ -1471,26 +1478,28 @@ $(document).ready(function () {
             contentType: false,
             processData: false,
             success: function(data) {
-                loadAvailableItem()
-
+                loadAvailableItem();
+    
                 // load New Item Image
                 let imgElement = $('<img>').attr('src', data.image);
                 $('#dump-image-container').append(imgElement);
-
-                $("#add-new-item-modal").click()
-                em= "آیتم با موفقیت به لیست غذاهای قابل انتخاب سیستم اضافه شد"
+    
+                $("#add-new-item-modal").click();
+                em = "آیتم با موفقیت به لیست غذاهای قابل انتخاب سیستم اضافه شد";
                 displayDismiss(
                     DISMISSLEVELS.SUCCESS,
                     convertToPersianNumber(em),
-                    DISMISSDURATIONS.DISPLAY_TIME_TEN)
-                },
+                    DISMISSDURATIONS.DISPLAY_TIME_TEN
+                );
+            },
             error: function(xhr, status, error) {
                 console.error('NEW ITEM ADDITION FAILED', status, 'and error:', error, 'detail:', xhr.responseJSON);
-                checkErrorRelatedToAuth(xhr.status)
-                displayDismiss(DISMISSLEVELS.ERROR,"مشکلی هنگام افزودن آیتم به سیستم پیش آمده است", DISMISSDURATIONS.DISPLAY_TIME_TEN)
+                checkErrorRelatedToAuth(xhr.status);
+                displayDismiss(DISMISSLEVELS.ERROR, "مشکلی هنگام افزودن آیتم به سیستم پیش آمده است", DISMISSDURATIONS.DISPLAY_TIME_TEN);
             }
         });
     });
+    
 
     
 });
