@@ -15,7 +15,6 @@ from pors.utils import (
     localnow,
     order_link,
     send_email_notif,
-    split_dates,
     weekday_to_word,
 )
 
@@ -32,6 +31,7 @@ class Command(BaseCommand):
         settings = SystemSetting.objects.first()
         sent = False
         now = localnow()
+        log_message = f"reminder email notification sent for date {str_date}"
 
         day_diff = date.day - now.day
         if day_diff == 0:
@@ -52,7 +52,7 @@ class Command(BaseCommand):
                     "Sending email notification for all meal types."
                 )
             )
-            self._send_alltypes_notif(date, day_word)
+            self._send_alltypes_notif(date, day_word, log_message)
             EmailReminderHistory.objects.bulk_create(
                 [
                     EmailReminderHistory(
@@ -76,7 +76,7 @@ class Command(BaseCommand):
                     f"Sending email notification for {meal_type}."
                 )
             )
-            self._send_typed_notif(date, meal_type, day_word)
+            self._send_typed_notif(date, meal_type, day_word, log_message)
             EmailReminderHistory.objects.create(
                 RemindDate=str_date, MealType=meal_type
             )
@@ -90,7 +90,11 @@ class Command(BaseCommand):
             )
 
     def _send_typed_notif(
-        self, date: jdatetime.datetime, meal_type: str, day_word: str
+        self,
+        date: jdatetime.datetime,
+        meal_type: str,
+        day_word: str,
+        log_message: str,
     ):
         str_date = date.strftime("%Y/%m/%d")
         with open("./pors/SQLs/UsersWithoutMealTypedOrder.sql", "r") as f:
@@ -120,9 +124,12 @@ class Command(BaseCommand):
             emails=emails,
             reason=getattr(EmailReason, f"REMINDER_{meal_type}"),
             max_tries=3,
+            log_message=log_message,
         )
 
-    def _send_alltypes_notif(self, date: jdatetime.datetime, day_word: str):
+    def _send_alltypes_notif(
+        self, date: jdatetime.datetime, day_word: str, log_message: str
+    ):
         str_date = date.strftime("%Y/%m/%d")
         with open("./pors/SQLs/UsersWithoutOrderAll.sql", "r") as f:
             query = f.read()
@@ -157,6 +164,7 @@ class Command(BaseCommand):
             emails=emails,
             reason=EmailReason.REMINDER_ALL,
             max_tries=3,
+            log_message=log_message
         )
 
     def _check_deadlines(self) -> tuple[dict, jdatetime.datetime]:

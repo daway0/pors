@@ -646,10 +646,11 @@ def send_email_notif(
     emails: list[str],
     reason: m.EmailReason,
     max_tries: int = 2,
+    log_message: Optional[str] = None,
 ):
     email_thread = Thread(
         target=_send_mail,
-        args=(subject, message, emails, max_tries, reason),
+        args=(subject, message, emails, max_tries, reason, log_message),
     )
     email_thread.start()
 
@@ -659,7 +660,8 @@ def _send_mail(
     message: str,
     emails: list[str],
     max_tries: int,
-    reason=m.EmailReason,
+    reason: m.EmailReason,
+    log_message: Optional[str],
 ):
     email = EmailMessage(
         subject=subject,
@@ -677,7 +679,11 @@ def _send_mail(
             success = email.send()
             m.ActionLog.objects.log(
                 action_type=m.ActionLog.ActionTypeChoices.CREATE,
-                log_msg=f"[{reason.value}], email notif sent successfully",
+                log_msg=(
+                    f"[{reason.value}], email notif sent successfully"
+                    if log_message is None
+                    else f"[{reason.value}], {log_message}"
+                ),
             )
         except Exception as e:
             total_tries += 1
