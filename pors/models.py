@@ -313,6 +313,8 @@ class Item(models.Model):
 
     ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.CASCADE)
 
+    Packages = models.ManyToManyField("Package", through="PackageItem")
+
     @property
     def Total_Likes(self):
         return Feedback.objects.filter(
@@ -394,6 +396,30 @@ class EmailReason(Enum):
     REMINDER_ALL = "REMINDER_ALL"
     REMINDER_BRF = "REMINDER_BRF"
     REMINDER_LNC = "REMINDER_LNC"
+
+
+class Package(models.Model):
+    Title = models.CharField(max_length=255)
+    PackageDesc = models.TextField(blank=True, null=True)
+    FreeItemCount = models.PositiveSmallIntegerField()
+    Items = models.ManyToManyField(Item, through="PackageItem")
+
+    # MinMustBeOrderedCount = ...
+    # MaxMustBeOrderedCount = ...
+    # DiscountPercentage = ...
+    # ParentPackage = ...
+    # Price = ...
+
+
+class PackageItem(models.Model):
+    Item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    Package = models.ForeignKey(Package, on_delete=models.CASCADE)
+
+    # MustBeInOrder = ...
+    # CanBeFree = ...
+
+    # az in item tu in package chand ta mishe sefaresh dad
+    # MaxOrderCount = ...
 
 
 class Deadlines(Logger):
@@ -544,6 +570,9 @@ class OrderItem(Logger):
     # Technical redundancy
     PricePerOne = models.PositiveIntegerField()
     Note = models.TextField(null=True, blank=True)
+    Package = models.ForeignKey(
+        Package, on_delete=models.CASCADE, null=True, blank=True
+    )
 
     @staticmethod
     def update_note(

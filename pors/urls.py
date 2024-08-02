@@ -25,6 +25,11 @@ urlpatterns = [
         name="all_items",
     ),
     path(
+        "all-packages/",
+        views.all_packages,
+        name="all_packages",
+    ),
+    path(
         "administrative/add-item-to-menu/",
         views.add_item_to_menu,
         name="aadd_item_to_menu",

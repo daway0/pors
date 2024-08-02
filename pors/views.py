@@ -31,6 +31,7 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
+    Package,
     Subsidy,
     SystemSetting,
     User,
@@ -49,6 +50,7 @@ from .serializers import (
     MenuItemSerializer,
     NoteSerializer,
     OrderSerializer,
+    PackageSerializer,
     PersonnelMenuItemSerializer,
     UpdateDeadlineSerializer,
     UserSerializer,
@@ -181,11 +183,16 @@ def all_items(request, user: User, override_user: User):
     return Response(serializer.data)
 
 
-class Categories(ListAPIView):
-    """Returning list of all categories from dataase."""
-
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+@api_view(["GET"])
+@check([is_open_for_personnel])
+@authenticate()
+def all_packages(request, user: User, override_user: User):
+    queryset = (
+        Package.objects.prefetch_related("Items")
+        .all()
+    )
+    serializer = PackageSerializer(queryset, many=True).data
+    return Response(serializer)
 
 
 @api_view(["GET"])

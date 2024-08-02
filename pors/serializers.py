@@ -34,7 +34,9 @@ class AllItemSerializer(serializers.ModelSerializer):
         return m.MealTypeChoices(item["MealType"]).label
 
     def get_image(self, item):
-        return f"{settings.MEDIA_URL}{item['Image']}" if item['Image'] else None
+        return (
+            f"{settings.MEDIA_URL}{item['Image']}" if item["Image"] else None
+        )
 
     class Meta:
         model = m.Item
@@ -420,3 +422,14 @@ class MenuItemLimitSerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
     date = serializers.CharField()
     limit = serializers.IntegerField(min_value=0)
+
+
+class ItemIdSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+
+
+class PackageSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    description = serializers.CharField(source="PackageDesc")
+    freeItemCount = serializers.IntegerField(source="FreeItemCount")
+    items = ItemIdSerializer(source="Items", many=True)
