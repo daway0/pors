@@ -321,30 +321,40 @@ function menuItemBlock(id, itemName, pic, orderedByCount, itemProvider) {
                      src="${addStaticFilePrefixTo('images/users.svg')}" alt="">
             </div>
     `
-    return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col cursor-pointer bg-white rounded p-4 shadow-md hover:bg-gray-300 ">
-    <div class="flex items-center gap-4">
-        <img
-                src="${pic || DEFAULTITEMIMAGE}"
-                alt=""
-                onerror="imgError(this);"
-                class="h-16 w-16 rounded object-cover self-start"
-        />
-        <div class="w-8/12">
-            <div class="flex flex-row gap-2"><h3 class="text-xs text-gray-900">${convertToPersianNumber(itemName)}
-            <span class="flex flex-row w-fit gap-1 bg-gray-300 border border-gray-400 rounded-full px-2 py-0.5 text-xs">
-            <svg class="w-4 h-4 fill-black" viewBox="0 -18.83 122.88 122.88" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="enable-background:new 0 0 122.88 85.22" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style> <g> <path class="st0" d="M82.08,7.33h35.4c1.35,0,2.46,1.11,2.46,2.46V30.4h0.24c1.49,0,2.7,1.22,2.7,2.7v3.01 c0,1.51-1.24,2.74-2.74,2.74h-19c14.12,1.26,22.19,14.39,21.31,31.46h-12.56c-0.01,8.23-6.69,14.89-14.92,14.89 c-8.23,0-14.91-6.67-14.92-14.89H41.68c-0.01-0.27-0.02-0.53-0.03-0.8c0.03,1.81-0.08,3.73-0.34,5.78L7.87,59.54L0,55.82 c6.32-7.19,13.94-10.21,23.16-8.13c1.42,0.36,2.76,0.78,4.03,1.26c-1.3-0.5-2.67-0.92-4.11-1.28l10.52-34.65l-4.75-0.09l0,0 c-0.98-0.02-2.04,0.25-2.71-0.23c-1.16-0.03-2.17-0.73-2.87-1.83c-0.63-0.98-1.01-2.32-1.01-3.78c0-1.46,0.39-2.8,1.01-3.78 c0.52-0.81,1.2-1.4,1.98-1.67c0.01-0.16,0.02-0.27,0.04-0.3c1.12-1.79,3.3-1.25,5.24-1.25l1.89,0.12c1.37,0.17,2.71,0.62,4,1.36 l2.16,1.21h1.75l5.88,1.14c1.92,0.37,2.2,0.21,1.75,2.58c-0.06,0.3-0.13,0.6-0.23,0.89c-0.58,1.73-1.04,1.09-2.83,0.72l-5.51-1.14 c0.21,2.22-0.49,4.94-1.48,8.12c3.17,2.68,4.59,6.5,2.43,11.53l-5.26,16.21C43.9,49.08,49.2,54.74,49.5,64.03h11.67 c7.19-5.45,6-15.15-1.89-21.35v-3.82h0v-5.84c0.01-1.85,1-2.68,2.84-2.63h17.5V9.79C79.62,8.44,80.73,7.33,82.08,7.33L82.08,7.33z M90.68,26.67h18.21c0.14,0,0.26,0.12,0.26,0.26v0.52c0,0.14-0.12,0.26-0.26,0.26H90.68c-0.14,0-0.26-0.12-0.26-0.26v-0.52 C90.42,26.79,90.53,26.67,90.68,26.67L90.68,26.67z M100.54,15.35c5.33,0.43,9.19,4.44,8.52,9.72H90.5 c-0.65-5.31,3.22-9.33,8.59-9.72v-1.49h-1.48c-0.15,0-0.27-0.12-0.27-0.27v-0.97c0-0.15,0.12-0.27,0.27-0.27h4.37 c0.15,0,0.27,0.12,0.27,0.27v0.97c0,0.15-0.12,0.27-0.27,0.27h-1.45V15.35L100.54,15.35L100.54,15.35z M7.91,59.56l13.3,6.3 l-4.32-1.98c-2.97,0.63-5.19,3.27-5.19,6.42c0,3.63,2.94,6.57,6.57,6.57c3.63,0,6.57-2.94,6.57-6.57c0-1.12-0.28-2.17-0.77-3.1 l9.08,4.3c-0.61,7.68-7.04,13.72-14.87,13.72c-8.24,0-14.92-6.68-14.92-14.92C3.34,66.08,5.09,62.27,7.91,59.56L7.91,59.56 L7.91,59.56z M25.27,4.2c0.06,1.92,0.19,4.39,0.28,6.05c-0.16-0.14-0.32-0.32-0.46-0.55c-0.42-0.65-0.67-1.58-0.67-2.62 s0.26-1.97,0.67-2.62C25.15,4.37,25.21,4.28,25.27,4.2L25.27,4.2z M88.4,70.32h13.14c-0.01,3.62-2.95,6.54-6.57,6.54 C91.35,76.87,88.41,73.94,88.4,70.32L88.4,70.32L88.4,70.32z"></path> </g> </g></svg>
-            ${convertToPersianNumber(itemProvider)}    
-        </span>
-            </h3>
+    return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col bg-white rounded p-2 shadow-md hover:bg-zinc-100 ">
+    <div class="flex w-full p-2 gap-2">
+        <div class="pl-2">
+            <div id="" data-percent="20" class="small blue demo"></div> 
+        </div> 
+        <div class="flex items-center">
+            <div class="flex flex-row gap-2">
+                <h3 class="text-xs text-gray-900">${convertToPersianNumber(itemName)}
+                    <span class="flex flex-row w-fit mt-2 gap-1 text-xs text-gray-400">
+                        ${convertToPersianNumber(itemProvider)}    
+                    </span>
+                </h3>
             </div>
         </div>
-        <div class="flex justify-end w-3/12 gap-2">
-        <span>${orderedByCount !==0 ? convertToPersianNumber(orderedByCount) : ''}</span>         
-        ${orderedByCount !==0 ? userIcon : ''}
-        ${canAdminChangeMenu() && orderedByCount ===0 ? trashcanIcon : ''}
-         
-        </div>
     </div>
+    <div class="flex flex-row-reverse p-1 overflow-hidden items-center" id="icons-box ">
+        <span class="menu-dot">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 12C7 13.1046 6.10457 14 5 14C3.89543 14 3 13.1046 3 12C3 10.8954 3.89543 10 5 10C6.10457 10 7 10.8954 7 12Z" fill="#9e9e9e"></path> <path d="M14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12Z" fill="#9e9e9e"></path> <path d="M21 12C21 13.1046 20.1046 14 19 14C17.8954 14 17 13.1046 17 12C17 10.8954 17.8954 10 19 10C20.1046 10 21 10.8954 21 12Z" fill="#9e9e9e"></path> </g></svg>
+        </span>
+        <a class="cursor-pointer op-icon hidden">
+            <svg class="hover:fill-blue-400" width="24px" height="24px" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" ><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 19,17L 41.25,17L 54,29.75L 54,37L 50,37L 50,33L 38,33L 38,21L 23,21L 23,55L 34.25,55L 31,59L 19,59L 19,17 Z M 54,56.75L 50,51L 50,47L 54,42L 54,56.75 Z M 40.25,59L 43.235,55.3453L 45.5,59L 40.25,59 Z M 41,22.25L 41,30L 48.75,30L 41,22.25 Z M 32.25,38L 39.5,38L 44.0374,44.4221L 49,38L 55.5,38L 47.0067,48.7036L 57,63L 49.5,63L 43.2223,53.5201L 38,60L 31.5,60L 40.2529,49.2387L 32.25,38 Z "></path> </g></svg>
+        </a>
+        <a class="cursor-pointer op-icon hidden ">
+            <svg class="hover:fill-blue-400" width="18px" height="18px" fill="#000000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0" class="hover:fill-orange-400"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M20.548,3.452a1.542,1.542,0,0,1,0,2.182L12.912,13.27,9.639,14.361l1.091-3.273,7.636-7.636A1.542,1.542,0,0,1,20.548,3.452ZM4,21H19a1,1,0,0,0,1-1V12a1,1,0,0,0-2,0v7H5V6h7a1,1,0,0,0,0-2H4A1,1,0,0,0,3,5V20A1,1,0,0,0,4,21Z"></path></g></svg>
+        </a>
+        <a class="ml-1 cursor-pointer op-icon hidden">
+            <svg class="hover:fill-blue-400" width="24px" height="24px" viewBox="0 -0.5 25 25" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M12.75 10.6C12.75 10.1858 12.4142 9.85 12 9.85C11.5858 9.85 11.25 10.1858 11.25 10.6H12.75ZM12 19H11.25C11.25 19.2489 11.3734 19.4815 11.5795 19.6211C11.7856 19.7606 12.0475 19.7888 12.2785 19.6964L12 19ZM19 16.2L19.2785 16.8964C19.5633 16.7825 19.75 16.5067 19.75 16.2H19ZM19.75 10.379C19.75 9.96479 19.4142 9.629 19 9.629C18.5858 9.629 18.25 9.96479 18.25 10.379H19.75ZM12.4538 10.0029C12.124 9.75224 11.6535 9.81641 11.4029 10.1462C11.1522 10.476 11.2164 10.9465 11.5462 11.1971L12.4538 10.0029ZM14.5 12.5L14.0462 13.0971C14.2687 13.2663 14.5669 13.2976 14.8198 13.1784L14.5 12.5ZM19.3198 11.0574C19.6944 10.8808 19.855 10.4339 19.6784 10.0592C19.5018 9.68456 19.0549 9.52398 18.6802 9.70058L19.3198 11.0574ZM11.7215 9.90364C11.3369 10.0575 11.1498 10.494 11.3036 10.8785C11.4575 11.2631 11.894 11.4502 12.2785 11.2964L11.7215 9.90364ZM19.2785 8.49636C19.6631 8.34252 19.8502 7.90604 19.6964 7.52146C19.5425 7.13687 19.106 6.94981 18.7215 7.10364L19.2785 8.49636ZM18.7215 8.49636C19.106 8.65019 19.5425 8.46313 19.6964 8.07854C19.8502 7.69396 19.6631 7.25748 19.2785 7.10364L18.7215 8.49636ZM12.2785 4.30364C11.894 4.14981 11.4575 4.33687 11.3036 4.72146C11.1498 5.10604 11.3369 5.54252 11.7215 5.69636L12.2785 4.30364ZM19.3665 7.14562C19.005 6.94323 18.548 7.07214 18.3456 7.43355C18.1432 7.79495 18.2721 8.25199 18.6335 8.45438L19.3665 7.14562ZM21.5 9.2L21.8199 9.87835C22.0739 9.75855 22.2397 9.50686 22.2495 9.22618C22.2593 8.94549 22.1115 8.68285 21.8665 8.54562L21.5 9.2ZM18.6801 9.70065C18.3054 9.87733 18.145 10.3243 18.3217 10.6989C18.4983 11.0736 18.9453 11.234 19.3199 11.0573L18.6801 9.70065ZM4.72146 7.10364C4.33687 7.25748 4.14981 7.69396 4.30364 8.07854C4.45748 8.46313 4.89396 8.65019 5.27854 8.49636L4.72146 7.10364ZM12.2785 5.69636C12.6631 5.54252 12.8502 5.10604 12.6964 4.72146C12.5425 4.33687 12.106 4.14981 11.7215 4.30364L12.2785 5.69636ZM5.36645 8.45438C5.72786 8.25199 5.85677 7.79495 5.65438 7.43355C5.45199 7.07214 4.99495 6.94323 4.63355 7.14562L5.36645 8.45438ZM2.5 9.2L2.13355 8.54562C1.8885 8.68285 1.74065 8.94549 1.75046 9.22618C1.76026 9.50686 1.92606 9.75855 2.18009 9.87835L2.5 9.2ZM4.68009 11.0573C5.05473 11.234 5.50167 11.0736 5.67835 10.6989C5.85503 10.3243 5.69455 9.87733 5.31991 9.70065L4.68009 11.0573ZM5.27854 7.10364C4.89396 6.94981 4.45748 7.13687 4.30364 7.52146C4.14981 7.90604 4.33687 8.34252 4.72146 8.49636L5.27854 7.10364ZM11.7215 11.2964C12.106 11.4502 12.5425 11.2631 12.6964 10.8785C12.8502 10.494 12.6631 10.0575 12.2785 9.90364L11.7215 11.2964ZM12.75 10.6C12.75 10.1858 12.4142 9.85 12 9.85C11.5858 9.85 11.25 10.1858 11.25 10.6H12.75ZM12 19L11.7215 19.6964C11.9525 19.7888 12.2144 19.7606 12.4205 19.6211C12.6266 19.4815 12.75 19.2489 12.75 19H12ZM5 16.2H4.25C4.25 16.5067 4.43671 16.7825 4.72146 16.8964L5 16.2ZM5.75 10.379C5.75 9.96479 5.41421 9.629 5 9.629C4.58579 9.629 4.25 9.96479 4.25 10.379H5.75ZM12.4538 11.1971C12.7836 10.9465 12.8478 10.476 12.5971 10.1462C12.3465 9.81641 11.876 9.75224 11.5462 10.0029L12.4538 11.1971ZM9.5 12.5L9.18024 13.1784C9.4331 13.2976 9.73125 13.2663 9.95381 13.0971L9.5 12.5ZM5.31976 9.70058C4.94508 9.52398 4.49818 9.68456 4.32158 10.0592C4.14498 10.4339 4.30556 10.8808 4.68024 11.0574L5.31976 9.70058ZM11.25 10.6V19H12.75V10.6H11.25ZM12.2785 19.6964L19.2785 16.8964L18.7215 15.5036L11.7215 18.3036L12.2785 19.6964ZM19.75 16.2V10.379H18.25V16.2H19.75ZM11.5462 11.1971L14.0462 13.0971L14.9538 11.9029L12.4538 10.0029L11.5462 11.1971ZM14.8198 13.1784L19.3198 11.0574L18.6802 9.70058L14.1802 11.8216L14.8198 13.1784ZM12.2785 11.2964L19.2785 8.49636L18.7215 7.10364L11.7215 9.90364L12.2785 11.2964ZM19.2785 7.10364L12.2785 4.30364L11.7215 5.69636L18.7215 8.49636L19.2785 7.10364ZM18.6335 8.45438L21.1335 9.85438L21.8665 8.54562L19.3665 7.14562L18.6335 8.45438ZM21.1801 8.52165L18.6801 9.70065L19.3199 11.0573L21.8199 9.87835L21.1801 8.52165ZM5.27854 8.49636L12.2785 5.69636L11.7215 4.30364L4.72146 7.10364L5.27854 8.49636ZM4.63355 7.14562L2.13355 8.54562L2.86645 9.85438L5.36645 8.45438L4.63355 7.14562ZM2.18009 9.87835L4.68009 11.0573L5.31991 9.70065L2.81991 8.52165L2.18009 9.87835ZM4.72146 8.49636L11.7215 11.2964L12.2785 9.90364L5.27854 7.10364L4.72146 8.49636ZM11.25 10.6V19H12.75V10.6H11.25ZM12.2785 18.3036L5.27854 15.5036L4.72146 16.8964L11.7215 19.6964L12.2785 18.3036ZM5.75 16.2V10.379H4.25V16.2H5.75ZM11.5462 10.0029L9.04619 11.9029L9.95381 13.0971L12.4538 11.1971L11.5462 10.0029ZM9.81976 11.8216L5.31976 9.70058L4.68024 11.0574L9.18024 13.1784L9.81976 11.8216Z"></path> </g></svg>
+        </a>
+        <a class="ml-1 cursor-pointer op-icon hidden">
+            <svg width="16px" height="16px" fill="#000000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="delete-alt-2" class="hover:fill-red-600 icon glyph"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M17,4V5H15V4H9V5H7V4A2,2,0,0,1,9,2h6A2,2,0,0,1,17,4Z"></path><path d="M20,6H4A1,1,0,0,0,4,8H5.07l.87,12.14a2,2,0,0,0,2,1.86h8.14a2,2,0,0,0,2-1.86L18.93,8H20a1,1,0,0,0,0-2ZM13,17a1,1,0,0,1-2,0V11a1,1,0,0,1,2,0Z"></path></g></svg>
+        </a>
+        
+    </div>
+
 </li>`
 }
 
@@ -410,6 +420,7 @@ function loadMenu(day, month, year) {
         // }
         let menuHTML = makeSelectedMenu(selectedMenu.items)
         $("#menu-items-container").append(menuHTML)
+        $(".demo").percircle();
     }
 
 
@@ -997,9 +1008,26 @@ $(document).ready(function () {
         });
 
     });
+    
+    $(document).on('mouseenter', '#menu-items-container li', function () {
+        $(this).find(".menu-dot").addClass('hidden')
+        $(this).find(".op-icon").removeClass('hidden')
+        $(this).find(".op-icon").stop().animate({
+            opacity: 1,
+        }, 1000 , 'linear');
+    })
+   
 
-    $(document).on('click', '#menu-items-container li', function () {
+    $(document).on('mouseleave', '#menu-items-container li', function () {
+        $(this).find(".menu-dot").removeClass('hidden')
+        $(this).find(".op-icon").addClass('hidden')
+        $(this).find(".op-icon").stop().animate({
+            opacity: 0,
+        },500,'linear');
+    })
 
+    $(document).on('click', '#menu-items-container li', function () {  
+        
 
         // علاوه بر اون باید بررسی کنیم که آیا غذایی که داره حدف میشه کسی
         // سفارشش رو داده یا نه؟‌درصورتی که سفارش داشته باشه اجازه حذف ندارد
