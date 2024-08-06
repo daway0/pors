@@ -863,12 +863,12 @@ def comments(
     elif request.method == "POST":
         item = get_object_or_404(Item, pk=item_id)
 
-        if not item.valid_for_feedback(user):
-            return invalid_request(
-                request,
-                message,
-                "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
-            )
+        # if not item.valid_for_feedback(user):
+        #     return invalid_request(
+        #         request,
+        #         message,
+        #         "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
+        #     )
 
         serializer = CommentSerializer(data=request.data)
         if not serializer.is_valid():
