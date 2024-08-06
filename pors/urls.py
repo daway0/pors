@@ -25,11 +25,6 @@ urlpatterns = [
         name="all_items",
     ),
     path(
-        "all-packages/",
-        views.all_packages,
-        name="all_packages",
-    ),
-    path(
         "administrative/add-item-to-menu/",
         views.add_item_to_menu,
         name="aadd_item_to_menu",
@@ -87,9 +82,9 @@ urlpatterns = [
     ),
     path("items/<int:item_id>/like/", views.item_like, name="item_like"),
     path(
-        "items/<int:item_id>/diss-like/",
-        views.item_diss_like,
-        name="item_diss_like",
+        "items/<int:item_id>/dis-like/",
+        views.item_dis_like,
+        name="item_dis_like",
     ),
     path(
         "items/<int:item_id>/reset/",

@@ -3,14 +3,14 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>یادآوری ثبت سفارش غذا</title>
+    <title>یادآوری ثبت سفارش غذا {{ mealtype}} برای {{ day_word }} مورخ <span dir="ltr">{{ date }}</span></title>
 </head>
 <body dir="rtl">
-    <p>با سلام،</p>
     <p>همکار گرامی،</p>
+    <p>با سلام،</p>
     <p>
         احتراماً به اطلاع می‌رساند که مهلت ثبت سفارش {{ mealtype }} 
-        برای {{ day_word }} <a href={{link}}>مورخ {{ date }}</a> در سیستم پرس به زودی به پایان می‌رسد.
+        برای {{ day_word }} <a href={{link}}>مورخ <span dir="ltr">{{ date }}</span></a> در سیستم پرس به زودی به پایان می‌رسد.
         لذا خواهشمند است در اسرع وقت نسبت به ثبت سفارش غذای خود اقدام فرمایید تا از خدمات ارائه شده بهره‌مند شوید.
     </p>
     {% if brf_deadline and lnc_deadline and brf_deadline == lnc_deadline %}
@@ -24,7 +24,7 @@
     {% elif lnc_deadline %}
         <strong>مهلت نهایی ثبت سفارش ناهار: تا ساعت {{ lnc_deadline|english_to_persian_number }}</strong>
     {% endif %}
-    <p style="text-align: center">با تشکر از همکاری توجه شما،</p>
+    <p style="text-align: center">با تشکر</p>
     <p style="text-align: center">
         تیم پشتیبانی پرس
     </p>

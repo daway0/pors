@@ -1,9 +1,10 @@
 import json
-from typing import Optional
+from typing import Optional, Union
 
 import jdatetime
 from django.db import IntegrityError, transaction
-from django.db.models import F, Q
+from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -26,7 +27,7 @@ from .utils import (
 )
 
 
-def validate_request(data: dict) -> tuple[str, int]:
+def validate_request(data: dict) -> tuple[str, int, Optional[int]]:
     """
     This function is responsible for validating request data for
         validator classes which are defined in this module.
@@ -35,6 +36,7 @@ def validate_request(data: dict) -> tuple[str, int]:
         data (dict): The request data which must contains:\n
           - 'date' (str): The date which you want to submit action on.
           - 'item' (int): The item which you want to do action with.
+          - 'package' (int) item's package id if it has any, (optional).
 
     Raises:
         ValueError: If parameters are not specified, or not valid.
@@ -46,13 +48,19 @@ def validate_request(data: dict) -> tuple[str, int]:
 
     date = validate_date(data.get("date"))
     item = data.get("item")
+    package = data.get("package")
     if not (date and item):
         raise ValueError("'item' and 'date' must specified.")
     try:
         item = int(item)
     except ValueError:
         raise ValueError("invalid 'item' value.")
-    return date, item
+    if package is not None:
+        try:
+            package = int(package)
+        except ValueError:
+            raise ValueError("invalid 'package' value.")
+    return date, item, package
 
 
 def validate_calendar_request(
@@ -83,6 +91,76 @@ def validate_calendar_request(
 
     if not 1 <= month <= 12:
         return "Invalid month value."
+
+
+def validate_package_submission(
+    validator: Union["ValidateOrder", "ValidateBreakfast"],
+):
+    """
+    Validating submission based on several conditions:
+        Package must exists in database
+        There must be a 'DailyMenuPackage' record for requested
+            date and package.
+        User should not ordered package items more than its capacity.
+
+    Args:
+        validator: validator class which has all of our dependencies.
+
+    Raises:
+        ValueError: if any of beyond validations gets violated.
+    """
+
+    package = m.Package.objects.filter(
+        pk=validator.package, packageitem__Item=validator.item
+    ).first()
+    if package is None:
+        raise ValueError("requested item and package does not exists")
+
+    total_orders = m.OrderItem.objects.filter(
+        Personnel=validator.user,
+        DeliveryDate=validator.date,
+        PackageItem__Package=package
+    ).aggregate(TotalOrders=Coalesce(Sum('Quantity'), 0))
+    if total_orders["TotalOrders"] >= package.FreeItemCount:
+        validator.message = "ظرفیت سفارش پکیج برای شما تمام شده است."
+        raise ValueError("Package cap is reached.")
+
+    validator.package = package
+
+
+def insert_package_record(
+    validator: Union["ValidateOrder", "ValidateBreakfast"], note: Optional[str]
+):
+    package = m.Item.objects.filter(Package=validator.package).first()
+
+    package_orders = m.OrderItem.objects.filter(
+        Personnel=validator.user.Personnel,
+        DeliveryDate=validator.date,
+        Item=package,
+    ).first()
+    if package_orders is not None:
+        package_orders.Quantity += 1
+        package_orders.save()
+    else:
+        m.OrderItem(
+            Personnel=validator.user.Personnel,
+            DeliveryDate=validator.date,
+            DeliveryBuilding=validator.user.LastDeliveryBuilding,
+            DeliveryFloor=validator.user.LastDeliveryFloor,
+            Item=package,
+            Quantity=1,
+            PricePerOne=0,
+            Note=note,
+        ).save(
+            log=(
+                f"Package item {package.ItemName} just added to order for"
+                f" {validator.date}"
+            ),
+            user=validator.user.Personnel,
+            admin=validator.admin_user,
+            reason=validator.reason,
+            comment=validator.comment,
+        )
 
 
 def get_days_with_menu(month: int, year: int) -> dict[str, str]:
@@ -380,6 +458,10 @@ class ValidateOrder(OverrideUserValidator):
         user: User object.
         item: The item which was requested by client,
             available AFTER validation.
+        order_item: OrderItem instance if user has already ordered
+            the requested item.
+        menu_item: DailyMenuItem instance if its available.
+        package: item instance of package if order is for a specific package.
         date: The order date, available AFTER validation.
         error: Catched error message which was caused by validation violations,
             NOT available if data was valid.
@@ -403,6 +485,7 @@ class ValidateOrder(OverrideUserValidator):
         self.item: m.Item = m.Item.objects.none()
         self.order_item: m.OrderItem = m.OrderItem.objects.none()
         self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
+        self.package: m.Item = None
 
     def is_valid(self, create=False, remove=False):
         """
@@ -430,10 +513,11 @@ class ValidateOrder(OverrideUserValidator):
             )
 
         try:
-            self.date, self.item = validate_request(self.data)
+            self.date, self.item, self.package = validate_request(self.data)
             if create:
                 self._validate_item_submission()
                 self._validate_default_delivery_building()
+                self._validate_package_submission()
             elif remove:
                 self._validate_item_removal()
 
@@ -455,13 +539,17 @@ class ValidateOrder(OverrideUserValidator):
         Fetch and storing item in self.item if it was valid.
         """
 
-        menu_item = m.DailyMenuItem.objects.filter(
-            Item=self.item,
-            AvailableDate=self.date,
-            IsActive=True,
-            Item__IsActive=True,
-            Item__MealType=m.Item.MealTypeChoices.LAUNCH,
-        ).first()
+        menu_item = (
+            m.DailyMenuItem.objects.filter(
+                Item=self.item,
+                AvailableDate=self.date,
+                IsActive=True,
+                Item__IsActive=True,
+                # Item__Package__isnull=True,
+            )
+            .exclude(Item__MealType=m.Item.MealTypeChoices.BREAKFAST)
+            .first()
+        )
         if not menu_item:
             self.message = "آیتم مورد نظر در تاریخ داده شده موجود نمی‌باشد."
             raise ValueError("item is not available in corresponding date.")
@@ -492,6 +580,12 @@ class ValidateOrder(OverrideUserValidator):
                 "User does not have default value for buidling and floor."
             )
 
+    def _validate_package_submission(self):
+        if self.package is None:
+            return
+
+        validate_package_submission(self)
+
     def _validate_item_removal(self):
         """
         Checking if the personnel has ordered the specified item
@@ -502,6 +596,7 @@ class ValidateOrder(OverrideUserValidator):
             Personnel=self.user.Personnel,
             DeliveryDate=self.date,
             Item=self.item,
+            PackageItem__Package=self.package if self.package else None,
         ).first()
         if not order_item:
             self.message = "آیتم مورد نظر در این تاریخ سفارش داده نشده است."
@@ -583,11 +678,29 @@ class ValidateOrder(OverrideUserValidator):
             with transaction.atomic():
                 self.menu_item.TotalOrdersLeft = F("TotalOrdersLeft") - 1
                 self.menu_item.save()
+
+                package_item = m.PackageItem.objects.filter(
+                                Item=self.item, Package=self.package
+                            ).first() if self.package else None
+                
                 instance = m.OrderItem.objects.filter(
                     Personnel=self.user.Personnel,
                     DeliveryDate=self.date,
                     Item=self.item,
+                    PackageItem=package_item
                 ).first()
+
+                note = m.OrderItem.objects.filter(
+                    DeliveryDate=self.date,
+                    Personnel=self.user,
+                    Note__isnull=False,
+                ).first()
+
+                if self.package is not None:
+                    insert_package_record(
+                        self, note.Note if note is not None else None
+                    )
+
                 if instance:
                     instance.Quantity += 1
                     instance.save(
@@ -600,6 +713,7 @@ class ValidateOrder(OverrideUserValidator):
                         reason=self.reason,
                         comment=self.comment,
                     )
+
                     self._send_email_notif(
                         {
                             "full_name": self.user.FullName,
@@ -616,19 +730,19 @@ class ValidateOrder(OverrideUserValidator):
                     )
 
                 else:
-                    note = m.OrderItem.objects.filter(
-                        DeliveryDate=self.date,
-                        Personnel=self.user,
-                        Note__isnull=False,
-                    ).first()
                     new_item = m.OrderItem(
                         Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
                         DeliveryBuilding=self.user.LastDeliveryBuilding,
                         DeliveryFloor=self.user.LastDeliveryFloor,
                         Item=self.item,
+                        PackageItem=package_item,
                         Quantity=1,
-                        PricePerOne=self.item.CurrentPrice,
+                        PricePerOne=(
+                            self.item.CurrentPrice
+                            if self.package is None
+                            else 0
+                        ),
                         Note=note.Note if note is not None else None,
                     )
                     new_item.save(
@@ -682,6 +796,28 @@ class ValidateOrder(OverrideUserValidator):
             m.DailyMenuItem.objects.filter(
                 Item=self.item, AvailableDate=self.date
             ).update(TotalOrdersLeft=F("TotalOrdersLeft") + 1)
+
+            if self.package is not None:
+                package = m.Item.objects.filter(Package=self.package).first()
+                package_order = m.OrderItem.objects.filter(
+                    Personnel=self.user,
+                    Item=package,
+                    DeliveryDate=self.date,
+                ).first()
+                if package_order.Quantity > 1:
+                    package_order.Quantity -= 1
+                    package_order.save()
+                else:
+                    package_order.delete(
+                        log=(
+                            f"Package item {package.ItemName} removed from order for"
+                            f" {self.date}"
+                        ),
+                        user=self.user.Personnel,
+                        admin=self.admin_user,
+                        reason=self.reason,
+                        comment=self.comment,
+                    )
 
             if self.order_item.Quantity > 1:
                 self.order_item.Quantity -= 1
@@ -769,6 +905,7 @@ class ValidateBreakfast(OverrideUserValidator):
         self.date: str = ""
         self.item: m.Item = m.Item.objects.none()
         self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
+        self.package: m.Package = None
 
     def is_valid(self):
         """
@@ -781,9 +918,10 @@ class ValidateBreakfast(OverrideUserValidator):
         """
 
         try:
-            self.date, self.item = validate_request(self.data)
+            self.date, self.item, self.package = validate_request(self.data)
             self._validate_item()
             self._validate_default_delivery_building()
+            self._validate_package_submission()
 
             if not self._is_admin():
                 self._validate_date()
@@ -840,6 +978,12 @@ class ValidateBreakfast(OverrideUserValidator):
             raise ValueError(
                 "User does not have default value for buidling and floor."
             )
+
+    def _validate_package_submission(self):
+        if self.package is None:
+            return
+
+        validate_package_submission(self)
 
     def _validate_date(self):
         """
@@ -915,6 +1059,17 @@ class ValidateBreakfast(OverrideUserValidator):
                     DeliveryDate=self.date,
                     Item=self.item,
                 ).first()
+                note = m.OrderItem.objects.filter(
+                    DeliveryDate=self.date,
+                    Personnel=self.user,
+                    Note__isnull=False,
+                ).first()
+
+                if self.package is not None:
+                    insert_package_record(
+                        self, note.Note if note is not None else None
+                    )
+
                 if instance:
                     instance.Quantity += 1
                     instance.save(
@@ -943,18 +1098,24 @@ class ValidateBreakfast(OverrideUserValidator):
                     )
 
                 else:
-                    note = m.OrderItem.objects.filter(
-                        DeliveryDate=self.date,
-                        Personnel=self.user,
-                        Note__isnull=False,
-                    ).first()
                     m.OrderItem(
                         Personnel=self.user.Personnel,
                         DeliveryDate=self.date,
                         DeliveryBuilding=self.user.LastDeliveryBuilding,
                         DeliveryFloor=self.user.LastDeliveryFloor,
                         Item=self.item,
-                        PricePerOne=self.item.CurrentPrice,
+                        PackageItem=(
+                            m.PackageItem.objects.filter(
+                                Item=self.item, Package=self.package
+                            ).first()
+                            if self.package
+                            else None
+                        ),
+                        PricePerOne=(
+                            self.item.CurrentPrice
+                            if self.package is None
+                            else 0
+                        ),
                         Note=note.Note if note is not None else None,
                     ).save(
                         log=(
@@ -1121,6 +1282,36 @@ class ValidateAddMenuItem:
             ),
             user=self.user.Personnel,
         )
+        if self.item.Package is not None:
+            menu_items = [
+                m.DailyMenuItem(
+                    AvailableDate=self.date,
+                    Item=item.Item,
+                    TotalOrdersAllowed=self.total_orders_allowed,
+                    TotalOrdersLeft=self.total_orders_allowed,
+                )
+                for item in m.PackageItem.objects.filter(
+                    Package=self.item.Package
+                )
+                .annotate(
+                    daily_menu_item=Subquery(
+                        m.DailyMenuItem.objects.filter(
+                            Q(Item=OuterRef("Item"))
+                            & Q(AvailableDate=self.date)
+                        ).values("id")
+                    )
+                )
+                .filter(daily_menu_item__isnull=True)
+            ]
+            package_menu_items = m.DailyMenuItem.objects.bulk_create(
+                menu_items
+            )
+            m.ActionLog.objects.log(
+                m.ActionLog.ActionTypeChoices.CREATE,
+                self.user,
+                f"{[menu_item.Item.ItemName for menu_item in package_menu_items]} items added to menu automatically",
+                m.DailyMenuItem,
+            )
 
 
 class ValidateDeliveryBuilding(OverrideUserValidator):

@@ -8,7 +8,6 @@ from django.urls import reverse
 from jdatetime import timedelta
 from rest_framework import status
 from rest_framework.decorators import api_view
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from . import business as b
@@ -23,7 +22,6 @@ from .general_actions import GeneralCalendar
 from .messages import Message
 from .models import (
     AdminManipulationReason,
-    Category,
     Comment,
     DailyMenuItem,
     Deadlines,
@@ -31,7 +29,6 @@ from .models import (
     ItemsOrdersPerDay,
     Order,
     OrderItem,
-    Package,
     Subsidy,
     SystemSetting,
     User,
@@ -39,7 +36,6 @@ from .models import (
 from .serializers import (
     AdminManipulationReasonsSerializer,
     AllItemSerializer,
-    CategorySerializer,
     CommentSerializer,
     DailyMenuItemSerializer,
     Deadline,
@@ -50,7 +46,6 @@ from .serializers import (
     MenuItemSerializer,
     NoteSerializer,
     OrderSerializer,
-    PackageSerializer,
     PersonnelMenuItemSerializer,
     UpdateDeadlineSerializer,
     UserSerializer,
@@ -181,18 +176,6 @@ def all_items(request, user: User, override_user: User):
 
     serializer = AllItemSerializer(items_with_feedback, many=True)
     return Response(serializer.data)
-
-
-@api_view(["GET"])
-@check([is_open_for_personnel])
-@authenticate()
-def all_packages(request, user: User, override_user: User):
-    queryset = (
-        Package.objects.prefetch_related("Items")
-        .all()
-    )
-    serializer = PackageSerializer(queryset, many=True).data
-    return Response(serializer)
 
 
 @api_view(["GET"])
@@ -791,7 +774,7 @@ def item_like(request, user, override_user, item_id: int):
 @api_view(["POST"])
 @check([is_open_for_personnel])
 @authenticate()
-def item_diss_like(request, user, override_user, item_id: int):
+def item_dis_like(request, user, override_user, item_id: int):
     """
     Responsible for liking specific item.
 
@@ -808,8 +791,8 @@ def item_diss_like(request, user, override_user, item_id: int):
     #         request, message, "شما در ماه اخیر این آیتم را سفارش نداده‌اید. "
     #     )
 
-    diss_liked = item.diss_like(user)
-    if diss_liked is None:
+    dis_liked = item.dis_like(user)
+    if dis_liked is None:
         return invalid_request(
             request, message, "شما در حال حاضر برای این آیتم نظر ثبت کرده‌اید."
         )
@@ -822,9 +805,9 @@ def item_diss_like(request, user, override_user, item_id: int):
 @authenticate()
 def remove_item_feedback(request, user, override_user, item_id: int):
     """
-    Removing feedback (like/diss_like) from a specific item.
+    Removing feedback (like/dis_like) from a specific item.
 
-    Type is not important since users cannot like and diss like
+    Type is not important since users cannot like and dis like
     an item simultaneously.
     """
     if override_user:

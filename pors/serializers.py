@@ -23,11 +23,12 @@ class AllItemSerializer(serializers.ModelSerializer):
     itemDesc = serializers.CharField(source="ItemDesc")
     isActive = serializers.BooleanField(source="IsActive")
     itemProvider = serializers.CharField()
+    package = serializers.SerializerMethodField()
     totalLikes = serializers.IntegerField(source="TotalLikes")
-    totalDissLikes = serializers.IntegerField(source="TotalDissLikes")
+    totalDisLikes = serializers.IntegerField(source="TotalDisLikes")
     totalComments = serializers.IntegerField(source="TotalComments")
     isLiked = serializers.BooleanField(source="IsLiked")
-    isDissLiked = serializers.BooleanField(source="IsDissLiked")
+    isDisLiked = serializers.BooleanField(source="IsDisLiked")
     isCommented = serializers.BooleanField(source="IsCommented")
 
     def get_mealType(self, item):
@@ -37,6 +38,20 @@ class AllItemSerializer(serializers.ModelSerializer):
         return (
             f"{settings.MEDIA_URL}{item['Image']}" if item["Image"] else None
         )
+
+    def get_package(self, item):
+        if item.get("Package_id") is None:
+            return None
+
+        return {
+            "id": item["Package_id"],
+            "freeItemCount": item["FreeItemCount"],
+            "items": list(
+                m.PackageItem.objects.filter(
+                    Package=item["Package_id"]
+                ).values_list("Item", flat=True)
+            ),
+        }
 
     class Meta:
         model = m.Item
@@ -51,11 +66,12 @@ class AllItemSerializer(serializers.ModelSerializer):
             "itemDesc",
             "isActive",
             "itemProvider",
+            "package",
             "totalLikes",
-            "totalDissLikes",
+            "totalDisLikes",
             "totalComments",
             "isLiked",
-            "isDissLiked",
+            "isDisLiked",
             "isCommented",
         )
 
@@ -422,14 +438,3 @@ class MenuItemLimitSerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
     date = serializers.CharField()
     limit = serializers.IntegerField(min_value=0)
-
-
-class ItemIdSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-
-
-class PackageSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    description = serializers.CharField(source="PackageDesc")
-    freeItemCount = serializers.IntegerField(source="FreeItemCount")
-    items = ItemIdSerializer(source="Items", many=True)

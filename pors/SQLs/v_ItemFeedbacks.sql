@@ -2,7 +2,7 @@ SELECT
     ROW_NUMBER() OVER (ORDER BY pi2.id) AS id,
     pi2.id AS Item,
     COALESCE(likes.TotalLikes, 0) AS TotalLikes,
-    COALESCE(dislikes.TotalDislikes, 0) AS TotalDisslikes,
+    COALESCE(dislikes.TotalDislikes, 0) AS TotalDislikes,
     COALESCE(comments.TotalComments, 0) AS TotalComments
 FROM 
     pors_item pi2

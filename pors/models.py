@@ -313,7 +313,9 @@ class Item(models.Model):
 
     ItemProvider = models.ForeignKey("ItemProvider", on_delete=models.CASCADE)
 
-    Packages = models.ManyToManyField("Package", through="PackageItem")
+    Package = models.ForeignKey(
+        "Package", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     @property
     def Total_Likes(self):
@@ -322,9 +324,9 @@ class Item(models.Model):
         ).count()
 
     @property
-    def Total_Diss_Likes(self):
+    def Total_Dis_Likes(self):
         return Feedback.objects.filter(
-            Item=self, Type=ItemLikeType.DISS_LIKE
+            Item=self, Type=ItemLikeType.DIS_LIKE
         ).count()
 
     @property
@@ -346,18 +348,18 @@ class Item(models.Model):
         )
         return record
 
-    def diss_like(self, user: User) -> "Feedback":
+    def dis_like(self, user: User) -> "Feedback":
         if Feedback.objects.filter(User=user, Item=self):
             return
 
         record = Feedback(
             Item=self,
             User=user,
-            Type=ItemLikeType.DISS_LIKE,
+            Type=ItemLikeType.DIS_LIKE,
         )
         record.save(
             user=user.Personnel,
-            log=f"{user.Personnel} just diss liked item {self.ItemName}",
+            log=f"{user.Personnel} just dis liked item {self.ItemName}",
         )
         return record
 
@@ -398,9 +400,9 @@ class EmailReason(Enum):
     REMINDER_LNC = "REMINDER_LNC"
 
 
-class Package(models.Model):
-    Title = models.CharField(max_length=255)
-    PackageDesc = models.TextField(blank=True, null=True)
+class Package(Logger):
+    # Title = models.CharField(max_length=255)
+    # PackageDesc = models.TextField(blank=True, null=True)
     FreeItemCount = models.PositiveSmallIntegerField()
     Items = models.ManyToManyField(Item, through="PackageItem")
 
@@ -411,7 +413,7 @@ class Package(models.Model):
     # Price = ...
 
 
-class PackageItem(models.Model):
+class PackageItem(Logger):
     Item = models.ForeignKey(Item, on_delete=models.CASCADE)
     Package = models.ForeignKey(Package, on_delete=models.CASCADE)
 
@@ -570,8 +572,8 @@ class OrderItem(Logger):
     # Technical redundancy
     PricePerOne = models.PositiveIntegerField()
     Note = models.TextField(null=True, blank=True)
-    Package = models.ForeignKey(
-        Package, on_delete=models.CASCADE, null=True, blank=True
+    PackageItem = models.ForeignKey(
+        PackageItem, on_delete=models.CASCADE, null=True, blank=True
     )
 
     @staticmethod
@@ -608,7 +610,7 @@ class OrderItem(Logger):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["Personnel", "DeliveryDate", "Item"],
+                fields=["Personnel", "DeliveryDate", "Item", "PackageItem"],
                 name="unique_item_date_personnel",
             ),
         ]
@@ -866,7 +868,7 @@ class AdminManipulationReason(models.Model):
 
 class ItemLikeType(models.TextChoices):
     LIKE = "L", "دوست داشتم"
-    DISS_LIKE = "D", "دوست نداشتم"
+    DIS_LIKE = "D", "دوست نداشتم"
 
 
 class Comment(Logger):
@@ -896,7 +898,7 @@ class ItemFeedbacks(models.Model):
     Id = models.PositiveIntegerField(primary_key=True)
     Item = models.PositiveBigIntegerField()
     TotalLikes = models.PositiveIntegerField()
-    TotalDissLikes = models.PositiveIntegerField()
+    TotalDisLikes = models.PositiveIntegerField()
     TotalComments = models.PositiveIntegerField()
 
     class Meta:
