@@ -856,7 +856,9 @@ def comments(
 
     if request.method == "GET":
         comments = CommentSerializer(
-            Comment.objects.filter(Item=item_id), many=True
+            Comment.objects.filter(Item=item_id).order_by("-Created"),
+            many=True,
+            context={"user": user},
         )
         return Response(comments.data, status=status.HTTP_200_OK)
 

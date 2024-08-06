@@ -364,6 +364,14 @@ class CommentSerializer(serializers.Serializer):
     created = serializers.CharField(read_only=True, source="Created")
     updated = serializers.CharField(read_only=True, source="Updated")
     text = serializers.CharField(max_length=500, source="Text")
+    isCommentedByUser = serializers.BooleanField(read_only=True, default=False)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if self.context["user"] == instance.User:
+            data["isCommentedByUser"] = True
+
+        return data
 
 
 class NoteSerializer(serializers.Serializer):
