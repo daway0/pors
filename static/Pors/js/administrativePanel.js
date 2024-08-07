@@ -323,9 +323,12 @@ function menuItemBlock(id, itemName, pic, orderedByCount, itemProvider) {
     `
     return `<li data-item-id="${id}" data-ordered-by="${orderedByCount}" class="flex flex-col bg-white rounded p-2 shadow-md hover:bg-zinc-100 ">
     <div class="flex w-full p-2 gap-2">
-        <div class="pl-2">
-            <div id="" data-percent="20" class="small blue demo"></div> 
-        </div> 
+        <img
+            src="${pic || DEFAULTITEMIMAGE}"
+            alt=""
+            onerror="imgError(this);"
+            class="h-16 w-16 rounded object-cover self-start"
+        />
         <div class="flex items-center">
             <div class="flex flex-row gap-2">
                 <h3 class="text-xs text-gray-900">${convertToPersianNumber(itemName)}
@@ -420,7 +423,6 @@ function loadMenu(day, month, year) {
         // }
         let menuHTML = makeSelectedMenu(selectedMenu.items)
         $("#menu-items-container").append(menuHTML)
-        $(".demo").percircle();
     }
 
 
