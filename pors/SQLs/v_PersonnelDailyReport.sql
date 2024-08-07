@@ -26,3 +26,4 @@ FROM PersonnelService.dbo.pors_orderitem AS orders
      HR_constvalue AS dbp ON dbp.Code = orders.DeliveryBuilding
          INNER JOIN
      HR_constvalue AS dfp ON dfp.Code = orders.DeliveryFloor
+    WHERE item.Package_id is NULL ;

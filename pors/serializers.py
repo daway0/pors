@@ -11,6 +11,14 @@ from .models import User
 Deadline = namedtuple("Deadline", "Days Hour")
 
 
+def validate_date(date):
+    date = u.validate_date(date)
+    if date is None:
+        raise serializers.ValidationError("invalid date value.")
+
+    return date
+
+
 class AllItemSerializer(serializers.ModelSerializer):
     itemName = serializers.CharField(source="ItemName")
     image = serializers.SerializerMethodField(source="Image")
@@ -438,3 +446,8 @@ class MenuItemLimitSerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
     date = serializers.CharField()
     limit = serializers.IntegerField(min_value=0)
+
+
+class ItemOrderingReport(serializers.Serializer):
+    item = serializers.IntegerField(min_value=1)
+    date = serializers.CharField(validators=[validate_date])

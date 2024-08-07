@@ -12,7 +12,8 @@ from pors_orderitem oi
          inner join dbo.pors_item pi on oi.Item_id = pi.id
          inner join dbo.pors_itemprovider p on pi.ItemProvider_id = p.id
          inner join dbo.HR_constvalue Hc on oi.DeliveryBuilding = Hc.Code
-group by pi.ItemName, pi.MealType, oi.PricePerOne, oi.DeliveryDate, oi.DeliveryBuilding, p.title, p.id, Hc.Caption
+where pi.Package_id is NULL
+group by pi.ItemName, pi.MealType, oi.PricePerOne, oi.DeliveryDate, oi.DeliveryBuilding, p.title, p.id, Hc.Caption;
 
 
 

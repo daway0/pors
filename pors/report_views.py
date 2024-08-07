@@ -16,7 +16,9 @@ message = Message()
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
-def food_provider_daily_ordering_report(request, user: m.User, override_user: m.User):
+def food_provider_daily_ordering_report(
+    request, user: m.User, override_user: m.User
+):
     schema = {"date": ""}
     try:
         u.validate_request_based_on_schema(schema, request.data)
@@ -25,36 +27,36 @@ def food_provider_daily_ordering_report(request, user: m.User, override_user: m.
 
     date = u.validate_date(request.data.get("date"))
 
-    queryset = m.FoodProviderOrdering.objects.filter(DeliveryDate=date).order_by(
-        "MealType",
-        "FoodProvider",
-        "DeliveryBuilding").values(
-        "ItemName",
-        "ItemTotalCount",
-        "DeliveryBuildingPersian",
-        "FoodProviderPersian",
-        "DeliveryDate"
+    queryset = (
+        m.FoodProviderOrdering.objects.filter(DeliveryDate=date)
+        .order_by("MealType", "FoodProvider", "DeliveryBuilding")
+        .values(
+            "ItemName",
+            "ItemTotalCount",
+            "DeliveryBuildingPersian",
+            "FoodProviderPersian",
+            "DeliveryDate",
+        )
     )
     if not queryset:
         return u.raise_report_notfound(message, request)
 
     providers = queryset.values_list("FoodProviderPersian", flat=True)
-    response = u.queryset_to_xlsx_response_food_provider_ordering(queryset, [
-        "آیتم",
-        "تعداد",
-        "محل تحویل",
-        "تامین کننده",
-        "تاریخ سفارش"
-    ], providers)
+    response = u.queryset_to_xlsx_response_food_provider_ordering(
+        queryset,
+        ["آیتم", "تعداد", "محل تحویل", "تامین کننده", "تاریخ سفارش"],
+        providers,
+    )
 
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Food Provider Ordering report generated for {date}",
-        m.PersonnelDailyReport
+        m.PersonnelDailyReport,
     )
 
     return response
+
 
 @api_view(["POST"])
 @decs.check([decs.is_open_for_admins])
@@ -76,43 +78,50 @@ def personnel_daily_report(request, user: m.User, override_user: m.User):
 
     date = u.validate_date(request.data.get("date"))
 
-    queryset = m.PersonnelDailyReport.objects.filter(DeliveryDate=date).order_by("-DeliveryDate", "Personnel").values(
-        "NationalCode",
-        "Personnel",
-        "FirstName",
-        "LastName",
-        "ItemName",
-        "Quantity",
-        "MealType",
-        "CurrentPrice",
-        "Provider",
-        "DeliveryDate",
-        "DeliveryBuildingPersian",
-        "DeliveryFloorPersian"
+    queryset = (
+        m.PersonnelDailyReport.objects.filter(DeliveryDate=date)
+        .order_by("-DeliveryDate", "Personnel")
+        .values(
+            "NationalCode",
+            "Personnel",
+            "FirstName",
+            "LastName",
+            "ItemName",
+            "Quantity",
+            "MealType",
+            "CurrentPrice",
+            "Provider",
+            "DeliveryDate",
+            "DeliveryBuildingPersian",
+            "DeliveryFloorPersian",
+        )
     )
     if not queryset:
         return u.raise_report_notfound(message, request)
 
-    response = u.queryset_to_xlsx_response(queryset, [
-        "کد ملی",
-        "نام کاربری",
-        "نام",
-        "نام خانوادگی",
-        "ایتم",
-        "تعداد",
-        "وعده غذایی",
-        "هزینه",
-        "تامین کننده",
-        "زمان تحویل",
-        "ساختمان تحویل",
-        "طبقه تحویل"
-    ])
+    response = u.queryset_to_xlsx_response(
+        queryset,
+        [
+            "کد ملی",
+            "نام کاربری",
+            "نام",
+            "نام خانوادگی",
+            "ایتم",
+            "تعداد",
+            "وعده غذایی",
+            "هزینه",
+            "تامین کننده",
+            "زمان تحویل",
+            "ساختمان تحویل",
+            "طبقه تحویل",
+        ],
+    )
 
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Daily Orders report generated for {date}",
-        m.PersonnelDailyReport
+        m.PersonnelDailyReport,
     )
 
     return response
@@ -131,14 +140,16 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         -  'year' (int): The year which you want to look for.
     """
 
-    schema = {"year": 0, "month": 0}
-    try:
-        u.validate_request_based_on_schema(schema, request.data)
-    except ValueError as err:
-        return Response({"errors": str(err)}, status.HTTP_400_BAD_REQUEST)
+    serializer = s.PersonnelMonthlyReport(data=request.data)
+    if not serializer.is_valid():
+        return Response(
+            {"errors": str(serializer.errors)}, status.HTTP_400_BAD_REQUEST
+        )
 
-    month = request.data.get("month")
-    year = request.data.get("year")
+    year, month = (
+        serializer.validated_data["year"],
+        serializer.validated_data["month"],
+    )
 
     if 12 < month < 0:
         return Response(
@@ -165,7 +176,7 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
         user,
         f"Monthly Financial report generated for year {year} and month "
         f"{month}",
-        m.Order
+        m.Order,
     )
     csv_content = u.generate_csv(result)
     return csv_content
@@ -175,7 +186,7 @@ def personnel_financial_report(request, user: m.User, override_user: m.User):
 @decs.check([decs.is_open_for_admins])
 @decs.authenticate(privileged_users=True)
 def item_ordering_personnel_list_report(
-        request, user: m.User, override_user: m.User
+    request, user: m.User, override_user: m.User
 ):
     """
     This view is responsible for generating a csv file that contains
@@ -188,53 +199,67 @@ def item_ordering_personnel_list_report(
     """
 
     # past auth ...
-    try:
-        date, item_id = b.validate_request(request.data)
-    except ValueError as err:
+    serializer = s.ItemOrderingReport(data=request.data)
+    if not serializer.is_valid():
         message.add_message(
             request,
             "مشکلی در اعتبارسنجی درخواست شما رخ داده است.",
             Message.ERROR,
         )
         return Response(
-            {"messages": message.messages(request), "errors": str(err)},
+            {
+                "messages": message.messages(request),
+                "errors": serializer.errors,
+            },
             status.HTTP_400_BAD_REQUEST,
         )
+    date, item_id = (
+        serializer.validated_data["date"],
+        serializer.validated_data["item"],
+    )
 
     # query sets that are in report must have .values for specifying columns
-    res = m.PersonnelDailyReport.objects.filter(
-        DeliveryDate=date, ItemId=item_id
-    ).order_by("-DeliveryDate").values(
-        "NationalCode",
-        "Personnel",
-        "FirstName",
-        "LastName",
-        "ItemName",
-        "Quantity",
-        "DeliveryDate",
-        "DeliveryBuildingPersian",
-        "DeliveryFloorPersian",
+    res = (
+        m.PersonnelDailyReport.objects.filter(
+            DeliveryDate=date,
+            ItemId=item_id,
+        )
+        .order_by("-DeliveryDate")
+        .values(
+            "NationalCode",
+            "Personnel",
+            "FirstName",
+            "LastName",
+            "ItemName",
+            "Quantity",
+            "DeliveryDate",
+            "DeliveryBuildingPersian",
+            "DeliveryFloorPersian",
+        )
     )
     if not res:
         return u.raise_report_notfound(message, request)
 
-    response = u.queryset_to_xlsx_response(res, [
-        "کد ملی",
-        "نام کاربری",
-        "نام",
-        "نام خانوادگی",
-        "ایتم",
-        "تعداد",
-        "زمان تحویل",
-        "ساختمان تحویل",
-        "طبقه تحویل"
-    ])
+    response = u.queryset_to_xlsx_response(
+        res,
+        [
+            "کد ملی",
+            "نام کاربری",
+            "نام",
+            "نام خانوادگی",
+            "ایتم",
+            "تعداد",
+            "زمان تحویل",
+            "ساختمان تحویل",
+            "طبقه تحویل",
+        ],
+    )
     item = m.Item.objects.filter(id=item_id).first()
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Item Orders report generated for item {item.ItemName} for {date}",
-        m.PersonnelDailyReport
+        m.PersonnelDailyReport,
     )
 
     return response
@@ -251,44 +276,51 @@ def personnel_monthly_report(request, user: m.User, override_user: m.User):
     month = serializer.validated_data.get("month")
     year = serializer.validated_data.get("year")
     first_date, last_date = u.first_and_last_day_date(month, year)
-    qs = m.PersonnelDailyReport.objects.filter(
-        DeliveryDate__range=[first_date, last_date]
-    ).order_by("-DeliveryDate").values(
-        "NationalCode",
-        "Personnel",
-        "FirstName",
-        "LastName",
-        "ItemName",
-        "Quantity",
-        "MealType",
-        "CurrentPrice",
-        "Provider",
-        "DeliveryDate",
-        "DeliveryBuildingPersian",
-        "DeliveryFloorPersian",
+    qs = (
+        m.PersonnelDailyReport.objects.filter(
+            DeliveryDate__range=[first_date, last_date]
+        )
+        .order_by("-DeliveryDate")
+        .values(
+            "NationalCode",
+            "Personnel",
+            "FirstName",
+            "LastName",
+            "ItemName",
+            "Quantity",
+            "MealType",
+            "CurrentPrice",
+            "Provider",
+            "DeliveryDate",
+            "DeliveryBuildingPersian",
+            "DeliveryFloorPersian",
+        )
     )
     if not qs:
         return u.raise_report_notfound(message, request)
 
-    response = u.queryset_to_xlsx_response(qs, [
-        "کد ملی",
-        "نام کاربری",
-        "نام",
-        "نام خانوادگی",
-        "ایتم",
-        "تعداد",
-        "وعده غذایی",
-        "هزینه",
-        "تامین کننده",
-        "زمان تحویل",
-        "ساختمان تحویل",
-        "طبقه تحویل"
-    ])
+    response = u.queryset_to_xlsx_response(
+        qs,
+        [
+            "کد ملی",
+            "نام کاربری",
+            "نام",
+            "نام خانوادگی",
+            "ایتم",
+            "تعداد",
+            "وعده غذایی",
+            "هزینه",
+            "تامین کننده",
+            "زمان تحویل",
+            "ساختمان تحویل",
+            "طبقه تحویل",
+        ],
+    )
     m.ActionLog.objects.log(
         m.ActionLog.ActionTypeChoices.CREATE,
         user,
         f"Monthly Orders report generated for year {year} and month {month}",
-        m.PersonnelDailyReport
+        m.PersonnelDailyReport,
     )
 
     return response
