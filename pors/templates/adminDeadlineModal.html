@@ -17,7 +17,8 @@
             <!-- Modal header -->
             <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                 <h3 class="text-base font-semibold text-gray-900 ">
-                    تغییر مهلت سفارش گیری سیستم 
+                        {% comment %} تغییر مهلت سفارش گیری سیستم  {% endcomment %}
+                        تغییر ظرفیت آیتم
                 </h3>
                 <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-xs h-8 w-8 ms-auto inline-flex justify-center items-center "
@@ -33,13 +34,35 @@
             
             <!-- Modal body -->
             <div id="deadlines-modal-body-container" class="p-4 md:p-5 flex flex-col gap-3">
-                <div class="flex flex-col gap-1 deadlines-container">
-                </div>
+                
 
+                <div class="deadline-row flex flex-row gap-4 items-center bg-slate-100 rounded-md p-2">
+                    <div class="flex flex-row items-center gap-2 w-2/3">
+                        <p class="w-1/4 text-sm">
+                            ظرفیت
+                         </p>
+                         <input value="" type="text"  aria-describedby="helper-text-explanation" class="bg-gray-50 deadline-day border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " placeholder="25" required />
+                    </div>
+                    <div class="flex flex-row items-center gap-2 w-1/3">
+                        <p class="text-sm whitespace-nowrap">
+                            باقی مانده
+                        </p>
+                        <input disabled value="52" type="text"  aria-describedby="helper-text-explanation" class="bg-gray-100 deadline-hour  border border-gray-300 text-gray-400 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " placeholder="25" required />
+                    </div>
+                </div>
+                <div class="flex">
+                    <div class="flex items-center h-5">
+                        <input id="deadline-notification" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ">
+                    </div>
+                    <div class="ms-2 text-sm">
+                        <label for="helper-checkbox" class="font-medium text-gray-900 ">ظرفیت نامحدود</label>
+
+                    </div>
+                </div>
                 <hr>
 
                 <div class="flex flex-col gap-3">
-                    <div class="flex">
+                    {% comment %} <div class="flex">
                         <div class="flex items-center h-5">
                             <input id="deadline-notification" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ">
                         </div>
@@ -47,7 +70,7 @@
                             <label for="helper-checkbox" class="font-medium text-gray-900 ">اطلاع رسانی</label>
                             <p id="helper-checkbox-text" class="text-xs font-normal text-gray-500 ">اطلاع رسانی به تمام همکارانی که از این سیستم استفاده می کنند</p>
                         </div>
-                    </div>
+                    </div> {% endcomment %}
                     
                     <button id="deadline-submit" type="button" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">اعمال تغییرات</button>
                 </div>
