@@ -856,19 +856,21 @@ def comments(
 
     if request.method == "GET":
         comments = CommentSerializer(
-            Comment.objects.filter(Item=item_id), many=True
+            Comment.objects.filter(Item=item_id).order_by("-Created"),
+            many=True,
+            context={"user": user},
         )
         return Response(comments.data, status=status.HTTP_200_OK)
 
     elif request.method == "POST":
         item = get_object_or_404(Item, pk=item_id)
 
-        if not item.valid_for_feedback(user):
-            return invalid_request(
-                request,
-                message,
-                "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
-            )
+        # if not item.valid_for_feedback(user):
+        #     return invalid_request(
+        #         request,
+        #         message,
+        #         "شما در ماه اخیر این آیتم را سفارش نداده‌اید. ",
+        #     )
 
         serializer = CommentSerializer(data=request.data)
         if not serializer.is_valid():
@@ -879,6 +881,7 @@ def comments(
 
     elif request.method == "DELETE":
         cm = get_object_or_404(Comment, pk=comment_id, User=user)
+        cm.delete()
 
         return valid_request(request, message, "کامنت با موفقیت حذف شد.")
 
