@@ -451,3 +451,9 @@ class MenuItemLimitSerializer(serializers.Serializer):
 class ItemOrderingReport(serializers.Serializer):
     item = serializers.IntegerField(min_value=1)
     date = serializers.CharField(validators=[validate_date])
+
+
+class OrderRequestSerializer(serializers.Serializer):
+    date = serializers.CharField(validators=[validate_date])
+    item = serializers.IntegerField()
+    package = serializers.IntegerField(required=False)

@@ -27,43 +27,6 @@ from .utils import (
 )
 
 
-def validate_request(data: dict) -> tuple[str, int, Optional[int]]:
-    """
-    This function is responsible for validating request data for
-        validator classes which are defined in this module.
-
-    Args:
-        data (dict): The request data which must contains:\n
-          - 'date' (str): The date which you want to submit action on.
-          - 'item' (int): The item which you want to do action with.
-          - 'package' (int) item's package id if it has any, (optional).
-
-    Raises:
-        ValueError: If parameters are not specified, or not valid.
-
-    Returns:
-        date: Validated date value.
-        item: Validated item value.
-    """
-
-    date = validate_date(data.get("date"))
-    item = data.get("item")
-    package = data.get("package")
-    if not (date and item):
-        raise ValueError("'item' and 'date' must specified.")
-    try:
-        item = int(item)
-    except ValueError:
-        raise ValueError("invalid 'item' value.")
-    if package is not None:
-        try:
-            package = int(package)
-        except ValueError:
-            raise ValueError("invalid 'package' value.")
-        return date, item, package
-    return date, item
-
-
 def validate_calendar_request(
     data: dict,
 ) -> Optional[str]:
@@ -120,8 +83,8 @@ def validate_package_submission(
     total_orders = m.OrderItem.objects.filter(
         Personnel=validator.user,
         DeliveryDate=validator.date,
-        PackageItem__Package=package
-    ).aggregate(TotalOrders=Coalesce(Sum('Quantity'), 0))
+        PackageItem__Package=package,
+    ).aggregate(TotalOrders=Coalesce(Sum("Quantity"), 0))
     if total_orders["TotalOrders"] >= package.FreeItemCount:
         validator.message = "ظرفیت سفارش پکیج برای شما تمام شده است."
         raise ValueError("Package cap is reached.")
@@ -347,12 +310,11 @@ class ValidateRemove:
         date: The corresponding menu date.
     """
 
-    def __init__(self, request_data: dict, user: m.User) -> None:
-        self.data = request_data
+    def __init__(self, serializer_data: dict, user: m.User) -> None:
         self.user = user
         self.error = ""
-        self.date: str = ""
-        self.item: m.Item = m.Item.objects.none()
+        self.date: str = serializer_data["date"]
+        self.item: m.Item = serializer_data["item"]
 
     def is_valid(self) -> bool:
         """
@@ -365,7 +327,6 @@ class ValidateRemove:
         """
 
         try:
-            self.date, self.item = validate_request(self.data)
             self._validate_item()
             self._validate_date()
         except ValueError as e:
@@ -476,17 +437,16 @@ class ValidateOrder(OverrideUserValidator):
     """
 
     def __init__(
-        self, request_data: dict, user: m.User, override_user: m.User
+        self, serializer_data: dict, user: m.User, override_user: m.User
     ) -> None:
         super().__init__(user, override_user)
-        self.data = request_data
         self.message: str = ""
         self.error = ""
-        self.date: str = ""
-        self.item: m.Item = m.Item.objects.none()
+        self.date: str = serializer_data["date"]
+        self.item: m.Item = serializer_data["item"]
         self.order_item: m.OrderItem = m.OrderItem.objects.none()
         self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
-        self.package: m.Item = None
+        self.package: m.Item = serializer_data.get("package")
 
     def is_valid(self, create=False, remove=False):
         """
@@ -514,7 +474,6 @@ class ValidateOrder(OverrideUserValidator):
             )
 
         try:
-            self.date, self.item, self.package = validate_request(self.data)
             if create:
                 self._validate_item_submission()
                 self._validate_default_delivery_building()
@@ -680,15 +639,19 @@ class ValidateOrder(OverrideUserValidator):
                 self.menu_item.TotalOrdersLeft = F("TotalOrdersLeft") - 1
                 self.menu_item.save()
 
-                package_item = m.PackageItem.objects.filter(
-                                Item=self.item, Package=self.package
-                            ).first() if self.package else None
-                
+                package_item = (
+                    m.PackageItem.objects.filter(
+                        Item=self.item, Package=self.package
+                    ).first()
+                    if self.package
+                    else None
+                )
+
                 instance = m.OrderItem.objects.filter(
                     Personnel=self.user.Personnel,
                     DeliveryDate=self.date,
                     Item=self.item,
-                    PackageItem=package_item
+                    PackageItem=package_item,
                 ).first()
 
                 note = m.OrderItem.objects.filter(
@@ -880,7 +843,7 @@ class ValidateBreakfast(OverrideUserValidator):
     The data will pass several validation before submission.
 
     Attributes:
-        data: Raw data retrieved from request.
+        data: serializer validated data.
         user: User object.
         item: Item id that has been requested to remove,
             available AFTER validation.
@@ -897,16 +860,15 @@ class ValidateBreakfast(OverrideUserValidator):
     """
 
     def __init__(
-        self, request_data: dict, user: m.User, override_user: m.User
+        self, serializer_data: dict, user: m.User, override_user: m.User
     ) -> None:
         super().__init__(user, override_user)
-        self.data = request_data
         self.message: str = ""
         self.error: str = ""
-        self.date: str = ""
-        self.item: m.Item = m.Item.objects.none()
+        self.date: str = serializer_data["date"]
+        self.item: m.Item = serializer_data["item"]
         self.menu_item: m.DailyMenuItem = m.DailyMenuItem.objects.none()
-        self.package: m.Package = None
+        self.package: m.Package = serializer_data.get("package")
 
     def is_valid(self):
         """
@@ -919,7 +881,6 @@ class ValidateBreakfast(OverrideUserValidator):
         """
 
         try:
-            self.date, self.item, self.package = validate_request(self.data)
             self._validate_item()
             self._validate_default_delivery_building()
             self._validate_package_submission()

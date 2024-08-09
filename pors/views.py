@@ -45,6 +45,7 @@ from .serializers import (
     MenuItemLimitSerializer,
     MenuItemSerializer,
     NoteSerializer,
+    OrderRequestSerializer,
     OrderSerializer,
     PersonnelMenuItemSerializer,
     UpdateDeadlineSerializer,
@@ -143,7 +144,16 @@ def remove_item_from_menu(request, user: User, override_user: User):
         -  'item' (str): The item which you want to remove.
     """
 
-    validator = b.ValidateRemove(request.data, user)
+    serializer = OrderRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است",
+            serializer.errors,
+        )
+
+    validator = b.ValidateRemove(serializer.validated_data, user)
     if validator.is_valid():
         validator.remove_item()
         message.add_message(request, "آیتم با موفقیت حذف شد.", Message.SUCCESS)
@@ -408,7 +418,16 @@ def create_order_item(request, user: User, override_user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateOrder(request.data, user, override_user)
+    serializer = OrderRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است",
+            serializer.errors,
+        )
+    
+    validator = b.ValidateOrder(serializer.validated_data, user, override_user)
     if validator.is_valid(create=True):
         try:
             validator.create_order()
@@ -449,8 +468,16 @@ def remove_order_item(request, user: User, override_user: User):
         -  'date' (str): The date which you want to remove order item from.
         -  'item' (str): The item which you want to remove.
     """
+    serializer = OrderRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است",
+            serializer.errors,
+        )
 
-    validator = b.ValidateOrder(request.data, user, override_user)
+    validator = b.ValidateOrder(serializer.validated_data, user, override_user)
     if validator.is_valid(remove=True):
         validator.remove_order()
         message.add_message(
@@ -484,7 +511,18 @@ def create_breakfast_order(request, user: User, override_user: User):
         -  'item' (str): The item which you want to order.
     """
 
-    validator = b.ValidateBreakfast(request.data, user, override_user)
+    serializer = OrderRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return invalid_request(
+            request,
+            message,
+            "مشکلی حین اعتبارسنجی درخواست شما رخ داده است",
+            serializer.errors,
+        )
+
+    validator = b.ValidateBreakfast(
+        serializer.validated_data, user, override_user
+    )
     if validator.is_valid():
         try:
             validator.create_breakfast_order()
