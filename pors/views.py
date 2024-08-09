@@ -881,6 +881,7 @@ def comments(
 
     elif request.method == "DELETE":
         cm = get_object_or_404(Comment, pk=comment_id, User=user)
+        cm.delete()
 
         return valid_request(request, message, "کامنت با موفقیت حذف شد.")
 

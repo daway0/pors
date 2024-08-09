@@ -525,13 +525,24 @@ function makeDropDownChoices(items) {
 
 function makeItemCommentsHTML(data) {
     let HTML = ''
+    let deleteCommentIcon = `
+        <a class="ml-1 cursor-pointer my-comment-delete hover:scale-110">
+            <svg width="12px" height="12px"  viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="delete-alt-2" class="fill-gray-500 hover:fill-red-600 icon glyph"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M17,4V5H15V4H9V5H7V4A2,2,0,0,1,9,2h6A2,2,0,0,1,17,4Z"></path><path d="M20,6H4A1,1,0,0,0,4,8H5.07l.87,12.14a2,2,0,0,0,2,1.86h8.14a2,2,0,0,0,2-1.86L18.93,8H20a1,1,0,0,0,0-2ZM13,17a1,1,0,0,1-2,0V11a1,1,0,0,1,2,0Z"></path></g></svg>
+        </a>`
     data.forEach(function(commentObj) {
+        
         HTML += `
-        <div class="flex flex-col gap-1 w-full px-4 py-2 bg-gray-100 rounded-md">
-            <span class="text-gray-500 text-xs">${commentObj.user}</span>
+        <div data-comment-id="${commentObj.id}" class="comment-box flex flex-col gap-1 w-full px-4 py-2 ${commentObj.isCommentedByUser ? "bg-blue-50" :"bg-gray-100"} rounded-md">
+            <span class="text-gray-500 text-xs ${commentObj.isCommentedByUser ? "font-bold": ""}">${commentObj.isCommentedByUser ? "شما": commentObj.user}</span>
             <p class="text-xs text-gray-800">
                 ${commentObj.text}
             </p>
+            <div class="flex mt-2 flex-row-reverse gap-2 items-start">
+                ${commentObj.isCommentedByUser ? deleteCommentIcon :""}
+                <span class="text-xs italic text-gray-500">
+                    ${convertToPersianNumber(commentObj.created)}
+                </span>
+            </div>
         </div>
         `
     })
@@ -1928,7 +1939,24 @@ $(document).ready(function () {
         let totalComments = parseInt($itemComment.attr("data-feedback-count"))
         let isCommented = parseInt($itemComment.attr("data-byme")) 
         
-        if (comment === null || comment === undefined) return
+        if (comment === "") {
+            let em = "امکان ثبت نظر خالی وجود ندارد!"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
+            return 
+        }
+        
+
+        if (comment.length <  5) {
+            let em = "حداقل طول نظر باید 5 کاراکتر باشد!"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
+            return 
+        }
+
+        if (comment.length >=  500) {
+            let em = "امکان ثبت نظر با بیش از 500 کاراکتر وجود ندارد!"
+            displayDismiss(DISMISSLEVELS.ERROR, em,DISMISSDURATIONS.DISPLAY_TIME_SHORT) 
+            return 
+        }
 
         let url = `items/${itemId}/comments/`
         $.ajax({
@@ -1961,6 +1989,45 @@ $(document).ready(function () {
             }
         });
     })
+
+    $(document).on('click', '.my-comment-delete', function () {
+        let commentId = parseInt($(this).parents(".comment-box").attr("data-comment-id"))
+        let itemId = parseInt($("#item-comment-modal").attr("comment-for"))
+        let $itemComment = $(`#menu-items-container li[data-item-id=${itemId}]`).find(".comment-item")
+    
+        let totalComments = parseInt($itemComment.attr("data-feedback-count"))
+        
+        
+        
+        let url = `comments/${commentId}/`
+        $.ajax({ 
+            url: addPrefixTo(url),
+            method: 'DELETE',
+            contentType: 'application/json',
+            statusCode:{
+                200: function (data) {
+                    // update comment counter on item card
+                    totalComments--
+
+                    // have to fix this, maybe a user has multiple comments on one item and then 
+                    // isCommented must be remains as true 
+                    changeItemFeedback({totalComments:totalComments, isCommented:false}, itemId) 
+                    $itemComment.find(".fb-real-count").text(convertToPersianNumber(totalComments))
+                    $itemComment.attr("data-feedback-count", totalComments)
+                    $("#item-comment-modal").click()
+                    
+                    catchResponseMessagesToDisplay(data.messages)
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Item Comment deletion failed!', status, 'and error:', error, 'detail:', xhr.responseJSON);
+                checkErrorRelatedToAuth(xhr.status)
+                catchResponseMessagesToDisplay(JSON.parse(xhr.responseText).messages)
+            }
+        });
+    })
+
+    
 
 
     // Order comment modal 
