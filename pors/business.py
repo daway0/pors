@@ -505,7 +505,7 @@ class ValidateOrder(OverrideUserValidator):
                 AvailableDate=self.date,
                 IsActive=True,
                 Item__IsActive=True,
-                # Item__Package__isnull=True,
+                Item__Package__isnull=True,
             )
             .exclude(Item__MealType=m.Item.MealTypeChoices.BREAKFAST)
             .first()
@@ -911,6 +911,7 @@ class ValidateBreakfast(OverrideUserValidator):
             IsActive=True,
             Item__IsActive=True,
             Item__MealType=m.Item.MealTypeChoices.BREAKFAST,
+            Item__Package__isnull=True,
         ).first()
         if not menu_item:
             self.message = "آیتم مورد نظر فعال نمی‌باشد."
