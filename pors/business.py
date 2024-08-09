@@ -60,7 +60,8 @@ def validate_request(data: dict) -> tuple[str, int, Optional[int]]:
             package = int(package)
         except ValueError:
             raise ValueError("invalid 'package' value.")
-    return date, item, package
+        return date, item, package
+    return date, item
 
 
 def validate_calendar_request(
